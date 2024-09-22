@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1071034831504",
+    "project_id": "fitbattles-167ae",
+    "storage_bucket": "fitbattles-167ae.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1071034831504:android:d352ca1d260fdc1a10be15",
+        "android_client_info": {
+          "package_name": "com.example.fitbattles"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAULmcdDR7NI3bLtJAlEvvMbR7vOo1_YLk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
