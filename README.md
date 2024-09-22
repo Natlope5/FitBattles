@@ -1,16 +1,29 @@
-# fitbattles
+# FitBattles
 
-A new Flutter project.
+FitBattles is a Flutter application designed to help users track and improve their fitness journey through engaging challenges and community support.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project is a starting point for a Flutter application that focuses on fitness challenges and tracking progress.
 
-A few resources to get you started if this is your first Flutter project:
+### Resources
+
+Here are a few resources to help you get started if this is your first Flutter project:
 
 - [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
 - [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- [Flutter Documentation](https://docs.flutter.dev/)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Features
+
+- User authentication using Firebase
+- Fitness challenges with rewards
+- Progress tracking with visual graphs
+- Community leaderboard
+- User profiles with achievements
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/fitbattles.git
