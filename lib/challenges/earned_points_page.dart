@@ -1,12 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // Importing Flutter material package for UI components
 
 // This widget represents a page that displays the user's earned points and related statistics.
 class EarnedPointsPage extends StatelessWidget {
-  // Points earned by the user
-  final int points;
-
-  // Number of days in the user's streak
-  final int streakDays;
+  final int points; // Points earned by the user
+  final int streakDays; // Number of days in the user's streak
 
   // Constructor for the EarnedPointsPage, requiring points and streakDays as parameters.
   const EarnedPointsPage({super.key, required this.points, required this.streakDays});
@@ -17,9 +14,8 @@ class EarnedPointsPage extends StatelessWidget {
     double progress = points / 1000;
 
     return Scaffold(
-      // AppBar containing the title of the page
       appBar: AppBar(
-        title: const Text('Earned Points'),
+        title: const Text('Earned Points'), // Title of the page
         backgroundColor: const Color(0xFF5D6C8A), // Custom color for the AppBar
       ),
       body: Padding(

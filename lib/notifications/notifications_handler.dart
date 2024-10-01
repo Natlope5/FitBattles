@@ -3,15 +3,12 @@ import 'package:flutter/material.dart'; // Importing Flutter Material for UI com
 import 'package:logger/logger.dart'; // Importing Logger for logging messages
 
 // Define a GlobalKey for the navigator
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>(); // Key to control navigation globally
 
 // Class to handle notifications using Firebase Cloud Messaging
 class NotificationsHandler {
-  // Create an instance of FirebaseMessaging
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-
-  // Create an instance of Logger for logging purposes
-  final Logger _logger = Logger();
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance; // Instance for Firebase Messaging
+  final Logger _logger = Logger(); // Logger instance for logging purposes
 
   // Initialization method for setting up notifications
   Future<void> init() async {

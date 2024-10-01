@@ -1,11 +1,11 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart'; // Importing Flutter material package for UI components
 
 // This widget represents the page for creating a new challenge.
 class CreateChallengePage extends StatefulWidget {
-  const CreateChallengePage({super.key});
+  const CreateChallengePage({super.key}); // Constructor
 
   @override
-  CreateChallengePageState createState() => CreateChallengePageState();
+  CreateChallengePageState createState() => CreateChallengePageState(); // Creating the state for CreateChallengePage
 }
 
 // This is the state class for CreateChallengePage. It holds the state of the page.
@@ -31,39 +31,39 @@ class CreateChallengePageState extends State<CreateChallengePage> {
     return Scaffold(
       // App bar for the page
       appBar: AppBar(
-        title: const Text('Create a Challenge'),
+        title: const Text('Create a Challenge'), // Title of the app bar
       ),
       // Padding for the body content
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0), // Padding around the content
+        child: SingleChildScrollView( // Allow scrolling for the content
           child: Column(
             children: [
               // Text field for the challenge name
               TextField(
-                controller: _challengeNameController,
-                decoration: const InputDecoration(labelText: 'Challenge Name'),
+                controller: _challengeNameController, // Controller for challenge name
+                decoration: const InputDecoration(labelText: 'Challenge Name'), // Label for text field
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 16), // Space between elements
 
               // Dropdown for selecting challenge type
               DropdownButtonFormField<String>(
-                value: _challengeType,
+                value: _challengeType, // Current challenge type
                 items: <String>['Steps', 'Time', 'Distance'] // Challenge types
                     .map((String value) => DropdownMenuItem<String>(
                   value: value,
-                  child: Text(value),
+                  child: Text(value), // Display challenge type
                 ))
                     .toList(),
                 onChanged: (String? newValue) {
                   // Update the challenge type when a new value is selected
                   setState(() {
-                    _challengeType = newValue!;
+                    _challengeType = newValue!; // Set new challenge type
                   });
                 },
-                decoration: const InputDecoration(labelText: 'Challenge Type'),
+                decoration: const InputDecoration(labelText: 'Challenge Type'), // Label for dropdown
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 16), // Space between elements
 
               // Row for selecting start and end dates
               Row(
@@ -80,9 +80,9 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                         // Show date picker for start date
                         DateTime? pickedDate = await showDatePicker(
                           context: context,
-                          initialDate: _startDate ?? DateTime.now(),
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2100),
+                          initialDate: _startDate ?? DateTime.now(), // Default date is today
+                          firstDate: DateTime.now(), // Start date can't be before today
+                          lastDate: DateTime(2100), // Limit to a reasonable future date
                         );
                         if (pickedDate != null) {
                           setState(() {
@@ -92,7 +92,7 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 16), // Space between elements
                   Expanded(
                     child: TextField(
                       readOnly: true, // Make the text field read-only
@@ -105,9 +105,9 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                         // Show date picker for end date
                         DateTime? pickedDate = await showDatePicker(
                           context: context,
-                          initialDate: _endDate ?? DateTime.now(),
+                          initialDate: _endDate ?? DateTime.now(), // Default date is today
                           firstDate: _startDate ?? DateTime.now(), // End date must be after start date
-                          lastDate: DateTime(2100),
+                          lastDate: DateTime(2100), // Limit to a reasonable future date
                         );
                         if (pickedDate != null) {
                           setState(() {
@@ -119,12 +119,12 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 16), // Space between elements
 
               // Text field for adding participants
               TextField(
-                controller: _participantController,
-                decoration: const InputDecoration(labelText: 'Add Participant'),
+                controller: _participantController, // Controller for participant input
+                decoration: const InputDecoration(labelText: 'Add Participant'), // Label for text field
               ),
               // Button to add participant to the list
               ElevatedButton(
@@ -136,9 +136,9 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                     }
                   });
                 },
-                child: const Text('Add Participant'),
+                child: const Text('Add Participant'), // Button text
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 16), // Space between elements
 
               // Display the list of participants as Chips
               Wrap(
@@ -153,7 +153,7 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 16), // Space between elements
 
               // Button to create the challenge
               ElevatedButton(
@@ -161,7 +161,7 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                   // Handle the logic to create the challenge here
                   _createChallenge();
                 },
-                child: const Text('Create Challenge'),
+                child: const Text('Create Challenge'), // Button text
               ),
             ],
           ),

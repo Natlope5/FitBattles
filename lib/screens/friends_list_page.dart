@@ -1,44 +1,37 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fitbattles/screens/user_profile_page.dart';
+import 'package:flutter/material.dart'; // Importing Flutter Material for UI components
+import 'package:cloud_firestore/cloud_firestore.dart'; // Importing Firestore for database interaction
+import 'package:fitbattles/screens/user_profile_page.dart'; // Importing user profile page
 
 class FriendsListPage extends StatefulWidget {
-  const FriendsListPage({super.key});
+  const FriendsListPage({super.key}); // Constructor for the FriendsListPage
 
   @override
-  FriendsListPageState createState() => FriendsListPageState();
+  FriendsListPageState createState() => FriendsListPageState(); // Creating state for the widget
 }
 
 class FriendsListPageState extends State<FriendsListPage> {
-  // Controller for the search text field
-  final TextEditingController _searchController = TextEditingController();
-  // Firestore instance to interact with the database
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TextEditingController _searchController = TextEditingController(); // Controller for the search text field
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance; // Firestore instance to interact with the database
 
-  // Lists to hold friends and suggested friends data
-  List<Map<String, dynamic>> friendsList = [];
-  List<Map<String, dynamic>> suggestedFriendsList = [];
+  List<Map<String, dynamic>> friendsList = []; // List to hold friends data
+  List<Map<String, dynamic>> suggestedFriendsList = []; // List for suggested friends
 
-  // Placeholder for the current user ID (to be replaced with actual user ID)
-  String userId = 'currentUserId'; // Replace with actual user ID
+  String userId = 'currentUserId'; // Placeholder for the current user ID (to be replaced with actual user ID)
 
   @override
   void initState() {
     super.initState();
-    // Fetch the list of friends when the page is initialized
-    _fetchFriends();
+    _fetchFriends(); // Fetch the list of friends when the page is initialized
   }
 
   // Function to fetch friends from Firestore
   Future<void> _fetchFriends() async {
-    // Clear the existing friends list before fetching
-    friendsList.clear();
+    friendsList.clear(); // Clear the existing friends list before fetching
 
     // Fetch currently added friends from Firestore
     DocumentSnapshot userFriendsDoc = await _firestore.collection('users').doc(userId).get();
     if (userFriendsDoc.exists) {
-      // Get the list of friend IDs from the user document
-      List<dynamic> friends = userFriendsDoc['friends'];
+      List<dynamic> friends = userFriendsDoc['friends']; // Get the list of friend IDs
       // Fetch user details for each friend
       for (String friendId in friends) {
         DocumentSnapshot friendDoc = await _firestore.collection('users').doc(friendId).get();
@@ -51,18 +44,15 @@ class FriendsListPageState extends State<FriendsListPage> {
           });
         }
       }
-      // Update the UI after fetching friends
-      setState(() {});
+      setState(() {}); // Update the UI after fetching friends
     }
   }
 
   // Function to search for friends based on the query
   Future<void> _searchFriends(String query) async {
     if (query.isEmpty) {
-      // Clear suggested friends if the search query is empty
-      setState(() {
-        suggestedFriendsList.clear();
-      });
+      suggestedFriendsList.clear(); // Clear suggested friends if the search query is empty
+      setState(() {}); // Update the UI
       return;
     }
 
@@ -97,14 +87,12 @@ class FriendsListPageState extends State<FriendsListPage> {
       };
     }).toList();
 
-    // Update the UI after searching for friends
-    setState(() {});
+    setState(() {}); // Update the UI after searching for friends
   }
 
   // Function to add a friend
   Future<void> _addFriend(String friendId) async {
-    // Check if the friend is already added
-    bool isFriendAlreadyAdded = friendsList.any((friend) => friend['id'] == friendId);
+    bool isFriendAlreadyAdded = friendsList.any((friend) => friend['id'] == friendId); // Check if the friend is already added
 
     if (!isFriendAlreadyAdded) {
       // If not added, update the user's friend list in Firestore
@@ -120,77 +108,75 @@ class FriendsListPageState extends State<FriendsListPage> {
 
   // Function to show a SnackBar with a message
   void _showSnackBar(String message) {
-    final snackBar = SnackBar(content: Text(message));
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    final snackBar = SnackBar(content: Text(message)); // Create a SnackBar with the message
+    ScaffoldMessenger.of(context).showSnackBar(snackBar); // Show the SnackBar
   }
 
   // Function to navigate to the user's profile page
   void _viewProfile(String friendId) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => UserProfilePage(userId: friendId)),
+      MaterialPageRoute(builder: (context) => UserProfilePage(userId: friendId)), // Navigate to user profile
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Search Friends')),
+      appBar: AppBar(title: const Text('Search Friends')), // AppBar title
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0), // Padding for the body
         child: Column(
           children: [
             // TextField for searching friends
             TextField(
-              controller: _searchController,
+              controller: _searchController, // Controller for the text field
               decoration: InputDecoration(
-                labelText: 'Search by Phone, Email, or User ID',
+                labelText: 'Search by Phone, Email, or User ID', // Label for the text field
                 suffixIcon: IconButton(
-                  icon: const Icon(Icons.search),
-                  onPressed: () => _searchFriends(_searchController.text),
+                  icon: const Icon(Icons.search), // Search icon
+                  onPressed: () => _searchFriends(_searchController.text), // Search action
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            // Display section title for added friends
+            const SizedBox(height: 16), // Space between text field and friend list
             const Text(
               'Added Friends',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // Title style
             ),
             Expanded(
               child: ListView.builder(
-                itemCount: friendsList.length,
+                itemCount: friendsList.length, // Number of friends to display
                 itemBuilder: (context, index) {
-                  final friend = friendsList[index];
+                  final friend = friendsList[index]; // Get friend details
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: NetworkImage(friend['image'] ?? ''), // Use NetworkImage for online images
+                      backgroundImage: NetworkImage(friend['image'] ?? ''), // Use NetworkImage for friend's image
                     ),
-                    title: Text(friend['name']),
-                    onTap: () => _viewProfile(friend['id']),
+                    title: Text(friend['name']), // Friend's name
+                    onTap: () => _viewProfile(friend['id']), // Navigate to profile on tap
                   );
                 },
               ),
             ),
-            // Display section title for suggested friends
-            const SizedBox(height: 16),
+            const SizedBox(height: 16), // Space between added friends and suggested friends section
             const Text(
               'Suggested Friends',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // Title style for suggested friends
             ),
             Expanded(
               child: ListView.builder(
-                itemCount: suggestedFriendsList.length,
+                itemCount: suggestedFriendsList.length, // Number of suggested friends to display
                 itemBuilder: (context, index) {
-                  final friend = suggestedFriendsList[index];
+                  final friend = suggestedFriendsList[index]; // Get suggested friend details
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: NetworkImage(friend['image'] ?? ''), // Use NetworkImage for online images
+                      backgroundImage: NetworkImage(friend['image'] ?? ''), // Use NetworkImage for friend's image
                     ),
-                    title: Text(friend['name']),
+                    title: Text(friend['name']), // Suggested friend's name
                     trailing: ElevatedButton(
-                      onPressed: () => _addFriend(friend['id']),
-                      child: const Text('Add Friend'),
+                      onPressed: () => _addFriend(friend['id']), // Add friend on button press
+                      child: const Text('Add Friend'), // Button label
                     ),
                   );
                 },
@@ -202,4 +188,3 @@ class FriendsListPageState extends State<FriendsListPage> {
     );
   }
 }
-
