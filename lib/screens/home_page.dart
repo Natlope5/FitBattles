@@ -246,6 +246,9 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 10),
 
+          // Workout tracking button
+          _buildWorkoutTrackingButton(context),
+
           // Button to show/hide preloaded challenges
           ElevatedButton(
             onPressed: () {
@@ -480,5 +483,20 @@ class _HomePageState extends State<HomePage> {
   Widget buildFriendsSection() {
     return _buildTopChallengedFriends(
         exampleFriends); // Use the renamed variable here
+  }
+
+  // Widget to build the workout tracking navigation button
+  Widget _buildWorkoutTrackingButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
+      },
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: const Color(0xFF85C83E), // Use the theme color
+        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
+      ),
+      child: const Text('Start Workout Tracking'), // Button text
+    );
   }
 }

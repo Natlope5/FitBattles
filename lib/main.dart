@@ -10,6 +10,7 @@ import 'package:fitbattles/notifications/notifications_handler.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
 import 'package:fitbattles/screens/friends_list_page.dart'; // Correctly importing the friends list page
 import 'package:fitbattles/settings/my_history.dart'; // Correctly importing the My History page
+import 'package:fitbattles/screens/workout_tracking_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensure all widgets are initialized
@@ -50,6 +51,7 @@ class MyApp extends StatelessWidget {
         '/create_challenge': (context) => const CreateChallengePage(), // Route to create challenge page
         '/earnedPoints': (context) => const EarnedPointsPage(points: 1000, streakDays: 360), // Route to earned points page (duplicate)
         '/friendsList': (context) => const FriendsListPage(), // Route to friends list page
+        '/workoutTracking': (context) => const WorkoutTrackingPage(),
       },
     );
   }
