@@ -46,19 +46,6 @@ class _HomePageState extends State<HomePage> {
     'Push-Ups Challenge',
   ];
 
-  // Placeholder data for friends
-  final List<Map<String, String>> friends = [
-    {'name': 'Alice', 'image': 'assets/images/alice.jpg'},
-    {'name': 'Bob', 'image': 'assets/images/bob.jpg'},
-    {'name': 'Charlie', 'image': 'assets/images/charlie.jpg'},
-    {'name': 'Diana', 'image': 'assets/images/diana.jpg'},
-    {'name': 'Ethan', 'image': 'assets/images/ethan.jpg'},
-    {'name': 'Fiona', 'image': 'assets/images/fiona.jpg'},
-    {'name': 'George', 'image': 'assets/images/george.jpg'},
-    {'name': 'Hannah', 'image': 'assets/images/hannah.jpg'},
-    {'name': 'Ian', 'image': 'assets/images/ian.jpg'},
-    {'name': 'Jack', 'image': 'assets/images/jack.jpg'},
-  ];
 
   // Method to pick an image from the gallery and upload it to Firebase
   Future<void> _pickAndUploadImage() async {
@@ -116,7 +103,7 @@ class _HomePageState extends State<HomePage> {
               _buildHistoryContainer(context),
               // Build the history container
               const SizedBox(height: 32),
-              _buildTopChallengedFriends(friends), // Pass the friends list
+              _buildTopChallengedFriends(exampleFriends), // Pass the friends list
               // Build the top challenged friends section
               const SizedBox(height: 32),
               Tooltip(
@@ -347,10 +334,7 @@ class _HomePageState extends State<HomePage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      width: MediaQuery
-          .of(context)
-          .size
-          .width * 0.9, // Responsive width
+      width: MediaQuery.of(context).size.width * 0.9, // Responsive width
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,8 +351,7 @@ class _HomePageState extends State<HomePage> {
               scrollDirection: Axis.horizontal,
               itemCount: friends.length,
               itemBuilder: (context, index) {
-                return buildFriendCard(
-                    friends[index]); // Build each friend's card
+                return buildFriendCard(context, friends[index]); // Pass both context and friend
               },
             ),
           ),
@@ -377,11 +360,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-// Widget to build each friend's card
-  Widget buildFriendCard(Map<String, dynamic> friend) {
+
+/// Widget to build each friend's card
+  Widget buildFriendCard(BuildContext context, Map<String, dynamic> friend) {
     return GestureDetector(
       onTap: () {
-        showFriendInfoDialog(friend); // Show the info dialog when tapped
+        showFriendInfoDialog(context, friend); // Pass context to showFriendInfoDialog
       },
       child: Padding(
         padding: const EdgeInsets.only(right: 8.0),
@@ -389,19 +373,10 @@ class _HomePageState extends State<HomePage> {
           children: [
             ClipOval(
               child: Image.asset(
-                friend['image']!, // Friend's image
+                friend['image']!, // Friend's image from assets
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  // If there's an error loading the image, show the placeholder
-                  return Image.asset(
-                    'assets/placeholder_avatar.png',
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                  );
-                },
               ),
             ),
             const SizedBox(height: 4),
@@ -411,9 +386,8 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-// Function to show the friend info dialog
-  void showFriendInfoDialog(Map<String, dynamic> friend) {
+  // Function to show the friend info dialog
+  void showFriendInfoDialog(BuildContext context, Map<String, dynamic> friend) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -422,21 +396,10 @@ class _HomePageState extends State<HomePage> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ClipOval(
-                child: Image.asset(
-                  friend['image']!,
-                  width: 80,
-                  height: 80,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/placeholder_avatar.png',
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                    );
-                  },
-                ),
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.grey[300],
+                backgroundImage: AssetImage(friend['image']!), // Friend's image
               ),
               const SizedBox(height: 10),
               Text('Challenges Won: ${friend['challengesWon'] ?? 0}'),
@@ -457,25 +420,73 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-// Example list of friends
-  final List<Map<String, dynamic>> exampleFriends = [
+
+
+  List<Map<String, dynamic>> get exampleFriends => [
     {
-      'name': 'John Doe',
-      'image': 'assets/friend_image.png',
-      'challengesWon': 5,
-      'totalChallenges': 10,
-      'points': 150,
+      'name': 'Bob',
+      'image': 'assets/images/bob.png',
+      'challengesWon': 12,
+      'totalChallenges': 20,
+      'points': 250,
     },
     {
-      'name': 'Jane Smith',
-      'image': 'assets/friend_image2.png',
+      'name': 'Charlie',
+      'image': 'assets/images/charlie.png',
       'challengesWon': 8,
+      'totalChallenges': 15,
+      'points': 180,
+    },
+    {
+      'name': 'Hannah',
+      'image': 'assets/images/hannah.png',
+      'challengesWon': 10,
+      'totalChallenges': 18,
+      'points': 220,
+    },
+    {
+      'name': 'Ian',
+      'image': 'assets/images/ian.png',
+      'challengesWon': 6,
       'totalChallenges': 12,
+      'points': 140,
+    },
+    {
+      'name': 'Fiona',
+      'image': 'assets/images/fiona.png',
+      'challengesWon': 7,
+      'totalChallenges': 14,
+      'points': 160,
+    },
+    {
+      'name': 'George',
+      'image': 'assets/images/george.png',
+      'challengesWon': 9,
+      'totalChallenges': 17,
       'points': 200,
     },
-    // Add more friends as needed
+    {
+      'name': 'Ethan',
+      'image': 'assets/images/ethan.png',
+      'challengesWon': 5,
+      'totalChallenges': 9,
+      'points': 120,
+    },
+    {
+      'name': 'Diana',
+      'image': 'assets/images/diana.png',
+      'challengesWon': 11,
+      'totalChallenges': 19,
+      'points': 240,
+    },
+    {
+      'name': 'Alice',
+      'image': 'assets/images/alice.png',
+      'challengesWon': 4,
+      'totalChallenges': 8,
+      'points': 100,
+    },
   ];
-
 // Usage example
   Widget buildFriendsSection() {
     return _buildTopChallengedFriends(

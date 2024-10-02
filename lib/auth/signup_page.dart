@@ -118,7 +118,7 @@ class _SignupPageState extends State<SignupPage> {
                 mainAxisAlignment: MainAxisAlignment.center, // Center the column vertically
                 children: <Widget>[
                   Image.asset(
-                    'assets/logo.png', // Logo image
+                    'assets/image/logo.png', // Logo image
                     height: 150, // Height of the logo
                   ),
                   const SizedBox(height: 20), // Space between elements
