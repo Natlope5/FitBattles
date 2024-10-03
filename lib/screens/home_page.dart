@@ -494,7 +494,7 @@ class _HomePageState extends State<HomePage> {
       style: ElevatedButton.styleFrom(
         foregroundColor: Colors.white,
         backgroundColor: const Color(0xFF85C83E), // Use the theme color
-        padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
       ),
       child: const Text('Start Workout Tracking'), // Button text
     );
