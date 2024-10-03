@@ -59,3 +59,7 @@ flutter:
     - assets/images/ethan.png
     - assets/images/diana.png
     - assets/images/alice.png
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter_18pt-Regular.ttf

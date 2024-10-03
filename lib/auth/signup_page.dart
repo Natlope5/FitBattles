@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth fo
 import 'package:logger/logger.dart'; // Importing logger for logging purposes
 import 'package:fitbattles/screens/home_page.dart'; // Importing HomePage for navigation after successful signup
 
+
 // Stateful widget for the Signup page
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key}); // Constructor
@@ -22,7 +23,7 @@ class _SignupPageState extends State<SignupPage> {
     // Check if email or password is empty
     if (email.isEmpty || password.isEmpty) {
       _showErrorDialog('Please fill in all fields.'); // Show error if fields are empty
-      return; // Exit the method early
+      return; // Exit method if validation fails
     }
 
     setState(() {
@@ -30,70 +31,71 @@ class _SignupPageState extends State<SignupPage> {
     });
 
     try {
-      // Attempt to create a user with email and password
+      // Attempt to create a new user using Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      String uid = userCredential.user!.uid; // Get the unique ID of the created user
-      String userEmail = userCredential.user!.email!; // Get the email of the created user
-
-      if (!mounted) return; // Check if the widget is still mounted
+      // Show success message upon successful signup
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Successfully registered as ${userCredential.user!.email}')),
+      );
 
       // Navigate to HomePage after successful signup
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage(uid: uid, email: userEmail)),
-      );
+      _navigateToHomePage(userCredential.user!.uid, userCredential.user!.email!);
     } on FirebaseAuthException catch (e) {
-      logger.e("Error code: ${e.code}", e); // Log the error
-      _showErrorDialog(_getErrorMessage(e)); // Show appropriate error message
+      logger.e("Error code: ${e.code}, Message: ${e.message}"); // Log Firebase error
+      _showErrorDialog(_getErrorMessage(e)); // Show error dialog with appropriate message
     } catch (e) {
-      logger.e("Unexpected error: $e"); // Log any unexpected errors
-      _showErrorDialog('An unexpected error occurred. Please try again.'); // Show generic error message
+      logger.e("Unexpected error: $e"); // Log unexpected errors
+      _showErrorDialog('An unexpected error occurred: $e'); // Show generic error dialog
     } finally {
       setState(() {
-        _isLoading = false; // Reset loading state after operation
+        _isLoading = false; // Reset loading state
       });
     }
   }
 
-  // Method to get a user-friendly error message based on Firebase exception
+  // Method to navigate to the home page
+  void _navigateToHomePage(String uid, String email) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => HomePage(uid: uid, email: email)), // Navigate to HomePage with user data
+    );
+  }
+
+  // Method to get error messages based on Firebase error codes
   String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':
-        return 'The email address is already in use by another account.'; // Specific error message
+        return 'The email is already in use. Please use another email.'; // Email already in use
       case 'weak-password':
-        return 'The password provided is too weak.'; // Specific error message
-      case 'invalid-email':
-        return 'The email address is not valid.'; // Specific error message
-      case 'operation-not-allowed':
-        return 'Email/password accounts are not enabled. Enable them in the Firebase console.'; // Specific error message
+        return 'The password provided is too weak.'; // Weak password
       default:
-        return 'An error occurred. Please try again.'; // Generic error message
+        return 'An error occurred. Please try again.'; // Default error message
     }
   }
 
-  // Method to show an error dialog with a message
+  // Method to show error dialog
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFFEFEFEF),
+          backgroundColor: const Color(0xFFEFEFEF), // Background color of dialog
           shape: RoundedRectangleBorder(
-            side: const BorderSide(color: Color(0xFFE62D2D), width: 2.0), // Border styling for the dialog
-            borderRadius: BorderRadius.circular(8.0), // Rounded corners
+            side: const BorderSide(color: Color(0xFFE62D2D), width: 2.0), // Border color and width
+            borderRadius: BorderRadius.circular(20.0), // Rounded corners
           ),
-          title: const Text('Error', style: TextStyle(color: Colors.black)), // Dialog title
-          content: Text(message, style: const TextStyle(color: Colors.black)), // Dialog content
+          title: const Text('Error', style: TextStyle(color: Colors.black)), // Title of the dialog
+          content: Text(message, style: const TextStyle(color: Colors.black)), // Error message content
           actions: <Widget>[
             TextButton(
+              child: const Text('OK', style: TextStyle(color: Colors.black)), // Button text
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text('OK', style: TextStyle(color: Colors.black)), // OK button
             ),
           ],
         );
@@ -101,62 +103,90 @@ class _SignupPageState extends State<SignupPage> {
     );
   }
 
+  // Build method to render the signup page UI
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xFF5D6C8A), // App bar color
-        title: const Text('Sign Up'), // App bar title
+        title: const Text('Sign Up'), // Title of the app bar
       ),
       body: Container(
-        color: const Color(0xFF5D6C8A), // Background color
-        child: Padding(
-          padding: const EdgeInsets.all(16.0), // Padding around the content
-          child: Center(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Center the column vertically
-                children: <Widget>[
-                  Image.asset(
-                    'assets/image/logo.png', // Logo image
-                    height: 150, // Height of the logo
-                  ),
-                  const SizedBox(height: 20), // Space between elements
-                  TextField(
+        color: const Color(0xFF5D6C8A), // Background color for the signup page
+        child: Center(
+          child: SingleChildScrollView( // Enable scrolling for the content
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                const SizedBox(height: 0),
+                Image.asset( // Logo image for the app
+                  'assets/images/logo2.png',
+                  height: 250,
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
+                  child: TextField(
                     controller: _emailController, // Controller for email input
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Email', // Label for email input
-                      fillColor: Colors.white,
-                      filled: true,
-                      border: OutlineInputBorder(), // Outline border for input
+                      fillColor: Colors.white, // Background color of input field
+                      filled: true, // Fill background color
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.0), // Rounded corners for the input field
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 16), // Space between elements
-                  TextField(
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
+                  child: TextField(
                     controller: _passwordController, // Controller for password input
-                    obscureText: true, // Obscure text for password
-                    decoration: const InputDecoration(
+                    obscureText: true, // Hide password input
+                    decoration: InputDecoration(
                       labelText: 'Password', // Label for password input
-                      fillColor: Colors.white,
-                      filled: true,
-                      border: OutlineInputBorder(), // Outline border for input
+                      fillColor: Colors.white, // Background color of input field
+                      filled: true, // Fill background color
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(20.0), // Rounded corners for the input field
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 32), // Space between elements
-                  _isLoading // Show loading indicator if true
-                      ? const CircularProgressIndicator() // Circular loading spinner
-                      : ElevatedButton(
-                    onPressed: () {
-                      createUser(_emailController.text, _passwordController.text); // Call createUser method on press
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: 200.0, // Set width for the button
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : () {
+                      String email = _emailController.text; // Get email from input field
+                      String password = _passwordController.text; // Get password from input field
+                      createUser(email, password); // Call createUser method
                     },
                     style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      backgroundColor: const Color(0xFF85C83E), // Button color
+                      foregroundColor: Colors.black, // Text color for button
+                      backgroundColor: const Color(0xFF85C83E), // Background color for button
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20.0), // Rounded corners for the button
+                      ),
                     ),
-                    child: const Text('Sign Up'), // Button text
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.black) // Show loading indicator if loading
+                        : const Text('Sign Up'), // Button text
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 20),
+                // Already have an account? Link
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Navigate back to the previous page (LoginPage)
+                  },
+                  child: const Text(
+                    "Already have an account? Log In",
+                    style: TextStyle(color: Colors.white), // Style for the link
+                  ),
+                ),
+              ],
             ),
           ),
         ),
