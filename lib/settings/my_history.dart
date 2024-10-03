@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/privacy_settings_page.dart'; // Import the PrivacySettingsPage
 
 class MyHistoryPage extends StatelessWidget {
   const MyHistoryPage({super.key});
@@ -20,6 +21,20 @@ class MyHistoryPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My History'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings), // Add a settings icon for privacy settings
+            onPressed: () {
+              // Navigate to the Privacy Settings Page when the icon is pressed
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PrivacySettingsPage(uid: 'currentUserUid'), // Pass the current user's UID here
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -47,4 +62,3 @@ class MyHistoryPage extends StatelessWidget {
     );
   }
 }
-

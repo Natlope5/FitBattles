@@ -6,7 +6,8 @@ class EarnedPointsPage extends StatelessWidget {
   final int streakDays; // Number of days in the user's streak
 
   // Constructor for the EarnedPointsPage, requiring points and streakDays as parameters.
-  const EarnedPointsPage({super.key, required this.points, required this.streakDays});
+  const EarnedPointsPage(
+      {super.key, required this.points, required this.streakDays});
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +22,8 @@ class EarnedPointsPage extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16.0), // Padding around the main content
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center, // Center-align the column contents
+          crossAxisAlignment: CrossAxisAlignment.center,
+          // Center-align the column contents
           children: [
             const SizedBox(height: 20), // Space between elements
 
@@ -36,17 +38,26 @@ class EarnedPointsPage extends StatelessWidget {
             // Display the total points earned
             Text(
               '$points Points',
-              style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.green),
+              style: const TextStyle(fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green),
             ),
 
             const SizedBox(height: 20), // Space between elements
 
             // Progress bar to visualize the points earned towards the goal
-            LinearProgressIndicator(
-              value: progress, // Progress based on points earned / 1000
-              minHeight: 10, // Minimum height of the progress bar
-              backgroundColor: Colors.grey[300], // Background color of the progress bar
-              color: const Color(0xFF85C83E), // Progress color
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              // Rounded corners for the progress bar
+              child: LinearProgressIndicator(
+                value: progress,
+                // Progress based on points earned / 1000
+                minHeight: 10,
+                // Minimum height of the progress bar
+                backgroundColor: Colors.grey[300],
+                // Background color of the progress bar
+                color: const Color(0xFF85C83E), // Progress color
+              ),
             ),
 
             const SizedBox(height: 10), // Space between elements
@@ -66,13 +77,14 @@ class EarnedPointsPage extends StatelessWidget {
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
               const SizedBox(height: 20),
-            ] else ...[ // If the goal has been reached
-              const Text(
-                'Congratulations! You reached your goal!',
-                style: TextStyle(fontSize: 18, color: Colors.green),
-              ),
-              const SizedBox(height: 20),
-            ],
+            ] else
+              ...[ // If the goal has been reached
+                const Text(
+                  'Congratulations! You reached your goal!',
+                  style: TextStyle(fontSize: 18, color: Colors.green),
+                ),
+                const SizedBox(height: 20),
+              ],
 
             // Call to build the statistics section with streak information
             _buildStatsSection(streakDays),
@@ -86,7 +98,8 @@ class EarnedPointsPage extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.white, // Text color of the button
-                backgroundColor: const Color(0xFF5D6C8A), // Background color of the button
+                backgroundColor: const Color(
+                    0xFF5D6C8A), // Background color of the button
               ),
               child: const Text('Back to Home'), // Button text
             ),
@@ -99,34 +112,39 @@ class EarnedPointsPage extends StatelessWidget {
   // Function to build the statistics section including streaks
   Widget _buildStatsSection(int streakDays) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Align children to the start
+      crossAxisAlignment: CrossAxisAlignment.start,
+      // Align children to the start
       children: [
         const Text(
           'Statistics',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 10), // Space between elements
+        const SizedBox(height: 10),
+        // Space between elements
 
         // Displaying total challenges completed
         const Text(
           'Total Challenges Completed: 5',
           style: TextStyle(fontSize: 18),
         ),
-        const SizedBox(height: 5), // Space between elements
+        const SizedBox(height: 5),
+        // Space between elements
 
         // Displaying points earned today
         const Text(
           'Points Earned Today: 150',
           style: TextStyle(fontSize: 18),
         ),
-        const SizedBox(height: 5), // Space between elements
+        const SizedBox(height: 5),
+        // Space between elements
 
         // Displaying the best day for points earned
         const Text(
           'Best Day: 200 points',
           style: TextStyle(fontSize: 18),
         ),
-        const SizedBox(height: 20), // Space between elements
+        const SizedBox(height: 20),
+        // Space between elements
 
         // Display current streak information with dynamic color based on streakDays
         Text(
@@ -134,10 +152,12 @@ class EarnedPointsPage extends StatelessWidget {
           style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: streakDays > 0 ? Colors.orange : Colors.grey // Color changes based on the streak
+              color: streakDays > 0 ? Colors.orange : Colors
+                  .grey // Color changes based on the streak
           ),
         ),
-        const SizedBox(height: 5), // Space between elements
+        const SizedBox(height: 5),
+        // Space between elements
 
         // Message to encourage maintaining the streak
         const Text(

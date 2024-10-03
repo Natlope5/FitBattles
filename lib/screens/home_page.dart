@@ -179,11 +179,14 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: pointsEarned / pointsGoal, // Progress based on earned points
-            minHeight: 20,
-            backgroundColor: Colors.grey[300],
-            color: const Color(0xFF85C83E),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10), // Rounded corners for the progress bar
+            child: LinearProgressIndicator(
+              value: pointsEarned / pointsGoal, // Progress based on earned points
+              minHeight: 20,
+              backgroundColor: Colors.grey[300],
+              color: const Color(0xFF85C83E),
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -214,6 +217,20 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // Widget to build the challenges container
   Widget _buildChallengesContainer(BuildContext context) {
