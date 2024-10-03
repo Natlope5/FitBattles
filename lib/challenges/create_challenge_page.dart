@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'challenge.dart'; // Import the Challenge model
 
 // This widget represents the page for creating a new challenge.
 class CreateChallengePage extends StatefulWidget {
@@ -16,6 +19,10 @@ class CreateChallengePageState extends State<CreateChallengePage> {
   // Default type of challenge (e.g., Steps, Time, Distance)
   String _challengeType = 'Steps';
 
+  // Controllers for the date text fields
+  final TextEditingController _startDateController = TextEditingController();
+  final TextEditingController _endDateController = TextEditingController();
+
   // Variables to hold the start and end dates for the challenge
   DateTime? _startDate;
   DateTime? _endDate;
@@ -25,6 +32,15 @@ class CreateChallengePageState extends State<CreateChallengePage> {
 
   // Controller for the participant text field
   final TextEditingController _participantController = TextEditingController();
+
+  @override
+  void dispose() {
+    _challengeNameController.dispose();
+    _participantController.dispose();
+    _startDateController.dispose();
+    _endDateController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,11 +86,10 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                 children: [
                   Expanded(
                     child: TextField(
+                      controller: _startDateController,
                       readOnly: true, // Make the text field read-only
-                      decoration: InputDecoration(
-                        labelText: _startDate == null
-                            ? 'Start Date' // Placeholder if no date is selected
-                            : 'Start Date: ${_startDate!.toLocal()}'.split(' ')[0], // Display selected date
+                      decoration: const InputDecoration(
+                        labelText: 'Start Date',
                       ),
                       onTap: () async {
                         // Show date picker for start date
@@ -87,6 +102,8 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                         if (pickedDate != null) {
                           setState(() {
                             _startDate = pickedDate; // Update the start date
+                            _startDateController.text =
+                                DateFormat('yyyy-MM-dd').format(_startDate!);
                           });
                         }
                       },
@@ -95,23 +112,24 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: TextField(
+                      controller: _endDateController,
                       readOnly: true, // Make the text field read-only
-                      decoration: InputDecoration(
-                        labelText: _endDate == null
-                            ? 'End Date' // Placeholder if no date is selected
-                            : 'End Date: ${_endDate!.toLocal()}'.split(' ')[0], // Display selected date
+                      decoration: const InputDecoration(
+                        labelText: 'End Date',
                       ),
                       onTap: () async {
                         // Show date picker for end date
                         DateTime? pickedDate = await showDatePicker(
                           context: context,
-                          initialDate: _endDate ?? DateTime.now(),
+                          initialDate: _endDate ?? (_startDate ?? DateTime.now()),
                           firstDate: _startDate ?? DateTime.now(), // End date must be after start date
                           lastDate: DateTime(2100),
                         );
                         if (pickedDate != null) {
                           setState(() {
                             _endDate = pickedDate; // Update the end date
+                            _endDateController.text =
+                                DateFormat('yyyy-MM-dd').format(_endDate!); // Update the end date
                           });
                         }
                       },
@@ -171,25 +189,52 @@ class CreateChallengePageState extends State<CreateChallengePage> {
   }
 
   // Function to create the challenge
-  void _createChallenge() {
-    String challengeName = _challengeNameController.text; // Get the challenge name from the text field
+  void _createChallenge() async {
+    String challengeName = _challengeNameController.text.trim();
 
     // Validate that all required fields are filled
-    if (challengeName.isEmpty || _startDate == null || _endDate == null || _participants.isEmpty) {
+    if (challengeName.isEmpty ||
+        _startDate == null ||
+        _endDate == null ||
+        _participants.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all fields.')), // Show error message
       );
       return; // Exit if validation fails
     }
 
-    // Implement your logic to create the challenge
-    // For example: Save to a database and notify participants
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Challenge "$challengeName" created! Participants: ${_participants.join(', ')}')),
+    // Create a Challenge object
+    Challenge challenge = Challenge(
+      name: challengeName,
+      type: _challengeType,
+      startDate: _startDate!,
+      endDate: _endDate!,
+      participants: _participants,
     );
 
-    // Optionally, navigate back or clear fields
-    Navigator.pop(context); // Navigate back to the previous screen
+    try {
+      // Save the challenge to Firestore
+      await FirebaseFirestore.instance
+          .collection('challenges')
+          .add(challenge.toMap());
+
+      // Check if the widget is still mounted before using context
+      if (!mounted) return;
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Challenge "${challenge.name}" created!')),
+      );
+
+      // Navigate back to the previous screen
+      Navigator.pop(context);
+    } catch (e) {
+      // Check if the widget is still mounted before using context
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error creating challenge: $e')),
+      );
+    }
   }
 }
