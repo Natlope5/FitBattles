@@ -12,10 +12,17 @@ class LocationTracker {
     await _determinePosition(); // Determines the initial position
 
     // Listen to the position stream for updates
-    Geolocator.getPositionStream().listen((Position position) {
+    Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 10, // Optional: Minimum distance (in meters) before updates are triggered
+      ),
+    ).listen((Position position) {
       if (previousPosition != null) {
         double distance = calculateDistance(previousPosition!, position); // Calculate distance
-        onDistanceUpdate(distance); // Update distance
+        if (distance > 1.0) { // Optional: only update if the distance is significant (e.g., greater than 1 meter)
+          onDistanceUpdate(distance); // Update distance
+        }
       }
       previousPosition = position; // Update the previous position
     });
@@ -30,7 +37,7 @@ class LocationTracker {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       logger.e('Location services are disabled.'); // Log error if services are disabled
-      return Future.error('Location services are disabled.');
+      throw Exception('Location services are disabled.'); // Use exception for better error handling
     }
 
     // Check current location permission status
@@ -39,18 +46,22 @@ class LocationTracker {
       permission = await Geolocator.requestPermission(); // Request permission
       if (permission == LocationPermission.denied) {
         logger.e('Location permissions are denied'); // Log error if permission denied
-        return Future.error('Location permissions are denied');
+        throw Exception('Location permissions are denied');
       }
     }
 
     // Handle permanently denied permissions
     if (permission == LocationPermission.deniedForever) {
       logger.e('Location permissions are permanently denied, we cannot request permissions.'); // Log error
-      return Future.error('Location permissions are permanently denied, we cannot request permissions.');
+      throw Exception('Location permissions are permanently denied, we cannot request permissions.');
     }
 
     // Get the initial position if permissions are granted
-    previousPosition = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    previousPosition = await Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+      ),
+    );
   }
 
   // Calculates the distance between two positions using the Haversine formula

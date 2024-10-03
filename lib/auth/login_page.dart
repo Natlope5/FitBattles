@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart'; // Importing Flutter material package for UI components
+import 'package:flutter/material.dart'; // Importing Flutter material package
 import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
 import 'package:logger/logger.dart'; // Importing Logger for error logging
 import 'package:fitbattles/screens/home_page.dart'; // Importing the home page to navigate after login
 import 'package:fitbattles/auth/signup_page.dart'; // Import your SignUp page here
+import 'package:fitbattles/auth/session_manager.dart'; // Import your SessionManager
 
 // Login page widget
 class LoginPage extends StatefulWidget {
@@ -19,6 +20,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController(); // Controller for password input
   final Logger logger = Logger(); // Logger instance for logging errors
   String? errorMessage; // Variable to hold error messages
+  final SessionManager _sessionManager = SessionManager(); // Instance of SessionManager
 
   // Method to authenticate user
   Future<void> authenticateUser(String email, String password) async {
@@ -38,6 +40,9 @@ class _LoginPageState extends State<LoginPage> {
       // Retrieve user ID and email upon successful authentication
       String uid = userCredential.user!.uid; // User ID
       String userEmail = userCredential.user!.email!; // User email
+
+      // Store the user email in shared preferences using SessionManager
+      await _sessionManager.saveUserEmail(userEmail); // Call to SessionManager to handle session
 
       // Clear error message and navigate to home page
       errorMessage = null;
@@ -169,4 +174,3 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 }
-

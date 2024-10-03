@@ -45,22 +45,22 @@ class AuthService {
   Future<void> _saveUserSession(User? user) async {
     if (user != null) { // Only save if user is not null
       SharedPreferences prefs = await SharedPreferences.getInstance(); // Get SharedPreferences instance
-      await prefs.setString('userEmail', user.email ?? ''); // Save user's email
-      await prefs.setString('userId', user.uid); // Save user's unique ID
+      await prefs.setString('user_email', user.email ?? ''); // Save user's email
+      await prefs.setString('user_id', user.uid); // Save user's unique ID
     }
   }
 
   // Clear session from SharedPreferences
   Future<void> _clearUserSession() async {
     SharedPreferences prefs = await SharedPreferences.getInstance(); // Get SharedPreferences instance
-    await prefs.remove('userEmail'); // Remove user's email
-    await prefs.remove('userId'); // Remove user's unique ID
+    await prefs.remove('user_email'); // Remove user's email
+    await prefs.remove('user_id'); // Remove user's unique ID
   }
 
   // Check if user is logged in
   Future<bool> isUserLoggedIn() async {
     SharedPreferences prefs = await SharedPreferences.getInstance(); // Get SharedPreferences instance
-    String? userId = prefs.getString('userId'); // Retrieve user's ID
+    String? userId = prefs.getString('user_id'); // Retrieve user's ID
     return userId != null; // Return true if user ID exists, indicating the user is logged in
   }
 

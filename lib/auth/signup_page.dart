@@ -2,7 +2,7 @@ import 'package:flutter/material.dart'; // Importing Flutter material package fo
 import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
 import 'package:logger/logger.dart'; // Importing logger for logging purposes
 import 'package:fitbattles/screens/home_page.dart'; // Importing HomePage for navigation after successful signup
-
+import 'package:shared_preferences/shared_preferences.dart'; // Importing SharedPreferences package for managing sessions
 
 // Stateful widget for the Signup page
 class SignupPage extends StatefulWidget {
@@ -37,10 +37,11 @@ class _SignupPageState extends State<SignupPage> {
         password: password,
       );
 
+      // Save user email after successful signup
+      await _saveUserEmail(userCredential.user!.email!);
+
       // Show success message upon successful signup
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Successfully registered as ${userCredential.user!.email}')),
-      );
+      _showSuccessMessage(userCredential.user!.email!);
 
       // Navigate to HomePage after successful signup
       _navigateToHomePage(userCredential.user!.uid, userCredential.user!.email!);
@@ -55,6 +56,19 @@ class _SignupPageState extends State<SignupPage> {
         _isLoading = false; // Reset loading state
       });
     }
+  }
+
+  // Method to save user email in SharedPreferences
+  Future<void> _saveUserEmail(String email) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_email', email); // Store user email
+  }
+
+  // Method to show success message
+  void _showSuccessMessage(String email) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Successfully registered as $email')),
+    );
   }
 
   // Method to navigate to the home page

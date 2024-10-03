@@ -16,4 +16,5 @@
     <color name="color_name">#85C83E</color>
     <!-- Additional Colors -->
     <color name="fitbattles_color">#5D6C8A</color>
+    <color name="darkMode">#000000</color>
 </resources>
