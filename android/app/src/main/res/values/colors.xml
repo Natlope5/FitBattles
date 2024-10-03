@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Colors -->
+    <color name="app_bar_color">#5D6C8A</color>
+    <color name="login_background_color">#5D6C8A</color>
+    <color name="app_background_color">#5D6C8A</color>
+    <color name="button_background_color">#85C83E</color>
+    <color name="button_text_color">#000000</color> <!-- Black -->
+    <color name="input_field_background_color">#FFFFFF</color> <!-- White -->
+    <color name="error_dialog_border_color">#E62D2D</color>
+    <color name="error_dialog_background_color">#EFEFEF</color>
+    <color name="storage_bucket_color">#FFFFFF</color>
+    <color name="colorPrimary">#5D6C8A</color>
+    <color name="colorAccent">#85C83E</color>
+    <color name="your_color_name">#5D6C8A</color>
+    <color name="color_name">#85C83E</color>
+    <!-- Additional Colors -->
+    <color name="fitbattles_color">#5D6C8A</color>
+</resources>

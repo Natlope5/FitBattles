@@ -1,59 +1,73 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
-    id 'com.google.gms.google-services'
-    id 'com.google.firebase.crashlytics'
+    id "dev.flutter.flutter-gradle-plugin" // Flutter plugin
+    id 'com.google.gms.google-services'    // Google services plugin
 }
 
 android {
-    namespace = "com.example.fitbattles"
-    compileSdk = flutter.compileSdkVersion
+    namespace = "com.example.fitbattles"    // Ensure this matches your actual package name
+    compileSdk = 34
+    // Use the correct SDK version (33 is common for modern Flutter projects)
     ndkVersion '23.1.7779620'
+    // Ensure this matches your NDK version or is needed for native code
 
     lintOptions {
-        // Set the warning level for deprecation
-        warningsAsErrors true
+        warningsAsErrors true               // Treat warnings as errors
+        abortOnError false                  // Continue build even if there are lint errors
+        lintConfig file("lint.xml")          // Specify lint configuration file if available
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-
+        sourceCompatibility = JavaVersion.VERSION_17   // Set source compatibility to Java 17
+        targetCompatibility = JavaVersion.VERSION_17   // Set target compatibility to Java 17
     }
 
     kotlinOptions {
-        jvmTarget = "17" // Updated to JVM target 17
+        jvmTarget = "17"
+        // Use JVM target 17 for Kotlin compatibility
     }
 
     defaultConfig {
-        applicationId = "com.example.fitbattles"
+        applicationId = "com.example.fitbattles"         // Application ID
         minSdkVersion 26
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+
+        targetSdk = 34
+
+        versionCode = 1                                  // Use correct versionCode for versioning
+        versionName = "1.0.0"                            // Use correct versionName
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            // Enables code shrinking, obfuscation, and optimization for release builds
+            minifyEnabled true
+            // Enables resource shrinking, which removes unused resources
+            shrinkResources true
+            // Proguard rules file for code shrinking
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:deprecation"
+    }
 }
+    flutter {
+        source = "../.."                                      // Flutter project source path
+    }
 
-flutter {
-    source = "../.."
-}
-
-dependencies {
-    // Import the Firebase BoM
-    implementation platform('com.google.firebase:firebase-bom:33.3.0')
-    implementation 'com.google.firebase:firebase-auth'
-    implementation 'com.google.firebase:firebase-database'
-    implementation 'com.google.firebase:firebase-analytics'
-    implementation 'com.google.firebase:firebase-firestore'
-    implementation 'com.google.firebase:firebase-storage'
-    implementation 'com.google.firebase:firebase-messaging'
-    implementation 'com.google.firebase:firebase-crashlytics'
-    implementation 'com.google.firebase:firebase-dynamic-links'
-}
+    dependencies {
+        // Import the Firebase BoM (Bill of Materials)
+        implementation platform('com.google.firebase:firebase-bom:33.3.0')
+        // Firebase dependencies using BoM
+        implementation 'com.google.firebase:firebase-auth'        // Firebase Authentication
+        implementation 'com.google.firebase:firebase-database'    // Firebase Realtime Database
+        implementation 'com.google.firebase:firebase-analytics'   // Firebase Analytics
+        implementation 'com.google.firebase:firebase-firestore'   // Cloud Firestore
+        implementation 'com.google.firebase:firebase-storage'     // Firebase Storage
+        implementation 'com.google.firebase:firebase-messaging'   // Firebase Cloud Messaging
+        implementation 'com.google.firebase:firebase-dynamic-links' // Firebase Dynamic Links
+        implementation 'androidx.appcompat:appcompat:1.4.0'
+        // Other dependencies
+        // Add any other dependencies like Google Play services, HTTP, etc.
+    }

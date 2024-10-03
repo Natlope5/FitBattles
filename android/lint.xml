@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- Ignore warnings for SDK XML versions higher than understood -->
+    <issue id="InvalidPackage" severity="ignore" />
+
+    <!-- Suppress lint warnings for deprecated APIs -->
+    <issue id="Deprecated" severity="ignore" />
+
+    <!-- Suppress the lint check for SDK XML versions (up to version 4) -->
+    <issue id="SdkXml" severity="ignore" />
+
+    <!-- Other potential warnings or issues you want to ignore can be added here -->
+</lint>
