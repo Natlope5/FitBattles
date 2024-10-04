@@ -1,98 +1,142 @@
 import 'package:flutter/material.dart';
 
-class WorkoutTrackingPage extends StatelessWidget
-{
+class WorkoutTrackingPage extends StatefulWidget {
   const WorkoutTrackingPage({super.key});
 
   @override
-  Widget build(BuildContext context)
-  {
+  _WorkoutTrackingPageState createState() => _WorkoutTrackingPageState();
+}
+
+class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
+  final _formKey = GlobalKey<FormState>(); // Form key to validate input
+
+  String workoutType = 'Strength'; // Default workout type
+  int sets = 0; // Number of sets
+  int reps = 0; // Number of reps
+  String workoutNotes = ''; // Notes or comments about the workout
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workout Tracking'),
-        backgroundColor: const Color(0xFF5D6C8A), // Same color as your theme
+        title: const Text('Log Workout Details'),
+        backgroundColor: const Color(0xFF5D6C8A),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Workout type and description
-            const Text(
-              'Strength Workout',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Workout focusing on building strength through various exercises.',
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 20),
-
-            // Timer display
-            const Center(
-              child: Column(
-                children: [
-                  Text(
-                    '00:00:00',
-                    style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    'Duration',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
+        child: Form(
+          key: _formKey, // Assign the form key
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Dropdown to select workout type
+              DropdownButtonFormField<String>(
+                value: workoutType,
+                onChanged: (String? newValue) {
+                  setState(() {
+                    workoutType = newValue!;
+                  });
+                },
+                decoration: const InputDecoration(labelText: 'Workout Type'),
+                items: <String>['Strength', 'Cardio', 'Flexibility', 'Endurance']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
               ),
-            ),
-            const SizedBox(height: 30),
+              const SizedBox(height: 16),
 
-            // Start, Pause, Stop buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton(
-                  onPressed: () {
-                    // Implement start logic
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF85C83E),
-                  ),
-                  child: const Text('Start'),
+              // Input field for sets
+              TextFormField(
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Number of Sets',
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Implement pause logic
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber,
-                  ),
-                  child: const Text('Pause'),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    // Implement stop logic
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                  ),
-                  child: const Text('Stop'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
+                onChanged: (value) {
+                  setState(() {
+                    sets = int.tryParse(value) ?? 0;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the number of sets';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
 
-            // Progress details, e.g., sets, reps
-            const Text(
-              'Sets: 3/5',
-              style: TextStyle(fontSize: 20),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Reps: 10/12',
-              style: TextStyle(fontSize: 20),
-            ),
-          ],
+              // Input field for reps
+              TextFormField(
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Number of Reps',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    reps = int.tryParse(value) ?? 0;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the number of reps';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+              // Input field for workout notes
+              TextFormField(
+                maxLines: 3,
+                decoration: const InputDecoration(
+                  labelText: 'Workout Notes',
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    workoutNotes = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // Submit button
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      // Form is valid, process the input data
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Workout Logged Successfully')),
+                      );
+                      // You can now save the data to Firebase or process it further
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF85C83E), // Same button style
+                  ),
+                  child: const Text('Log Workout'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
