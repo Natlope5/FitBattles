@@ -1,76 +1,110 @@
-import 'package:firebase_messaging/firebase_messaging.dart'; // Importing Firebase Messaging for push notifications
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Importing Flutter Local Notifications for local notifications
-import 'package:logger/logger.dart'; // Importing logger for logging messages
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:logger/logger.dart';
 
-class GoalNotifications {
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance; // Instance of FirebaseMessaging for handling FCM
-  final FlutterLocalNotificationsPlugin _localNotificationsPlugin = FlutterLocalNotificationsPlugin(); // Instance for local notifications
-  final Logger logger = Logger(); // Logger instance for debugging
+class NotificationsHandler {
+  final FirebaseMessaging firebaseMessaging;
+  final FlutterLocalNotificationsPlugin localNotificationsPlugin;
+  final Logger loggerInstance;
 
-  GoalNotifications() {
-    _initializeNotifications(); // Initialize notifications when an instance is created
-  }
+  NotificationsHandler({
+    required this.firebaseMessaging,
+    required this.localNotificationsPlugin,
+    required this.loggerInstance,
+  });
 
   Future<void> init() async {
-    await _initializeNotifications(); // Ensure notifications are initialized
+    await _initializeNotifications();
+    _setupNotificationListeners();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   }
 
-  Future<void> _initializeNotifications() async {
-    // Initialize local notifications with Android settings
-    const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
+  Future<void> showNotification(RemoteNotification notification) async {
+    try {
+      const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'general_notifications_channel',
+        'General Notifications',
+        channelDescription: 'General notifications for the app',
+        importance: Importance.max,
+        priority: Priority.high,
+        showWhen: false,
+        sound: RawResourceAndroidNotificationSound('your_sound_file'), // Ensure this sound file exists
+      );
 
-    const InitializationSettings initializationSettings =
-    InitializationSettings(android: initializationSettingsAndroid);
+      const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
 
-    await _localNotificationsPlugin.initialize(initializationSettings); // Initialize local notifications
+      await localNotificationsPlugin.show(
+        notification.hashCode,
+        notification.title,
+        notification.body,
+        platformChannelSpecifics,
+        payload: 'general_notification',
+      );
 
-    // Request permission for iOS notifications
-    await _firebaseMessaging.requestPermission();
+      loggerInstance.i('Notification displayed: ${notification.title}');
+    } catch (e) {
+      loggerInstance.e('Error showing notification: $e');
+    }
+  }
 
-    // Handle background messages
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  void _setupNotificationListeners() {
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      loggerInstance.d('Notification tapped: ${message.data}');
+      String? payload = message.data['payload'];
+      if (payload != null) {
+        handleNotificationAction(payload);
+      }
+    });
 
-    // Listen to foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
-        _showNotification(message.notification!); // Show notification when message is received
+        showNotification(message.notification!);
       }
     });
   }
 
-  // Function to show local notification
-  Future<void> _showNotification(RemoteNotification notification) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'goal_completion_channel', // Channel ID
-      'Goal Completion Notifications', // Channel name
-      channelDescription: 'Notifications when a goal is completed', // Channel description
-      importance: Importance.max, // Maximum importance
-      priority: Priority.high, // High priority
-      showWhen: false, // Do not show time of notification
-    );
-
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
-
-    await _localNotificationsPlugin.show(
-      notification.hashCode, // Unique ID for the notification
-      notification.title, // Notification title
-      notification.body, // Notification body
-      platformChannelSpecifics, // Notification details
-      payload: 'goal_completed', // Optional payload for handling selection
-    );
-  }
-
-  // Callback for when the notification is selected
-  Future<void> onSelectNotification(String? payload) async {
-    if (payload != null) {
-      logger.d('Notification payload: $payload'); // Log the payload for debugging
-      // Handle navigation or any action based on the notification selection
+  void handleNotificationAction(String payload) {
+    if (payload == 'goal_completed') {
+      loggerInstance.d('Navigating to goal completion details.');
+      // Implement navigation logic
     }
   }
 
-  // Static method for handling background messages
-  static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    await GoalNotifications()._showNotification(message.notification!); // Show notification when a background message is received
+  static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    // Initialize dependencies for background handler
+    final localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    final loggerInstance = Logger();
+    final notificationsHandler = NotificationsHandler(
+      firebaseMessaging: FirebaseMessaging.instance,
+      localNotificationsPlugin: localNotificationsPlugin,
+      loggerInstance: loggerInstance,
+    );
+
+    try {
+      if (message.notification != null) {
+        await notificationsHandler.showNotification(message.notification!);
+      }
+      loggerInstance.i('Background message handled: ${message.notification?.title}');
+    } catch (e) {
+      loggerInstance.e('Error handling background message: $e');
+    }
+  }
+
+  Future<void> _initializeNotifications() async {
+    try {
+      const AndroidInitializationSettings initializationSettingsAndroid =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
+
+      const InitializationSettings initializationSettings =
+      InitializationSettings(android: initializationSettingsAndroid);
+
+      await localNotificationsPlugin.initialize(initializationSettings);
+      await firebaseMessaging.requestPermission();
+
+      loggerInstance.i('Notifications initialized successfully.');
+    } catch (e) {
+      loggerInstance.e('Failed to initialize notifications: $e');
+    }
   }
 }
+

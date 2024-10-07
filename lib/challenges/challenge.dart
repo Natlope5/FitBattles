@@ -40,4 +40,17 @@ class Challenge {
       participants: List<String>.from(data['participants'] ?? []),
     );
   }
+
+  // Add a participant to the challenge
+  void addParticipant(String participantId) {
+    if (!participants.contains(participantId)) {
+      participants.add(participantId);
+    }
+  }
+
+  // Check if the challenge is active
+  bool isActive() {
+    final now = DateTime.now();
+    return now.isAfter(startDate) && now.isBefore(endDate);
+  }
 }

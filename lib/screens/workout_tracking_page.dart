@@ -1,12 +1,52 @@
 import 'package:flutter/material.dart';
+import 'dart:async'; // Import for Timer functionality
 
-class WorkoutTrackingPage extends StatelessWidget
-{
+class WorkoutTrackingPage extends StatefulWidget {
   const WorkoutTrackingPage({super.key});
 
   @override
-  Widget build(BuildContext context)
-  {
+  WorkoutTrackingPageState createState() => WorkoutTrackingPageState();
+}
+
+class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
+  Timer? _timer;
+  Duration _duration = Duration.zero;
+  bool _isTracking = false;
+
+  void _startTimer() {
+    if (_isTracking) return; // Prevent multiple timers
+
+    _isTracking = true;
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _duration += const Duration(seconds: 1);
+      });
+    });
+  }
+
+  void _pauseTimer() {
+    _timer?.cancel();
+    _isTracking = false;
+  }
+
+  void _stopTimer() {
+    _timer?.cancel();
+    setState(() {
+      _isTracking = false;
+      _duration = Duration.zero; // Reset duration
+    });
+  }
+
+  String get _formattedDuration {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final hours = twoDigits(_duration.inHours);
+    final minutes = twoDigits(_duration.inMinutes.remainder(60));
+    final seconds = twoDigits(_duration.inSeconds.remainder(60));
+    return "$hours:$minutes:$seconds";
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workout Tracking'),
@@ -30,15 +70,15 @@ class WorkoutTrackingPage extends StatelessWidget
             const SizedBox(height: 20),
 
             // Timer display
-            const Center(
+            Center(
               child: Column(
                 children: [
                   Text(
-                    '00:00:00',
-                    style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                    _formattedDuration,
+                    style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
                   ),
-                  SizedBox(height: 10),
-                  Text(
+                  const SizedBox(height: 10),
+                  const Text(
                     'Duration',
                     style: TextStyle(fontSize: 16, color: Colors.grey),
                   ),
@@ -52,27 +92,21 @@ class WorkoutTrackingPage extends StatelessWidget
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton(
-                  onPressed: () {
-                    // Implement start logic
-                  },
+                  onPressed: _startTimer,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF85C83E),
                   ),
                   child: const Text('Start'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Implement pause logic
-                  },
+                  onPressed: _pauseTimer,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.amber,
                   ),
                   child: const Text('Pause'),
                 ),
                 ElevatedButton(
-                  onPressed: () {
-                    // Implement stop logic
-                  },
+                  onPressed: _stopTimer,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.redAccent,
                   ),
@@ -96,5 +130,11 @@ class WorkoutTrackingPage extends StatelessWidget
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel timer when the widget is disposed
+    super.dispose();
   }
 }

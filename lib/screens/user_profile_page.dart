@@ -2,18 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserProfilePage extends StatefulWidget {
-  final String userId;
+  final String id;
 
+  const UserProfilePage({super.key, required this.id});
 
-  const UserProfilePage({super.key, required this.userId});
   @override
   UserProfilePageState createState() => UserProfilePageState();
 }
 
 class UserProfilePageState extends State<UserProfilePage> {
-  late String name;
-  late String imageUrl;
-  late String privacySetting;
+  late String name = 'Loading...'; // Default loading text
+  late String imageUrl = ''; // Default value
+  late String privacySetting = 'Loading...'; // Default loading text
+  bool isLoading = true; // State to manage loading status
 
   @override
   void initState() {
@@ -23,13 +24,19 @@ class UserProfilePageState extends State<UserProfilePage> {
 
   Future<void> _fetchUserProfile() async {
     try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(widget.id)
+          .get();
       if (userDoc.exists) {
         setState(() {
           name = userDoc['name'] ?? 'No Name'; // Default value if name not found
           imageUrl = userDoc['image'] ?? ''; // Default value if image not found
           privacySetting = userDoc['privacy'] ?? 'public'; // Default privacy setting
+          isLoading = false; // Stop loading
         });
+      } else {
+        _showErrorDialog('User profile not found.');
       }
     } catch (e) {
       _showErrorDialog('Failed to fetch user profile: $e');
@@ -64,7 +71,9 @@ class UserProfilePageState extends State<UserProfilePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator()) // Show loading indicator
+            : Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (imageUrl.isNotEmpty) ...[
@@ -81,7 +90,7 @@ class UserProfilePageState extends State<UserProfilePage> {
             ElevatedButton(
               onPressed: () {
                 // Navigate to privacy settings or any other page if needed
-                Navigator.pushNamed(context, '/privacySettings', arguments: widget.userId);
+                Navigator.pushNamed(context, '/privacySettings', arguments: widget.id);
               },
               child: const Text('Edit Privacy Settings'),
             ),

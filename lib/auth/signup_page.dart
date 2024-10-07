@@ -75,7 +75,7 @@ class _SignupPageState extends State<SignupPage> {
   void _navigateToHomePage(String uid, String email) {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage(uid: uid, email: email)), // Navigate to HomePage with user data
+      MaterialPageRoute(builder: (context) => HomePage(uid: uid, email: email, id: '',)), // Navigate to HomePage with user data
     );
   }
 

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart'; // Importing Flutter material package
 import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
 import 'package:logger/logger.dart'; // Importing Logger for error logging
 import 'package:fitbattles/screens/home_page.dart'; // Importing the home page to navigate after login
-import 'package:fitbattles/auth/signup_page.dart'; // Import your SignUp page here
 import 'package:fitbattles/auth/session_manager.dart'; // Import your SessionManager
+import 'package:fitbattles/auth/signup_page.dart'; // Adjust the import path based on your project structure
 
 // Login page widget
 class LoginPage extends StatefulWidget {
@@ -25,8 +25,9 @@ class _LoginPageState extends State<LoginPage> {
   // Method to authenticate user
   Future<void> authenticateUser(String email, String password) async {
     if (email.isEmpty || password.isEmpty) {
-      errorMessage = 'Email and password cannot be empty.'; // Set error message for empty fields
-      setState(() {}); // Trigger UI update
+      setState(() {
+        errorMessage = 'Email and password cannot be empty.'; // Set error message for empty fields
+      });
       return;
     }
 
@@ -49,21 +50,23 @@ class _LoginPageState extends State<LoginPage> {
       _navigateToHomePage(uid, userEmail);
     } on FirebaseAuthException catch (e) {
       logger.e("Error code: ${e.code}, Message: ${e.message}"); // Log Firebase error
-      errorMessage = _getErrorMessage(e); // Set error message
-      setState(() {}); // Trigger UI update
+      setState(() {
+        errorMessage = _getErrorMessage(e); // Set error message
+      });
     } catch (e) {
       logger.e("Unexpected error: $e"); // Log unexpected errors
-      errorMessage = 'An unexpected error occurred: $e'; // Set generic error message
-      setState(() {}); // Trigger UI update
+      setState(() {
+        errorMessage = 'An unexpected error occurred: $e'; // Set generic error message
+      });
     }
   }
 
   // Method to navigate to the home page
-  void _navigateToHomePage(String uid, String email) {
+  void _navigateToHomePage(String id, String email) {
     if (!mounted) return; // Ensure widget is still mounted
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage(uid: uid, email: email)), // Navigate to home page with user data
+      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, uid: '',)), // Navigate to home page with user data
     );
   }
 
@@ -76,6 +79,34 @@ class _LoginPageState extends State<LoginPage> {
         return 'Wrong password provided for that user.'; // Error for wrong password
       default:
         return 'An error occurred. Please try again.'; // Default error message
+    }
+  }
+
+  // Method to handle password reset
+  Future<void> _resetPassword(String email) async {
+    if (email.isEmpty) {
+      setState(() {
+        errorMessage = 'You must enter an email address to receive the reset link.'; // Update error message for empty email
+      });
+      return; // Exit the method early
+    }
+
+    try {
+      // Send a password reset email
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      setState(() {
+        errorMessage = 'Password reset email sent! Please check your inbox.'; // Inform user about the email sent
+      });
+    } on FirebaseAuthException catch (e) {
+      logger.e("Error code: ${e.code}, Message: ${e.message}"); // Log Firebase error
+      setState(() {
+        errorMessage = _getErrorMessage(e); // Set error message
+      });
+    } catch (e) {
+      logger.e("Unexpected error: $e"); // Log unexpected errors
+      setState(() {
+        errorMessage = 'An unexpected error occurred: $e'; // Set generic error message
+      });
     }
   }
 
@@ -155,16 +186,27 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 20),
                 TextButton(
                   onPressed: () {
-                    // Navigate to signup page without using context
+                    // Call _resetPassword when clicked
+                    _resetPassword(_emailController.text);
+                  },
+                  child: const Text(
+                    'Forgot Password?',
+                    style: TextStyle(color: Colors.black), // Make text black
+                  ), // Forgot password prompt text
+                ),
+                const SizedBox(height: 20),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to the Signup page
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const SignupPage()),
+                      MaterialPageRoute(builder: (context) => const SignupPage()), // Ensure to use SignupPage
                     );
                   },
                   child: const Text(
-                    'Don\'t have an account? Sign Up',
-                    style: TextStyle(color: Colors.black), // Text style for signup link
-                  ),
+                    'Don’t have an account? Sign up here.',
+                    style: TextStyle(color: Colors.black), // Make text black
+                  ), // Sign up prompt text
                 ),
               ],
             ),

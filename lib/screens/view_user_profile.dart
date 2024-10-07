@@ -8,9 +8,17 @@ class ViewUserProfile extends StatelessWidget {
   const ViewUserProfile({super.key, required this.currentUid, required this.targetUid});
 
   Future<Map<String, dynamic>> getUserData() async {
+    // Fetch the user's document from Firestore
     var userDoc = await FirebaseFirestore.instance.collection('users').doc(targetUid).get();
+
+    // Check if the user document exists
+    if (!userDoc.exists) {
+      throw Exception('User does not exist.');
+    }
+
     String privacy = userDoc['privacy'] ?? 'public';
 
+    // Handle privacy settings
     if (privacy == 'public') {
       return userDoc.data() as Map<String, dynamic>; // Show public data
     } else if (privacy == 'friends') {
@@ -52,10 +60,30 @@ class ViewUserProfile extends StatelessWidget {
           var userData = snapshot.data!;
           return Scaffold(
             appBar: AppBar(
-              title: Text('${userData['name']}\'s Profile'),
+              title: Text('${userData['name'] ?? 'User'}\'s Profile'), // Use user name or fallback
             ),
-            body: Center(
-              child: Text('Email: ${userData['email']}'),
+            body: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Display user image if available
+                  if (userData['image'] != null && userData['image'] != '')
+                    CircleAvatar(
+                      radius: 50,
+                      backgroundImage: NetworkImage(userData['image']),
+                    ),
+                  const SizedBox(height: 10),
+                  // Display user name
+                  Text('Name: ${userData['name'] ?? 'No Name'}', style: const TextStyle(fontSize: 20)),
+                  const SizedBox(height: 10),
+                  // Display user email
+                  Text('Email: ${userData['email'] ?? 'No Email'}', style: const TextStyle(fontSize: 16)),
+                  const SizedBox(height: 10),
+                  // Display privacy setting
+                  Text('Privacy Setting: ${userData['privacy'] ?? 'public'}', style: const TextStyle(fontSize: 16)),
+                ],
+              ),
             ),
           );
         } else {
