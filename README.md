@@ -54,7 +54,7 @@ To set up the development environment:
    Ensure you have the right permissions to access and contribute to the GitHub repository. Follow the branching strategy (feature branches, pull requests, etc.) for smooth collaboration.
 
 ## **License**
-This project is licensed under the MIT License - see the [LICENSE](https://opensource.org/licenses/MIT) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](https://www.gnu.org/licenses/gpl-3.0.en.html) file for details.
 
 ## **Contributors**
 - **Frontend Developer**: [Matthew Tome](https://github.com/MatthewTome)
