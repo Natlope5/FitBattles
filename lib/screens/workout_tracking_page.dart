@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class WorkoutTrackingPage extends StatefulWidget {
   const WorkoutTrackingPage({super.key});
@@ -8,137 +9,141 @@ class WorkoutTrackingPage extends StatefulWidget {
 }
 
 class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
-  final _formKey = GlobalKey<FormState>(); // Form key to validate input
-
-  String workoutType = 'Strength'; // Default workout type
-  int sets = 0; // Number of sets
-  int reps = 0; // Number of reps
-  String workoutNotes = ''; // Notes or comments about the workout
+  bool isWorkingOut = false;
+  Duration workoutDuration = Duration.zero;
+  final TextEditingController _calorieController = TextEditingController(); // Controller for calorie input
+  final _formKey = GlobalKey<FormState>(); // Key for form validation
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Log Workout Details'),
+        title: const Text('Workout Tracker'),
         backgroundColor: const Color(0xFF5D6C8A),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey, // Assign the form key
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Dropdown to select workout type
-              DropdownButtonFormField<String>(
-                value: workoutType,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    workoutType = newValue!;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Workout Type'),
-                items: <String>['Strength', 'Cardio', 'Flexibility', 'Endurance']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 16),
-
-              // Input field for sets
-              TextFormField(
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Number of Sets',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    sets = int.tryParse(value) ?? 0;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the number of sets';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Input field for reps
-              TextFormField(
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Number of Reps',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    reps = int.tryParse(value) ?? 0;
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter the number of reps';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-              // Input field for workout notes
-              TextFormField(
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Workout Notes',
-                ),
-                onChanged: (value) {
-                  setState(() {
-                    workoutNotes = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // Submit button
-              Center(
-                child: ElevatedButton(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            const Text(
+              'Workout Type: Strength',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            // Timer Display
+            Text(
+              _formatDuration(workoutDuration),
+              style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            // Workout Controls
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
                   onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // Form is valid, process the input data
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Workout Logged Successfully')),
-                      );
-                      // You can now save the data to Firebase or process it further
-                    }
+                    setState(() {
+                      isWorkingOut = !isWorkingOut;
+                    });
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF85C83E), // Same button style
+                    backgroundColor: Colors.green,
                   ),
-                  child: const Text('Log Workout'),
+                  child: Text(isWorkingOut ? 'Pause' : 'Start'),
                 ),
+                ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      workoutDuration = Duration.zero;
+                      isWorkingOut = false;
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                  ),
+                  child: const Text('Stop'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
+
+            // Calorie Input Section
+            Form(
+              key: _formKey, // Assign form key
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  const Text(
+                    'Enter Calories Burned:',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _calorieController,
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: 'Calories',
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: <TextInputFormatter>[
+                      FilteringTextInputFormatter.digitsOnly, // Restrict input to digits
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter a calorie value';
+                      }
+                      if (int.tryParse(value) == null) {
+                        return 'Please enter a valid number';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Submit Button
+                  ElevatedButton(
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        // Process calorie input
+                        final int calories = int.parse(_calorieController.text);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Calories logged: $calories')),
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
+                    child: const Text('Log Calories'),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Calories Burned (Placeholder)
+            const Text(
+              'Calories Burned: 100',
+              style: TextStyle(fontSize: 20),
+            ),
+            const SizedBox(height: 20),
+            // Workout Intensity (Placeholder)
+            const Text(
+              'Intensity: Moderate',
+              style: TextStyle(fontSize: 20),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return '$minutes:$seconds';
   }
 }
