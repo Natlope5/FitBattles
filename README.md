@@ -58,7 +58,7 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 
 ## **Contributors**
 - **Frontend Developer**: [Matthew Tome](https://github.com/MatthewTome)
-- **Frontend Developer**: [Lizbett Perez]()
+- **Frontend Developer**: [Lizbett Perez](https://github.com/lizbettperez)
 - **Backend Developer**: [Natalie Lopez](https://github.com/Natlope5)
 - **Backend Developer**: [Cameron Speake](https://github.com/CameronSpeake)
 
