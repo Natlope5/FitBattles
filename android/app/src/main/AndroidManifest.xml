@@ -1,6 +1,6 @@
 <!--suppress AndroidDomInspection, AndroidDomInspection -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.fitbattles"> <!-- Ensure your package name matches your project -->
+    package="com.example.fitbattles">
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -28,15 +28,20 @@
 
         <!-- Handle notifications -->
         <receiver
-            android:name="com.dexterous.flutterlocalnotifications.receivers.ActionBroadcastReceiver" />
+            android:name="com.dexterous.flutterlocalnotifications.receivers.ActionBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false" />
 
         <receiver
-            android:name="com.dexterous.flutterlocalnotifications.receivers.NotificationBroadcastReceiver" />
+            android:name="com.dexterous.flutterlocalnotifications.receivers.NotificationBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false"/>
 
         <!-- Receive notification on boot -->
         <receiver
-
-            android:name="">
+            android:name="com.dexterous.flutterlocalnotifications.receivers.BootBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />

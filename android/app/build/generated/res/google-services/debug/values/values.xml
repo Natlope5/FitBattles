@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gcm_defaultSenderId" translatable="false">1071034831504</string>
+    <string name="google_api_key" translatable="false">AIzaSyAULmcdDR7NI3bLtJAlEvvMbR7vOo1_YLk</string>
+    <string name="google_app_id" translatable="false">1:1071034831504:android:d352ca1d260fdc1a10be15</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyAULmcdDR7NI3bLtJAlEvvMbR7vOo1_YLk</string>
+    <string name="google_storage_bucket" translatable="false">fitbattles-167ae.appspot.com</string>
+    <string name="project_id" translatable="false">fitbattles-167ae</string>
+</resources>

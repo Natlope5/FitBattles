@@ -1,4 +1,5 @@
 import 'package:camera/camera.dart';
+import 'package:fitbattles/screens/workout_tracking_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -105,6 +106,7 @@ class MyApp extends StatelessWidget {
             '/settings': (context) => const SettingsPage(), // Added route for SettingsPage
             '/create_challenge': (context) => CreateChallengePage(cameras: cameras, friends: const [], friend: ''),
             '/friendsList': (context) => const FriendsListPage(),
+            '/workoutTracking': (context) => const WorkoutTrackingPage(),
           },
           navigatorKey: notificationsHandler.navigatorKey, // Add navigator key to handle notification taps
         );
