@@ -1,76 +1,63 @@
 FitBattles
-FitBattles is a Flutter application designed to help users track and improve their fitness journey through engaging challenges and community support.
+A Fitness Challenge App for Competing with Friends
 
-Getting Started
-FitBattles is built using Flutter and Firebase to provide real-time fitness tracking, challenges, and community engagement. This project is a starting point for building fitness-centric mobile applications with Flutter.
+Introduction
+FitBattles is a social fitness app that allows users to create, join, and compete in fitness challenges with friends. With FitBattles you can compete with friends, track your daily workouts, earn badges for reaching milestones, and participate in community challenges. FitBattles makes it fun to stay active and healthy! With seamless integration for tracking workout progress and the ability to compare results with others, it helps keep users motivated on their fitness journey.
 
-Resources
-If this is your first Flutter project, you can find helpful resources below:
-
-Lab: Write your first Flutter app
-Cookbook: Useful Flutter samples
-Flutter Documentation
-Firebase Documentation
 Features
-User Authentication: Sign up and log in using Firebase Authentication.
-Fitness Challenges: Participate in preset or custom challenges to compete with friends or others in the community.
-Progress Tracking: Track your fitness progress with real-time visual graphs and statistics.
-Community Leaderboard: Compete on a global or friend-specific leaderboard to see how your fitness progress compares to others.
-User Profiles: Create and customize your user profile, showcasing achievements, challenges completed, and progress.
+Create and Join Challenges: Set up custom fitness challenges or join existing ones with friends or the broader community.
+Track Workouts: Input details like distance, duration, sets, reps, and calories burned for various workout types.
+Earn Badges and Rewards: Unlock achievements for hitting fitness milestones.
+Custom Workout Plans: Create and share workout plans tailored to your fitness goals.
+Community Challenges: Participate in weekly or monthly challenges with users from all over the world.
+Health Reports: View detailed insights into your fitness progress, including calories burned, workout duration, and more.
+Technologies
+Frontend: Flutter
+Backend: Firebase (Firestore, Authentication, Cloud Functions)
+APIs: Google Fit, Apple HealthKit (for workout data sync)
+Version Control: GitHub (Gitflow branching strategy)
 Installation
-To run this project locally, follow these steps:
+To install and run FitBattles on your local machine:
 
-Prerequisites
-Ensure you have the following installed:
-
-Flutter SDK (version 3.26.0 or higher)
-Dart
-Android Studio or Visual Studio Code (with Flutter and Dart plugins)
-Firebase CLI (for Firebase integration)
-Steps
 Clone the repository:
-
-git clone https://github.com/Natlope5/FitBattles.git
+git clone https://github.com/Nlope5/fitbattles.git
 cd fitbattles
-Install dependencies: Run the following command to fetch the required Flutter and Dart packages:
 
+Install Flutter dependencies:
+Ensure you have Flutter SDK installed. Run the following command to get dependencies:
 flutter pub get
+
 Configure Firebase:
 
-Set up Firebase in your Flutter app by following this guide.
-Add your google-services.json (for Android) and GoogleService-Info.plist (for iOS) to the respective android and ios directories.
-Enable Firebase Authentication, Firestore, and Firebase Cloud Messaging in your Firebase Console.
-Run the app: You can run the app on an emulator or connected device:
-
+Create a Firebase project and configure Firestore, Authentication, and Cloud Functions.
+Update the google-services.json (for Android) and GoogleService-Info.plist (for iOS) files in the project.
+Run the app:
+Start the development server using:
 flutter run
-Optional Configuration
-Google Fonts: Ensure to install fonts manually if desired, as google_fonts package might not be included.
-Git LFS: If you're using large files such as videos or APKs, ensure you have Git LFS configured in the project by running git lfs install.
-Usage
-Sign Up: Create an account using Firebase Authentication (or log in if you already have an account).
-Create Challenges: Create your custom fitness challenges or join preloaded ones.
-Track Progress: View your performance and progress through the app’s visual graphs and progress meters.
-Community Engagement: Participate in challenges, track friends' progress, and engage through the leaderboard.
-Directory Structure
-Here's an overview of the project's directory structure:
 
-lib/
-│
-├── auth/                  # Authentication-related files
-├── challenges/            # Challenge-related logic and UI
-├── location/              # Location-based services
-├── models/                # Data models (e.g., user, challenge)
-├── notifications/         # Push notifications logic
-├── screens/               # UI Screens (e.g., HomePage, ProfilePage)
-├── settings/              # Settings page and logic
-└── workouts/              # Workout tracking and history
-Contributing
-If you'd like to contribute to FitBattles:
+Development Setup
+To set up the development environment:
 
-Fork the repository.
-Create a new branch (git checkout -b feature/new-feature).
-Commit your changes (git commit -m "Add new feature").
-Push to the branch (git push origin feature/new-feature).
-Open a pull request.
+Ensure Flutter SDK is installed:
+Follow Flutter’s official installation guide for your operating system.
+
+Install Firebase CLI:
+Install Firebase CLI to manage Firestore, Authentication, and Cloud Functions from the command line:
+npm install -g firebase-tools
+
+Create a Firebase project:
+Follow the Firebase setup guide to link your project with Firebase services.
+
+Set up GitHub repo:
+Ensure you have the right permissions to access and contribute to the GitHub repository. Follow the branching strategy (feature branches, pull requests, etc.) for smooth collaboration.
+
 License
-FitBattles is licensed under the MIT License. See LICENSE for more information.
+This project is licensed under the GNU General Public License v3.0 - see the LICENSE file for details.
+
+Contributors
+Frontend Developer: Matthew Tome
+Frontend Developer: Lizbett Perez
+Backend Developer: Natalie Lopez
+Backend Developer: Cameron Speake
+Project Status
+FitBattles is currently in Alpha. Development is ongoing, and the core features are still being implemented.
