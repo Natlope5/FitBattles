@@ -23,7 +23,7 @@ To install and run FitBattles on your local machine:
 
 1. **Clone the repository**:  
    `git clone https://github.com/Natlope5/FitBattles.git`  
-   `cd fitbattles`
+   `cd FitBattles`
 
 2. **Install Flutter dependencies**:  
    Ensure you have Flutter SDK installed. Run the following command to get dependencies:  
