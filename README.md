@@ -18,4 +18,4 @@ Community leaderboard
 User profiles with achievements
 Installation
 Clone the repository:
-git clone https://github.com/yourusername/fitbattles.git
+git clone https://github.com/Nlope5/fitbattles.git
