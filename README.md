@@ -22,7 +22,7 @@ FitBattles is a social fitness app that allows users to create, join, and compet
 To install and run FitBattles on your local machine:
 
 1. **Clone the repository**:  
-   `git clone https://github.com/your-username/fitbattles.git`  
+   `git clone https://github.com/Natlope5/FitBattles.git`  
    `cd fitbattles`
 
 2. **Install Flutter dependencies**:  
@@ -46,7 +46,7 @@ To set up the development environment:
 2. **Install Firebase CLI**:  
    Install Firebase CLI to manage Firestore, Authentication, and Cloud Functions from the command line:  
    `npm install -g firebase-tools`
-
+/
 3. **Create a Firebase project**:  
    Follow the Firebase setup guide to link your project with Firebase services.
 
