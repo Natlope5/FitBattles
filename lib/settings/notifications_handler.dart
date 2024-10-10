@@ -1,25 +1,30 @@
-import 'package:firebase_messaging/firebase_messaging.dart'; // Importing Firebase Messaging for push notifications
-import 'package:flutter/material.dart'; // Importing Flutter Material for UI components
-import 'package:logger/logger.dart'; // Importing Logger for logging messages
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:logger/logger.dart';
 
-// Define a GlobalKey for the navigator
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>(); // Key to control navigation globally
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-// Class to handle notifications using Firebase Cloud Messaging
+// Class to handle notifications using Firebase Cloud Messaging and local notifications
 class NotificationsHandler {
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance; // Instance for Firebase Messaging
-  final Logger _logger = Logger(); // Logger instance for logging purposes
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  final Logger _logger = Logger();
 
-  // Initialization method for setting up notifications
+  late FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin;
+
+  NotificationsHandler() {
+    // Initialize the local notifications plugin
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    _initializeLocalNotifications();
+  }
+
   Future<void> init() async {
     // Request permissions for iOS notifications
     NotificationSettings settings = await _firebaseMessaging.requestPermission();
-    // Log the user's permission status
     _logger.i('User granted permission: ${settings.authorizationStatus}');
 
     // Get the FCM token for this device
     String? token = await _firebaseMessaging.getToken();
-    // Log the token for debugging purposes
     _logger.i('FCM Token: $token');
 
     // Listen for incoming messages when the app is in the foreground
@@ -32,44 +37,50 @@ class NotificationsHandler {
 
     // Handle notification taps when the app is opened from a notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      _handleNotificationTap(message); // Navigate based on the notification data
+      _handleNotificationTap(message);
     });
   }
 
-  // Static method to handle background messages
+  Future<void> _initializeLocalNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
   static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    // Log the handling of the background message
     Logger().i('Handling a background message: ${message.messageId}');
-    // Optionally show a local notification here (e.g., using flutter_local_notifications)
+    // Optionally show a local notification here if needed
   }
 
-  // Method to show notifications when messages are received
-  void _showNotification(RemoteMessage message) {
-    // Display a SnackBar for the notification
-    if (navigatorKey.currentContext != null) {
-      // Use the ScaffoldMessenger to show a SnackBar
-      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-        SnackBar(
-          content: Text(message.notification?.title ?? 'Notification'), // Display the notification title or a default message
-          action: SnackBarAction(
-            label: 'Dismiss', // Action label for dismissing the notification
-            onPressed: () {
-              // Optionally handle dismiss action (e.g., logging)
-            },
-          ),
-        ),
-      );
-    } else {
-      // Log a warning if there is no context available to show the notification
-      _logger.w('No context available to show notification.');
-    }
+  void _showNotification(RemoteMessage message) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+      'your_channel_id', // Change this to a unique ID
+      'your_channel_name', // Change this to a descriptive name
+      channelDescription: 'your_channel_description',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      message.notification.hashCode, // Use a unique ID for each notification
+      message.notification?.title,
+      message.notification?.body,
+      platformChannelSpecifics,
+      payload: message.data['route'], // Pass the route as payload
+    );
   }
 
-  // Method to handle notification taps
   void _handleNotificationTap(RemoteMessage message) {
-    // Check if the message data contains a route to navigate to
     if (message.data['route'] != null) {
-      // Navigate to the specified route using the navigator key
       navigatorKey.currentState?.pushNamed(message.data['route']);
     }
   }

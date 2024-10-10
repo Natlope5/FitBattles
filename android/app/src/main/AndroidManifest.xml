@@ -1,4 +1,4 @@
-<!--suppress AndroidDomInspection, AndroidDomInspection -->
+<!--suppress AndroidDomInspection, AndroidDomInspection, XmlHighlighting, lHighlighting, lHighlighting, lHighlighting, lHighlighting, lHighlighting -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.fitbattles">
 
@@ -28,20 +28,14 @@
 
         <!-- Handle notifications -->
         <receiver
-            android:name="com.dexterous.flutterlocalnotifications.receivers.ActionBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false" />
+            android:name="com.dexterous.flutterlocalnotifications.receivers.ActionBroadcastReceiver" />
 
         <receiver
-            android:name="com.dexterous.flutterlocalnotifications.receivers.NotificationBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false"/>
+            android:name="com.dexterous.flutterlocalnotifications.receivers.NotificationBroadcastReceiver" />
 
         <!-- Receive notification on boot -->
         <receiver
-            android:name="com.dexterous.flutterlocalnotifications.receivers.BootBroadcastReceiver"
-            android:enabled="true"
-            android:exported="false">
+            android:name="com.dexterous.flutterlocalnotifications.receivers.BootBroadcastReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />

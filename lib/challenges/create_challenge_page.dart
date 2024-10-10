@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart'; // For image picking
+import 'package:image_picker/image_picker.dart';
 
 class CreateChallengePage extends StatefulWidget {
   final List<CameraDescription> cameras;
@@ -13,7 +13,7 @@ class CreateChallengePage extends StatefulWidget {
   const CreateChallengePage({
     super.key,
     required this.cameras,
-    required this.friends, required friend,
+    required this.friends, required String friend,
   });
 
   @override
@@ -21,25 +21,22 @@ class CreateChallengePage extends StatefulWidget {
 }
 
 class CreateChallengePageState extends State<CreateChallengePage> {
-  VideoPlayerController? videoPlayerController; // Controller for video playback
-  String? videoPath; // Path to the recorded video file
-  final formKey = GlobalKey<FormState>(); // Key to validate the form
+  VideoPlayerController? videoPlayerController;
+  String? videoPath;
+  final formKey = GlobalKey<FormState>();
   final TextEditingController challengeNameController = TextEditingController();
   final TextEditingController challengeTypeController = TextEditingController();
-  DateTime? startDate; // Start date of the challenge
-  DateTime? endDate; // End date of the challenge
-  String? statusMessage; // Message to display status updates
-  List<String> participants = []; // List to store selected participants
+  DateTime? startDate;
+  DateTime? endDate;
+  String? statusMessage;
+  List<String> participants = [];
 
-  // Sample preloaded challenges
   final List<Challenge> preloadedChallenges = [
     Challenge(id: '1', name: '10,000 Steps Challenge', description: 'Walk every day 1000 steps for 14 days!'),
     Challenge(id: '2', name: 'Running Challenge', description: 'Run every day for 30 days'),
     Challenge(id: '3', name: 'Healthy Eating Challenge', description: 'Eat healthy for 30 days.'),
     Challenge(id: '4', name: '50 SitUps Challenge', description: 'Do 50 SitUps a day for 21 days.'),
     Challenge(id: '5', name: '100 Squat Challenge', description: 'Do 100 squats a day for 30 days.'),
-
-
   ];
 
   @override
@@ -117,7 +114,6 @@ class CreateChallengePageState extends State<CreateChallengePage> {
     }
   }
 
-  // Method to show preloaded challenges and notify opponents
   void _showPreloadedChallenges() {
     showDialog(
       context: context,
@@ -131,12 +127,11 @@ class CreateChallengePageState extends State<CreateChallengePage> {
               itemBuilder: (context, index) {
                 final challenge = preloadedChallenges[index];
                 return ListTile(
-                  title: Text(challenge.name),
+                  title: Text(challenge.name, style: TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text(challenge.description),
                   onTap: () {
-                    // Notify the opponent about the selected challenge
                     _notifyOpponent(challenge.name);
-                    Navigator.of(context).pop(); // Close the dialog
+                    Navigator.of(context).pop();
                   },
                 );
               },
@@ -147,7 +142,6 @@ class CreateChallengePageState extends State<CreateChallengePage> {
     );
   }
 
-  // Method to notify the opponent about the selected challenge
   void _notifyOpponent(String challengeName) {
     setState(() {
       statusMessage = 'Notified opponent about $challengeName!';
@@ -158,159 +152,179 @@ class CreateChallengePageState extends State<CreateChallengePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Create Your Own Challenge')),
-      resizeToAvoidBottomInset: true,
       body: Container(
         color: const Color(0xFF5D6C8A),
-        padding: EdgeInsets.only(
-          left: 16.0,
-          right: 16.0,
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
+        padding: EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Form(
             key: formKey,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Challenge name input
-                TextFormField(
-                  controller: challengeNameController,
-                  decoration: const InputDecoration(labelText: 'Challenge Name'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a challenge name';
-                    }
-                    return null;
-                  },
-                ),
-                // Challenge type input
-                TextFormField(
-                  controller: challengeTypeController,
-                  decoration: const InputDecoration(labelText: 'Challenge Type'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a challenge type';
-                    }
-                    return null;
-                  },
-                ),
+                _buildTextInput(challengeNameController, 'Challenge Name', 'Please enter a challenge name'),
                 const SizedBox(height: 16),
-                // Start date
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        startDate == null
-                            ? 'Start Date'
-                            : 'Start: ${DateFormat('yyyy-MM-dd').format(startDate!)}',
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () => selectDate(context, true),
-                    ),
-                  ],
-                ),
-                // End date
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        endDate == null
-                            ? 'End Date'
-                            : 'End: ${DateFormat('yyyy-MM-dd').format(endDate!)}',
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () => selectDate(context, false),
-                    ),
-                  ],
-                ),
+                _buildTextInput(challengeTypeController, 'Challenge Type', 'Please enter a challenge type'),
                 const SizedBox(height: 16),
-                // Participants dropdown
-                DropdownButtonFormField<String>(
-                  value: null,
-                  onChanged: _selectParticipant,
-                  decoration: const InputDecoration(labelText: 'Participant'),
-                  items: widget.friends
-                      .map((friend) => DropdownMenuItem(value: friend, child: Text(friend)))
-                      .toList(),
-                  validator: (value) {
-                    if (value == null || participants.isEmpty) {
-                      return 'Please select a participant';
-                    }
-                    return null;
-                  },
-                ),
+                _buildDateRow('Start Date', startDate, () => selectDate(context, true)),
                 const SizedBox(height: 16),
-                // Display selected participants
-                Wrap(
-                  spacing: 8.0,
-                  children: participants
-                      .map((participant) => Chip(
-                    label: Text(participant),
-                    onDeleted: () {
-                      setState(() {
-                        participants.remove(participant);
-                      });
-                    },
-                  ))
-                      .toList(),
-                ),
+                _buildDateRow('End Date', endDate, () => selectDate(context, false)),
                 const SizedBox(height: 16),
-                // Pick video button
-                ElevatedButton(
-                  onPressed: pickVideo,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF85C83E),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
-                  child: const Text('Pick Video'),
-                ),
+                _buildParticipantDropdown(),
                 const SizedBox(height: 16),
-                // Display video if picked
-                if (videoPath != null)
-                  Column(
-                    children: [
-                      VideoPlayer(videoPlayerController!),
-                      ElevatedButton(
-                        onPressed: () {
-                          videoPlayerController?.value.isPlaying == true
-                              ? videoPlayerController?.pause()
-                              : videoPlayerController?.play();
-                        },
-                        child: Icon(videoPlayerController?.value.isPlaying == true ? Icons.pause : Icons.play_arrow),
-                      ),
-                    ],
-                  ),
+                _buildSelectedParticipantsChips(),
                 const SizedBox(height: 16),
-                // Notify opponents button
-                ElevatedButton(
-                  onPressed: _showPreloadedChallenges,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF85C83E),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
-                  child: const Text('Notify Opponents'),
-                ),
+                _buildVideoPickerButton(),
                 const SizedBox(height: 16),
-                // Create Challenge button
-                ElevatedButton(
-                  onPressed: createChallenge,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF85C83E),
-                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                  ),
-                  child: const Text('Create Challenge'),
-                ),
+                if (videoPath != null) _buildVideoPlayer(),
                 const SizedBox(height: 16),
-                // Display status message
-                if (statusMessage != null) Text(statusMessage!),
+                _buildNotifyOpponentsButton(),
+                const SizedBox(height: 16),
+                _buildCreateChallengeButton(),
+                const SizedBox(height: 16),
+                if (statusMessage != null) Text(statusMessage!, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTextInput(TextEditingController controller, String label, String errorMessage) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          filled: true,
+          fillColor: const Color(0xFFE8F0FE),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return errorMessage;
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildDateRow(String label, DateTime? date, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 4,
+        child: Container(
+          padding: EdgeInsets.symmetric(vertical: 16.0),
+          decoration: BoxDecoration(
+            color: const Color(0xFFE8F0FE),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: Text(
+              date == null ? label : 'Selected: ${DateFormat('yyyy-MM-dd').format(date)}',
+              style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildParticipantDropdown() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      child: DropdownButtonFormField<String>(
+        value: null,
+        onChanged: _selectParticipant,
+        decoration: InputDecoration(
+          labelText: 'Participant',
+          filled: true,
+          fillColor: const Color(0xFFE8F0FE),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        items: widget.friends
+            .map((friend) => DropdownMenuItem(value: friend, child: Text(friend)))
+            .toList(),
+        validator: (value) {
+          if (value == null || participants.isEmpty) {
+            return 'Please select a participant';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildSelectedParticipantsChips() {
+    return Wrap(
+      spacing: 8.0,
+      children: participants
+          .map((participant) => Chip(
+        label: Text(participant),
+        onDeleted: () {
+          setState(() {
+            participants.remove(participant);
+          });
+        },
+        backgroundColor: const Color(0xFF85C83E),
+        deleteIconColor: Colors.white,
+      ))
+          .toList(),
+    );
+  }
+
+  Widget _buildVideoPickerButton() {
+    return ElevatedButton(
+      onPressed: pickVideo,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF85C83E),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+      ),
+      child: const Text('Pick Video', style: TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildVideoPlayer() {
+    return Column(
+      children: [
+        VideoPlayer(videoPlayerController!),
+        ElevatedButton(
+          onPressed: () {
+            videoPlayerController?.value.isPlaying == true
+                ? videoPlayerController?.pause()
+                : videoPlayerController?.play();
+          },
+          child: Icon(videoPlayerController?.value.isPlaying == true ? Icons.pause : Icons.play_arrow),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotifyOpponentsButton() {
+    return ElevatedButton(
+      onPressed: _showPreloadedChallenges,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF85C83E),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+      ),
+      child: const Text('Notify Opponents', style: TextStyle(fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildCreateChallengeButton() {
+    return ElevatedButton(
+      onPressed: createChallenge,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF85C83E),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+      ),
+      child: const Text('Create Challenge', style: TextStyle(fontWeight: FontWeight.bold)),
     );
   }
 }

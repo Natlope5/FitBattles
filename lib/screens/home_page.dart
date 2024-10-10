@@ -1,9 +1,11 @@
 import 'package:fitbattles/challenges/challenge.dart';
+import 'package:fitbattles/settings/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
@@ -24,44 +26,12 @@ class _HomePageState extends State<HomePage> {
   int pointsGoal = 1000; // Example goal for points
 
   List<Challenge> preloadedChallenges = [
-    Challenge(
-      name: '10,000 Steps Challenge',
-      type: 'Fitness',
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 7)),
-      participants: [],
-    ),
-    Challenge(
-      name: 'Running Challenge',
-      type: 'Fitness',
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 7)),
-      participants: [],
-    ),
-    Challenge(
-      name: '30 Days Fit Challenge',
-      type: 'Fitness',
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 30)),
-      participants: [],
-    ),
-    Challenge(
-      name: 'SitUp Challenge',
-      type: 'Fitness',
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 7)),
-      participants: [],
-    ),
-    Challenge(
-      name: '100 Squat Challenge',
-      type: 'Fitness',
-      startDate: DateTime.now(),
-      endDate: DateTime.now().add(const Duration(days: 30)),
-      participants: [],
-    ),
+    Challenge(name: '10,000 Steps Challenge', type: 'Fitness', startDate: DateTime.now(), endDate: DateTime.now().add(const Duration(days: 7)), participants: []),
+    Challenge(name: 'Running Challenge', type: 'Fitness', startDate: DateTime.now(), endDate: DateTime.now().add(const Duration(days: 7)), participants: []),
+    Challenge(name: '30 Days Fit Challenge', type: 'Fitness', startDate: DateTime.now(), endDate: DateTime.now().add(const Duration(days: 30)), participants: []),
+    Challenge(name: 'SitUp Challenge', type: 'Fitness', startDate: DateTime.now(), endDate: DateTime.now().add(const Duration(days: 7)), participants: []),
+    Challenge(name: '100 Squat Challenge', type: 'Fitness', startDate: DateTime.now(), endDate: DateTime.now().add(const Duration(days: 30)), participants: []),
   ];
-
-
 
   Future<void> _pickAndUploadImage() async {
     try {
@@ -81,41 +51,44 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF5D6C8A), // Background color
+      backgroundColor: themeProvider.isDarkMode ? Colors.black : const Color(0xFF5D6C8A), // Background color based on theme
       appBar: AppBar(
         title: const Text('Home'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.pushNamed(
-                  context, '/settings'); // Navigate to Settings page
+              Navigator.pushNamed(context, '/settings'); // Navigate to Settings page
+            },
+          ),
+          IconButton(
+            icon: Icon(themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
+            onPressed: () {
+              themeProvider.toggleTheme(); // Toggle the theme
             },
           ),
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-              vertical: 100.0, horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 100.0, horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              _buildHeader(),
+              _buildHeader(themeProvider),
               const SizedBox(height: 32),
-              _buildPointsSection(context),
+              _buildPointsSection(context, themeProvider),
               const SizedBox(height: 32),
-              _buildChallengesContainer(context),
+              _buildChallengesContainer(context, themeProvider),
               const SizedBox(height: 32),
-              _buildHistoryContainer(context),
+              _buildHistoryContainer(context, themeProvider),
               const SizedBox(height: 32),
-              // Assuming exampleFriends is defined somewhere
-              _buildTopChallengedFriends(exampleFriends),
+              _buildTopChallengedFriends(exampleFriends, themeProvider),
               const SizedBox(height: 32),
-              _viewFriendsButton(context),
-              _buildWorkoutTrackingButton(context)
-
+              _buildWorkoutTrackingButton(context),
             ],
           ),
         ),
@@ -123,27 +96,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _viewFriendsButton(BuildContext context) {
-    return Tooltip(
-      message: 'View your friends list',
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.pushNamed(context, '/friendsList');
-        },
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.black,
-          backgroundColor: const Color(0xFF85C83E),
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 32.0),
-        ),
-        child: const Text('View Friends'),
-      ),
-    );
-  }
-
-  // Widget to build the header section
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeProvider themeProvider) {
     return Container(
-      color: Colors.grey[600],
+      color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.grey[600],
       width: double.infinity,
       height: 200,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -152,25 +107,23 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
-            'FitBattles', // App title
+            'FitBattles',
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: Colors.white,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 10),
           GestureDetector(
             onTap: _pickAndUploadImage,
-            // Call method to pick and upload image when tapped
             child: CircleAvatar(
               radius: 40,
               backgroundColor: Colors.grey[300],
               backgroundImage: _image != null ? FileImage(_image!) : null,
-              // Display selected image
               child: _image == null
-                  ? const Icon(Icons.add_a_photo, color: Colors.black, size: 30) // Placeholder icon
+                  ? const Icon(Icons.add_a_photo, color: Colors.black, size: 30)
                   : null,
             ),
           ),
@@ -179,35 +132,34 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPointsSection(BuildContext context) {
+  Widget _buildPointsSection(BuildContext context, ThemeProvider themeProvider) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
-            'Points Earned', // Section title
+            'Points Earned',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10), // Rounded corners for the progress bar
+            borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
-              value: pointsEarned / pointsGoal, // Progress based on earned points
+              value: pointsEarned / pointsGoal,
               minHeight: 20,
-              backgroundColor: Colors.grey[300],
+              backgroundColor: themeProvider.isDarkMode ? Colors.grey[800] : Colors.grey[300],
               color: const Color(0xFF85C83E),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            '$pointsEarned / $pointsGoal points', // Display earned points and goal
+            '$pointsEarned / $pointsGoal points',
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
-              // Navigate to the EarnedPointsPage when button is pressed
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -217,7 +169,7 @@ class _HomePageState extends State<HomePage> {
                     totalChallengesCompleted: 0,
                     pointsEarnedToday: 0,
                     bestDayPoints: 0,
-                  ), // Example parameters
+                  ),
                 ),
               );
             },
@@ -225,17 +177,17 @@ class _HomePageState extends State<HomePage> {
               foregroundColor: Colors.black,
               backgroundColor: const Color(0xFF85C83E),
             ),
-            child: const Text('View Earned Points'), // Button text
+            child: const Text('View Earned Points'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildChallengesContainer(BuildContext context) {
+  Widget _buildChallengesContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
       width: MediaQuery.of(context).size.width * 0.9,
@@ -258,12 +210,10 @@ class _HomePageState extends State<HomePage> {
               foregroundColor: Colors.black,
               backgroundColor: const Color(0xFF85C83E),
             ),
-            child: Text(showPreloadedChallenges
-                ? 'Hide Preloaded Challenges'
-                : 'Show Preloaded Challenges'),
+            child: Text(showPreloadedChallenges ? 'Hide Preloaded Challenges' : 'Show Preloaded Challenges'),
           ),
           const SizedBox(height: 16),
-          if (showPreloadedChallenges) _buildPreloadedChallengesList(),
+          if (showPreloadedChallenges) _buildPreloadedChallengesList(themeProvider),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: () {
@@ -280,23 +230,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPreloadedChallengesList() {
+  Widget _buildPreloadedChallengesList(ThemeProvider themeProvider) {
     return SizedBox(
-      height: 100, // Fixed height for horizontal scrolling
+      height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: preloadedChallenges.length,
         itemBuilder: (context, index) {
           return GestureDetector(
             onTap: () {
-              // Show challenge info when tapped
               _showChallengeInfo(preloadedChallenges[index]);
             },
             child: Container(
               margin: const EdgeInsets.only(right: 16.0),
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[200],
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFF85C83E), width: 2),
               ),
@@ -317,19 +266,19 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
   void _showChallengeInfo(Challenge challenge) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF85C83E), // Set background color to green
+          backgroundColor: const Color(0xFF85C83E),
           title: Text(challenge.name),
           content: Container(
-            // Optional: Add padding to the content
             padding: const EdgeInsets.all(16.0),
             child: Text(
               'Type: ${challenge.type}\nStart Date: ${challenge.startDate}\nEnd Date: ${challenge.endDate}',
-              style: const TextStyle(color: Colors.black), // Change text color to improve visibility
+              style: const TextStyle(color: Colors.black),
             ),
           ),
           actions: [
@@ -337,7 +286,7 @@ class _HomePageState extends State<HomePage> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Close', style: TextStyle(color: Colors.black)), // Adjust text color if needed
+              child: const Text('Close', style: TextStyle(color: Colors.black)),
             ),
           ],
         );
@@ -345,16 +294,14 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-
-  Widget _buildHistoryContainer(BuildContext context) {
+  Widget _buildHistoryContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withAlpha(128), // Using withAlpha for shadow color
+            color: Colors.grey.withAlpha(128),
             spreadRadius: 2,
             blurRadius: 5,
             offset: const Offset(0, 3),
@@ -373,28 +320,23 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
           TextButton(
             onPressed: () {
-              logger.e("Navigating to history page..."); // Debugging log
-
-              // Navigate to the history page
+              logger.e("Navigating to history page...");
               Navigator.of(context).pushNamed('/history').catchError((error) {
                 logger.e("Error navigating to history page: $error");
-                // Return a default value to satisfy the return type requirement
-                return null; // or some default value or action
+                return null;
               });
             },
             child: const Text('View History', style: TextStyle(color: Colors.black)),
-
           ),
-
         ],
       ),
     );
   }
 
-  Widget _buildTopChallengedFriends(List<String> friends) {
+  Widget _buildTopChallengedFriends(List<String> friends, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
       width: MediaQuery.of(context).size.width * 0.9,
@@ -417,25 +359,17 @@ class _HomePageState extends State<HomePage> {
                   padding: const EdgeInsets.only(right: 16.0),
                   child: GestureDetector(
                     onTap: () {
-                      // Pass the required arguments: context, friendName, and friendImagePath
-                      _showFriendInfo(
-                        context,
-                        friends[index].split('/').last.split('.').first, // Friend's name
-                        friends[index], // Friend's image path
-                        gamesWon: 25, // Sample data, can be dynamic
-                        streakDays: 10, // Sample data, can be dynamic
-                        rank: 3, // Sample data, can be dynamic
-                      );
+                      _showFriendInfo(context, friends[index].split('/').last.split('.').first, friends[index], gamesWon: 25, streakDays: 10, rank: 3);
                     },
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         CircleAvatar(
                           radius: 30,
-                          backgroundImage: AssetImage(friends[index]), // Friend image from assets
+                          backgroundImage: AssetImage(friends[index]),
                         ),
                         const SizedBox(height: 8),
-                        Text(friends[index].split('/').last.split('.').first), // Friend's name
+                        Text(friends[index].split('/').last.split('.').first),
                       ],
                     ),
                   ),
@@ -447,35 +381,32 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  void _showFriendInfo(BuildContext context, String friendName, String friendImagePath, {
-    int gamesWon = 0,
-    int streakDays = 0,
-    int rank = 0,
-  }) {
+
+  void _showFriendInfo(BuildContext context, String friendName, String friendImagePath, {int gamesWon = 0, int streakDays = 0, int rank = 0}) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: const Color(0xFF85C83E), // Set background color to green
-          title: Text(friendName, style: const TextStyle(color: Colors.black)), // Change title color for visibility
+          backgroundColor: const Color(0xFF85C83E),
+          title: Text(friendName, style: const TextStyle(color: Colors.black)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Image.asset(friendImagePath), // Display friend image
+              Image.asset(friendImagePath),
               const SizedBox(height: 10),
-              Text('Games Won: $gamesWon', style: const TextStyle(color: Colors.black)), // Show number of games won
+              Text('Games Won: $gamesWon', style: const TextStyle(color: Colors.black)),
               const SizedBox(height: 5),
-              Text('Streak Days: $streakDays', style: const TextStyle(color: Colors.black)), // Show streak count
+              Text('Streak Days: $streakDays', style: const TextStyle(color: Colors.black)),
               const SizedBox(height: 5),
-              Text('Rank: $rank', style: const TextStyle(color: Colors.black)), // Show rank
+              Text('Rank: $rank', style: const TextStyle(color: Colors.black)),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
-              child: const Text('Close', style: TextStyle(color: Colors.black)), // Adjust text color if needed
+              child: const Text('Close', style: TextStyle(color: Colors.black)),
             ),
           ],
         );
@@ -483,7 +414,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  final List <String> exampleFriends = [
+  final List<String> exampleFriends = [
     'assets/images/Bob.png',
     'assets/images/Charlie.png',
     'assets/images/Hannah.png',
@@ -494,19 +425,19 @@ class _HomePageState extends State<HomePage> {
     'assets/images/Diana.png',
     'assets/images/Alice.png',
   ];
-}
 
-// Widget to build the workout tracking navigation button
-Widget _buildWorkoutTrackingButton(BuildContext context) {
-  return ElevatedButton(
-    onPressed: () {
-      Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
-    },
-    style: ElevatedButton.styleFrom(
-      foregroundColor: Colors.white,
-      backgroundColor: const Color(0xFF85C83E), // Use the theme color
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
-    ),
-    child: const Text('Start Workout Tracking'), // Button text
-  );
+  // Widget to build the workout tracking navigation button
+  Widget _buildWorkoutTrackingButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () {
+        Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
+      },
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.black,
+        backgroundColor: const Color(0xFF85C83E),
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
+      ),
+      child: const Text('Start Workout Tracking'),
+    );
+  }
 }

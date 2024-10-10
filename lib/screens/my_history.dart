@@ -19,8 +19,8 @@ class MyHistoryPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-          title: const Text('My History'),
-          backgroundColor: Color(0xFF5D6C8A)
+        title: const Text('My History'),
+        backgroundColor: const Color(0xFF5D6C8A),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -62,6 +62,7 @@ class MyHistoryPage extends StatelessWidget {
                         Icons.arrow_forward_ios,
                         color: Colors.teal[300],
                       ),
+                      onTap: () => _showInfoDialog(context, entry.key, entry.value),
                     ),
                   );
                 }).toList()
@@ -82,14 +83,19 @@ class MyHistoryPage extends StatelessWidget {
                           ),
                         ),
                         subtitle: Text(
-                          (historyData['Friends Involved'] as List<String>?)
-                              ?.join(', ') ??
-                              'None',
+                          (historyData['Friends Involved'] is List<String>)
+                              ? (historyData['Friends Involved'] as List<String>).join(', ')
+                              : 'None',
                           style: const TextStyle(fontSize: 16),
                         ),
                         trailing: Icon(
                           Icons.arrow_forward_ios,
                           color: Colors.teal[300],
+                        ),
+                        onTap: () => _showInfoDialog(
+                          context,
+                          'Friends Involved',
+                          (historyData['Friends Involved'] as List<String>?)?.join(', ') ?? 'None',
                         ),
                       ),
                     ),
@@ -122,5 +128,27 @@ class MyHistoryPage extends StatelessWidget {
       default:
         return const Icon(Icons.help_outline, color: Colors.teal);
     }
+  }
+
+  // Function to show the information dialog
+  void _showInfoDialog(BuildContext context, String title, dynamic value) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(
+            value is List<String> ? value.join(', ') : '$value',
+            style: const TextStyle(fontSize: 18),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
