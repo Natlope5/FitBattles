@@ -113,7 +113,7 @@ class _HomePageState extends State<HomePage> {
               _buildChallengesContainer(context),
               // Build the challenges container
               const SizedBox(height: 32),
-              _buildHistoryContainer(context),
+              _buildWorkoutContainer(context),
               // Build the history container
               const SizedBox(height: 32),
               _buildTopChallengedFriends(friends), // Pass the friends list
@@ -245,10 +245,6 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-
-          // Workout tracking button
-          _buildWorkoutTrackingButton(context),
-
           // Button to show/hide preloaded challenges
           ElevatedButton(
             onPressed: () {
@@ -261,16 +257,12 @@ class _HomePageState extends State<HomePage> {
               foregroundColor: Colors.white,
               backgroundColor: const Color(0xFF85C83E),
             ),
-            child: Text(showPreloadedChallenges ? 'Hide Preloaded Challenges' : 'Show Preloaded Challenges'), // Toggle button text
+            child: Text(showPreloadedChallenges ? 'Hide Preloaded Challenges' : 'Challenges'), // Toggle button text
           ),
-
           const SizedBox(height: 16),
-
           // Conditionally display preloaded challenges list
           if (showPreloadedChallenges) _buildPreloadedChallengesList(),
-
           const SizedBox(height: 16),
-
           // Button to create a new challenge
           ElevatedButton(
             onPressed: () {
@@ -281,7 +273,7 @@ class _HomePageState extends State<HomePage> {
               foregroundColor: Colors.white,
               backgroundColor: const Color(0xFF85C83E),
             ),
-            child: const Text('Create a New Challenge'), // Button text
+            child: const Text('New Challenge'), // Button text
           ),
         ],
       ),
@@ -310,7 +302,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildHistoryContainer(BuildContext context) {
+  Widget _buildWorkoutContainer(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -322,10 +314,12 @@ class _HomePageState extends State<HomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'My History', // Section title
+            'Workout', // Section title
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
+          // Workout tracking button
+          _buildWorkoutTrackingButton(context),
           ElevatedButton(
             onPressed: () {
               // Navigate to the history page when button is pressed
@@ -335,7 +329,7 @@ class _HomePageState extends State<HomePage> {
               foregroundColor: Colors.white,
               backgroundColor: const Color(0xFF85C83E),
             ),
-            child: const Text('View My History'), // Button text
+            child: const Text('My History'), // Button text
           ),
         ],
       ),
@@ -496,7 +490,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color(0xFF85C83E), // Use the theme color
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
       ),
-      child: const Text('Start Workout Tracking'), // Button text
+      child: const Text('Workout Tracking'), // Button text
     );
   }
 }
