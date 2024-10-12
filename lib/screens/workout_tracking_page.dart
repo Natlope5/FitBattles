@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class WorkoutTrackingPage extends StatefulWidget {
   const WorkoutTrackingPage({super.key});
@@ -13,6 +14,7 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
   Duration workoutDuration = Duration.zero;
   final TextEditingController _calorieController = TextEditingController(); // Controller for calorie input
   final _formKey = GlobalKey<FormState>(); // Key for form validation
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance; // Firestore instance
 
   @override
   Widget build(BuildContext context) {
@@ -31,13 +33,11 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            // Timer Display
             Text(
               _formatDuration(workoutDuration),
               style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            // Workout Controls
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -67,10 +67,8 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
               ],
             ),
             const SizedBox(height: 40),
-
-            // Calorie Input Section
             Form(
-              key: _formKey, // Assign form key
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -87,7 +85,7 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                     ),
                     keyboardType: TextInputType.number,
                     inputFormatters: <TextInputFormatter>[
-                      FilteringTextInputFormatter.digitsOnly, // Restrict input to digits
+                      FilteringTextInputFormatter.digitsOnly,
                     ],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -100,36 +98,22 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                     },
                   ),
                   const SizedBox(height: 20),
-
-                  // Submit Button
                   ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Process calorie input
-                        final int calories = int.parse(_calorieController.text);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Calories logged: $calories')),
-                        );
-                      }
-                    },
+                    onPressed: _logWorkout,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                     ),
-                    child: const Text('Log Calories'),
+                    child: const Text('Log Workout'),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
-
-            // Calories Burned (Placeholder)
             const Text(
               'Calories Burned: 100',
               style: TextStyle(fontSize: 20),
             ),
             const SizedBox(height: 20),
-            // Workout Intensity (Placeholder)
             const Text(
               'Intensity: Moderate',
               style: TextStyle(fontSize: 20),
@@ -138,6 +122,31 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _logWorkout() async {
+    if (_formKey.currentState!.validate()) {
+      final int calories = int.parse(_calorieController.text);
+
+      // Save workout data to Firestore
+      await _firestore.collection('workouts').add({
+        'calories': calories,
+        'duration': workoutDuration.inSeconds,
+        'timestamp': Timestamp.now(),
+        'workoutType': 'Strength',
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Workout logged: $calories calories')),
+      );
+
+      // Clear input and reset state
+      _calorieController.clear();
+      setState(() {
+        workoutDuration = Duration.zero;
+        isWorkingOut = false;
+      });
+    }
   }
 
   String _formatDuration(Duration duration) {
