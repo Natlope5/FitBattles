@@ -104,20 +104,17 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              _buildHeader(),
-              // Build the header section
+              _buildHeader(), // Build the header section
               const SizedBox(height: 32),
-              _buildPointsSection(context),
-              // Build the points section
+              _buildPointsSection(context), // Build the points section
               const SizedBox(height: 32),
-              _buildChallengesContainer(context),
-              // Build the challenges container
+              _buildChallengesContainer(context), // Build the challenges container
               const SizedBox(height: 32),
-              _buildWorkoutContainer(context),
-              // Build the history container
+              _buildWorkoutContainer(context), // Build the workout container
               const SizedBox(height: 32),
-              _buildTopChallengedFriends(friends), // Pass the friends list
-              // Build the top challenged friends section
+              _buildHistoryContainer(context), // Build the workout container
+              const SizedBox(height: 32),
+              _buildTopChallengedFriends(friends), // Build the top challenged friends section
               const SizedBox(height: 32),
               Tooltip(
                 message: 'View your friends list',
@@ -280,6 +277,43 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  // Widget to build the History container
+  Widget _buildHistoryContainer(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      width: MediaQuery.of(context).size.width * 0.9, // Responsive width
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'History', // Section title
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          // Button to show/hide preloaded challenges
+          ElevatedButton(
+            onPressed: () {
+              // Navigate to the history page when button is pressed
+              Navigator.pushNamed(context, '/my_history');
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF85C83E),
+            ),
+            child: const Text('My History'), // Button text
+          ),
+          const SizedBox(height: 16),
+
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
   // Widget to build the list of preloaded challenges
   Widget _buildPreloadedChallengesList() {
     return ListView.builder(
@@ -320,22 +354,10 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
           // Workout tracking button
           _buildWorkoutTrackingButton(context),
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to the history page when button is pressed
-              Navigator.pushNamed(context, '/my_history');
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: const Color(0xFF85C83E),
-            ),
-            child: const Text('My History'), // Button text
-          ),
         ],
       ),
     );
   }
-
 
 // Widget to build the top challenged friends section
   Widget _buildTopChallengedFriends(List<Map<String, dynamic>> friends) {
