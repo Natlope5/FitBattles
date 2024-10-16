@@ -1,25 +1,29 @@
+import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore package
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart'; // Import animation package
+import 'package:fitbattles/l10n/app_localizations.dart'; // Import localization
 
 // This widget represents a page that displays the leaderboard.
 class LeaderboardPage extends StatelessWidget {
-  // Constructor for the LeaderboardPage
   const LeaderboardPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Access localized strings
+    final localizations = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Leaderboard'), // Title of the AppBar
+        title: Text(localizations.leaderboardTitle), // Title from strings
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh), // Refresh icon
             onPressed: () {
-              // Placeholder for refresh action
+              // Show SnackBar using localized string
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Leaderboard refreshed!'),
+                SnackBar(
+                  content: Text(localizations.leaderboardRefreshed),
                 ),
               );
             },
@@ -37,32 +41,46 @@ class LeaderboardPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return const Center(child: Text('Error loading leaderboard.'));
+            return Center(
+              child: Text(localizations.errorLoadingLeaderboard), // Error message
+            );
           }
+
           final leaderboardData = snapshot.data?.docs ?? []; // Retrieve leaderboard data
 
-          return leaderboardData.isNotEmpty // Check if there's data to display
+          return leaderboardData.isNotEmpty
               ? AnimationLimiter( // Wrap the ListView in AnimationLimiter
             child: ListView.builder(
               itemCount: leaderboardData.length,
               itemBuilder: (context, index) {
                 final player = leaderboardData[index];
+
+                // Use a default image if imageUrl is null or empty
+                String imageUrl = player['imageUrl'] ?? '';
+                if (imageUrl.isEmpty) {
+                  imageUrl = 'assets/default_avatar.png'; // Set default image
+                }
+
                 return AnimationConfiguration.staggeredList(
                   position: index,
                   duration: const Duration(milliseconds: 500), // Animation duration
                   child: FadeInAnimation(
                     child: Card( // Card for better visual representation
-                      margin: const EdgeInsets.all(8.0), // Margin around each card
+                      margin: const EdgeInsets.all(AppDimens.cardMargin), // Use dimension for margin
                       child: ListTile(
                         leading: CircleAvatar(
-                          backgroundImage: NetworkImage(player['imageUrl'] ?? ''), // Display user's image
-                          radius: 30, // Radius of the avatar
+                          backgroundImage: imageUrl.startsWith('http')
+                              ? NetworkImage(imageUrl) // Use network image if URL is valid
+                              : AssetImage(imageUrl) as ImageProvider, // Fallback to asset image
+                          radius: AppDimens.avatarRadius, // Use dimension for radius
                         ),
-                        title: Text(player['name']), // Display player's name
-                        subtitle: Text('Streak: ${player['streakDays']} days'), // Show streak info
+                        title: Text(player['name'] ?? 'Unknown'), // Display player's name, fallback if null
+                        subtitle: Text(
+                          '${localizations.streak}: ${player['streakDays'] ?? 0} ${localizations.days}', // Show streak info using localized string
+                        ),
                         trailing: Text(
-                          player['score'].toString(), // Display player's score
-                          style: const TextStyle(fontSize: 18), // Score styling
+                          player['score']?.toString() ?? '0', // Display player's score, fallback to 0
+                          style: const TextStyle(fontSize: AppDimens.scoreFontSize), // Use dimension for score font size
                         ),
                       ),
                     ),
@@ -71,10 +89,10 @@ class LeaderboardPage extends StatelessWidget {
               },
             ),
           )
-              : const Center( // Center widget for no data scenario
+              : Center( // Center widget for no data scenario
             child: Text(
-              'No leaderboard data available.', // Message when no data
-              style: TextStyle(fontSize: 24), // Style of the text
+              localizations.noLeaderboardData, // No data message
+              style: const TextStyle(fontSize: AppDimens.noDataFontSize), // Use dimension for no data font size
             ),
           );
         },
@@ -82,3 +100,5 @@ class LeaderboardPage extends StatelessWidget {
     );
   }
 }
+
+

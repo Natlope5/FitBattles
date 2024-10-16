@@ -1,33 +1,52 @@
-import 'package:logger/logger.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter/material.dart'; // Required for Flutter widgets
+import 'package:logger/logger.dart'; // For logging
+import 'package:permission_handler/permission_handler.dart'; // For managing permissions
+import 'app_strings.dart'; // Import your strings file
 
-final Logger logger = Logger(); // Initialize your logger
+final Logger logger = Logger(); // Initialize the logger
 
-Future<void> requestNotificationPermission() async {
-  // Requesting the notification permission
-  final status = await Permission.notification.request();
+class PermissionService {
+  /// Requests notification permission and handles the dialog if denied.
+  Future<PermissionStatus> requestNotificationPermission(VoidCallback onShowSettingsDialog) async {
+    final status = await Permission.notification.request();
 
-  if (status.isGranted) {
-    // Permission granted
-    logger.d('Notification permission granted');
-  } else if (status.isDenied) {
-    // Permission denied
-    logger.d('Notification permission denied');
-  } else if (status.isPermanentlyDenied) {
-    // The permission is permanently denied
-    logger.w('Notification permission permanently denied');
-    // Optionally, guide the user to settings to enable it
-    await _guideUserToSettings();
-  } else if (status.isRestricted) {
-    // The permission is restricted
-    logger.w('Notification permission is restricted');
-  } else {
-    logger.e('Unknown permission status: ${status.toString()}');
+    // Log the status of the permission request
+    logger.i("Notification permission status: ${status.toString()}");
+
+    if (status.isDenied || status.isPermanentlyDenied) {
+      // If permission is denied, call the callback to show the settings dialog
+      onShowSettingsDialog();
+    }
+
+    return status; // Return the status for further processing
   }
 }
 
-Future<void> _guideUserToSettings() async {
-  // Optionally, provide user guidance
-  logger.i('Opening app settings for notification permission...');
-  await openAppSettings(); // This opens the app settings
+/// Shows a dialog to guide the user to the app settings to enable permissions.
+void showGuideToSettingsDialog(BuildContext context) {
+  logger.i(AppStrings.openingAppSettings); // Log the action of opening settings
+
+  // Show a dialog to confirm before navigating to settings
+  showDialog<void>(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Permission Required'), // Dialog title
+        content: Text('This app requires notification permission to function properly. Would you like to open the settings?'), // Dialog content
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(), // User rejected
+            child: Text('Cancel'), // Cancel button
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              openAppSettings(); // This opens the app settings
+            },
+            child: Text('Open Settings'), // Open Settings button
+          ),
+        ],
+      );
+    },
+  );
 }

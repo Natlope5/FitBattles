@@ -1,10 +1,31 @@
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase authentication package
 import 'package:shared_preferences/shared_preferences.dart'; // Package for shared preferences to store user data
 import 'package:logger/logger.dart'; // Logger for logging errors and information
+import 'package:permission_handler/permission_handler.dart'; // Permission handler package
 
-class AuthService {
+class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance; // FirebaseAuth instance for authentication
   final Logger logger = Logger(); // Logger instance for logging
+
+  // Request camera and microphone permissions
+  Future<void> requestCameraAndMicrophonePermissions() async {
+    var cameraStatus = await Permission.camera.status;
+    var microphoneStatus = await Permission.microphone.status;
+
+    if (cameraStatus.isDenied) {
+      cameraStatus = await Permission.camera.request();
+    }
+
+    if (microphoneStatus.isDenied) {
+      microphoneStatus = await Permission.microphone.request();
+    }
+
+    if (cameraStatus.isGranted && microphoneStatus.isGranted) {
+      logger.i('Camera and microphone permissions granted.');
+    } else {
+      logger.e('Camera and microphone permissions are required to use this feature.');
+    }
+  }
 
   // Sign in with email and password
   Future<User?> signIn(String email, String password) async {
@@ -32,7 +53,7 @@ class AuthService {
       logger.i('User registered: ${userCredential.user?.email}'); // Log success
 
       // Send email verification if needed
-      if (!userCredential.user!.emailVerified) {
+      if (userCredential.user != null && !userCredential.user!.emailVerified) {
         await userCredential.user!.sendEmailVerification();
         logger.i('Verification email sent to ${userCredential.user!.email}');
       }
@@ -68,7 +89,7 @@ class AuthService {
       await prefs.setString('user_email', user.email ?? '');
       await prefs.setString('user_id', user.uid);
 
-      // Optional: Save session expiration time
+      // Save session expiration time
       await prefs.setInt('session_expiration', DateTime.now().add(Duration(hours: 1)).millisecondsSinceEpoch);
       logger.i('User session saved.');
     }

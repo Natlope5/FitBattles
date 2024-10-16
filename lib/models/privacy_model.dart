@@ -1,42 +1,39 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:logger/logger.dart'; // Import logger for logging errors
+import 'package:logger/logger.dart';
+import 'package:fitbattles/settings/app_strings.dart'; // Import your strings file
 
 class PrivacyModel {
   final String id;
-  final Logger logger = Logger(); // Initialize the logger instance
+  final Logger logger = Logger();
 
   PrivacyModel({required this.id}) {
     if (id.isEmpty) {
-      throw ArgumentError('User ID cannot be empty');
+      throw ArgumentError(AppStrings.userIdEmptyError);
     }
   }
 
-  // Fetch current privacy setting from Firestore
   Future<String> getPrivacySetting() async {
     try {
       var userDoc = await FirebaseFirestore.instance.collection('users').doc(id).get();
 
       if (userDoc.exists) {
-        return userDoc.data()?['privacy'] as String? ?? 'public'; // Return 'public' if no setting is found
+        return userDoc.data()?['privacy'] as String? ?? 'public';
       } else {
-        return 'public'; // Return 'public' if the document does not exist
+        return 'public';
       }
     } catch (e) {
-      // Handle any errors that occur during the fetch
-      logger.e('Error fetching privacy setting for user $id: $e');
-      return 'public'; // Return default value on error
+      logger.e('${AppStrings.privacyFetchError} for user $id: $e');
+      return 'public';
     }
   }
 
-  // Update the user's privacy setting in Firestore
   Future<void> updatePrivacySetting(String privacySetting) async {
     try {
       await FirebaseFirestore.instance.collection('users').doc(id).update({
         'privacy': privacySetting,
       });
-      logger.i('Privacy setting updated to $privacySetting for user $id');
+      logger.i('${AppStrings.privacySettingUpdated} to $privacySetting for user $id');
     } catch (e) {
-      // Handle any errors that occur during the update
       logger.e('Error updating privacy setting for user $id: $e');
     }
   }

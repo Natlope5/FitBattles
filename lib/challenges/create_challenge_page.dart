@@ -1,187 +1,260 @@
 import 'dart:io';
+
 import 'package:camera/camera.dart';
+import 'package:fitbattles/settings/app_colors.dart';
+import 'package:fitbattles/settings/app_dimens.dart';
+import 'package:fitbattles/settings/app_strings.dart';
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 class CreateChallengePage extends StatefulWidget {
-  final List<CameraDescription> cameras;
-  final List<String> friends;
-
-  const CreateChallengePage({
-    super.key,
-    required this.cameras,
-    required this.friends, required String friend,
-  });
+  const CreateChallengePage({super.key, required List<CameraDescription> cameras, required List friends, required String friend});
 
   @override
   CreateChallengePageState createState() => CreateChallengePageState();
 }
 
 class CreateChallengePageState extends State<CreateChallengePage> {
-  VideoPlayerController? videoPlayerController;
-  String? videoPath;
-  final formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController challengeNameController = TextEditingController();
   final TextEditingController challengeTypeController = TextEditingController();
   DateTime? startDate;
   DateTime? endDate;
+  String? videoPath; // Store the path of the selected video
+  VideoPlayerController? videoController;
   String? statusMessage;
-  List<String> participants = [];
-
-  final List<Challenge> preloadedChallenges = [
-    Challenge(id: '1', name: '10,000 Steps Challenge', description: 'Walk every day 1000 steps for 14 days!'),
-    Challenge(id: '2', name: 'Running Challenge', description: 'Run every day for 30 days'),
-    Challenge(id: '3', name: 'Healthy Eating Challenge', description: 'Eat healthy for 30 days.'),
-    Challenge(id: '4', name: '50 SitUps Challenge', description: 'Do 50 SitUps a day for 21 days.'),
-    Challenge(id: '5', name: '100 Squat Challenge', description: 'Do 100 squats a day for 30 days.'),
-  ];
+  List<String> selectedParticipants = [];
+  List<String> participants = ['Participant 1', 'Participant 2', 'Participant 3'];
 
   @override
   void dispose() {
-    videoPlayerController?.dispose();
     challengeNameController.dispose();
     challengeTypeController.dispose();
+    videoController?.dispose();
     super.dispose();
   }
 
-  Future<void> pickVideo() async {
-    final picker = ImagePicker();
-    final videoFile = await picker.pickVideo(source: ImageSource.gallery);
-
-    if (videoFile != null) {
-      setState(() {
-        videoPath = videoFile.path;
-      });
-
-      videoPlayerController = VideoPlayerController.file(File(videoPath!))
-        ..initialize().then((_) {
-          setState(() {});
-        });
-    }
-  }
-
   Future<void> selectDate(BuildContext context, bool isStartDate) async {
-    final picked = await showDatePicker(
+    final DateTime? pickedDate = await showDatePicker(
       context: context,
-      initialDate: isStartDate ? (startDate ?? DateTime.now()) : (endDate ?? DateTime.now()),
-      firstDate: DateTime.now(),
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
       lastDate: DateTime(2101),
     );
-
-    if (picked != null) {
+    if (pickedDate != null && pickedDate != (isStartDate ? startDate : endDate)) {
       setState(() {
         if (isStartDate) {
-          startDate = picked;
+          startDate = pickedDate;
         } else {
-          endDate = picked;
+          endDate = pickedDate;
         }
       });
     }
   }
 
-  Future<void> createChallenge() async {
-    if (formKey.currentState!.validate()) {
-      try {
-        final challengeData = {
-          'name': challengeNameController.text,
-          'type': challengeTypeController.text,
-          'startDate': startDate,
-          'endDate': endDate,
-          'participants': participants,
-          'videoPath': videoPath,
-        };
-
-        await FirebaseFirestore.instance.collection('challenges').add(challengeData);
-        setState(() {
-          statusMessage = 'Challenge created successfully!';
-        });
-      } catch (e) {
-        setState(() {
-          statusMessage = 'Error creating challenge: $e';
-        });
-      }
-    }
-  }
-
-  void _selectParticipant(String? value) {
-    if (value != null && !participants.contains(value)) {
-      setState(() {
-        participants.add(value);
-      });
-    }
-  }
-
-  void _showPreloadedChallenges() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Select a Challenge'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              itemCount: preloadedChallenges.length,
-              itemBuilder: (context, index) {
-                final challenge = preloadedChallenges[index];
-                return ListTile(
-                  title: Text(challenge.name, style: TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text(challenge.description),
-                  onTap: () {
-                    _notifyOpponent(challenge.name);
-                    Navigator.of(context).pop();
-                  },
-                );
-              },
-            ),
-          ),
-        );
+  Widget _buildTextInput(TextEditingController controller, String label, String errorMsg) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.white,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.accentColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.accentColor, width: 2.0),
+        ),
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return errorMsg;
+        }
+        return null;
       },
     );
   }
 
-  void _notifyOpponent(String challengeName) {
+  Widget _buildParticipantDropdown() {
+    return DropdownButtonFormField<String>(
+      decoration: InputDecoration(
+        labelText: AppStrings.participants,
+        filled: true,
+        fillColor: Colors.white,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.accentColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.accentColor, width: 2.0),
+        ),
+      ),
+      items: participants.map((String participant) {
+        return DropdownMenuItem<String>(
+          value: participant,
+          child: Text(participant),
+        );
+      }).toList(),
+      onChanged: (newValue) {
+        setState(() {
+          if (newValue != null && !selectedParticipants.contains(newValue)) {
+            selectedParticipants.add(newValue);
+          }
+        });
+      },
+    );
+  }
+
+  Widget _buildSelectedParticipantsChips() {
+    return Wrap(
+      spacing: 8.0,
+      children: selectedParticipants.map((participant) {
+        return Chip(
+          label: Text(participant),
+          onDeleted: () {
+            setState(() {
+              selectedParticipants.remove(participant);
+            });
+          },
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildDateRow(String label, DateTime? date, VoidCallback onPressed) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: TextStyle(color: Colors.white)),
+        ElevatedButton(
+          onPressed: onPressed,
+          child: Text(date != null ? DateFormat('yMMMd').format(date) : 'Select date'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> pickVideoFromCamera() async {
+    final cameras = await availableCameras();
+    final firstCamera = cameras.first;
+
+    // Perform navigation with a separate function
+    final path = await _navigateToCamera(firstCamera);
+
+    // Check if the returned path is not null
+    if (path != null) {
+      _handleVideoPath(path);
+    }
+  }
+
+// Method to navigate to the CameraPage
+  Future<String?> _navigateToCamera(CameraDescription camera) {
+    return Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (BuildContext context) => CameraPage(camera: camera),
+      ),
+    );
+  }
+
+// Handle the video path after navigation
+  void _handleVideoPath(String path) {
     setState(() {
-      statusMessage = 'Notified opponent about $challengeName!';
+      videoPath = path; // Update videoPath with the new path
+      videoController = VideoPlayerController.file(File(videoPath!))
+        ..initialize().then((_) {
+          // Refresh the UI after the controller is initialized
+          if (mounted) {
+            setState(() {}); // Refresh the UI
+          }
+        });
     });
+  }
+
+
+
+  Widget _buildVideoPickerButton() {
+    return ElevatedButton(
+      onPressed: pickVideoFromCamera,
+      child: Text('Pick a Video'),
+    );
+  }
+
+  Widget _buildVideoPlayer() {
+    if (videoController != null && videoController!.value.isInitialized) {
+      return AspectRatio(
+        aspectRatio: videoController!.value.aspectRatio,
+        child: VideoPlayer(videoController!),
+      );
+    } else {
+      return Container(
+        color: Colors.grey,
+        height: 200,
+        child: Center(child: Text('No video selected', style: TextStyle(color: Colors.white))),
+      );
+    }
+  }
+
+  Widget _buildNotifyOpponentsButton() {
+    return ElevatedButton(
+      onPressed: () {
+        // Notify opponents logic here
+      },
+      child: Text('Notify Opponents'),
+    );
+  }
+
+  Widget _buildCreateChallengeButton() {
+    return ElevatedButton(
+      onPressed: () {
+        if (formKey.currentState!.validate()) {
+          // Form submission logic here
+          setState(() {
+            statusMessage = 'Challenge created successfully!';
+          });
+        }
+      },
+      child: Text('Create Challenge'),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Your Own Challenge')),
+      appBar: AppBar(
+        title: Text('Create Your Own Challenge', style: Theme.of(context).textTheme.titleLarge),
+      ),
       body: Container(
-        color: const Color(0xFF5D6C8A),
-        padding: EdgeInsets.all(16.0),
+        color: AppColors.primaryColor,
+        padding: EdgeInsets.all(AppDimens.paddingLarge),
         child: SingleChildScrollView(
           child: Form(
             key: formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildTextInput(challengeNameController, 'Challenge Name', 'Please enter a challenge name'),
-                const SizedBox(height: 16),
-                _buildTextInput(challengeTypeController, 'Challenge Type', 'Please enter a challenge type'),
-                const SizedBox(height: 16),
-                _buildDateRow('Start Date', startDate, () => selectDate(context, true)),
-                const SizedBox(height: 16),
-                _buildDateRow('End Date', endDate, () => selectDate(context, false)),
-                const SizedBox(height: 16),
+                _buildTextInput(challengeNameController, AppStrings.challengeName, AppStrings.challengeNameError),
+                SizedBox(height: AppDimens.spacingMedium),
+                _buildTextInput(challengeTypeController, AppStrings.challengeType, AppStrings.challengeTypeError),
+                SizedBox(height: AppDimens.spacingMedium),
                 _buildParticipantDropdown(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppDimens.spacingMedium),
                 _buildSelectedParticipantsChips(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppDimens.spacingMedium),
+                _buildDateRow(AppStrings.startDate, startDate, () => selectDate(context, true)),
+                SizedBox(height: AppDimens.spacingMedium),
+                _buildDateRow(AppStrings.endDate, endDate, () => selectDate(context, false)),
+                SizedBox(height: AppDimens.spacingMedium),
                 _buildVideoPickerButton(),
-                const SizedBox(height: 16),
-                if (videoPath != null) _buildVideoPlayer(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppDimens.spacingMedium),
+                _buildVideoPlayer(),
+                SizedBox(height: AppDimens.spacingMedium),
                 _buildNotifyOpponentsButton(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppDimens.spacingMedium),
                 _buildCreateChallengeButton(),
-                const SizedBox(height: 16),
-                if (statusMessage != null) Text(statusMessage!, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                SizedBox(height: AppDimens.spacingMedium),
+                if (statusMessage != null)
+                  Text(statusMessage!, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
@@ -189,150 +262,94 @@ class CreateChallengePageState extends State<CreateChallengePage> {
       ),
     );
   }
-
-  Widget _buildTextInput(TextEditingController controller, String label, String errorMessage) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: const Color(0xFFE8F0FE),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return errorMessage;
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildDateRow(String label, DateTime? date, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 4,
-        child: Container(
-          padding: EdgeInsets.symmetric(vertical: 16.0),
-          decoration: BoxDecoration(
-            color: const Color(0xFFE8F0FE),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: Text(
-              date == null ? label : 'Selected: ${DateFormat('yyyy-MM-dd').format(date)}',
-              style: TextStyle(color: Colors.black54, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildParticipantDropdown() {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 4,
-      child: DropdownButtonFormField<String>(
-        value: null,
-        onChanged: _selectParticipant,
-        decoration: InputDecoration(
-          labelText: 'Participant',
-          filled: true,
-          fillColor: const Color(0xFFE8F0FE),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        items: widget.friends
-            .map((friend) => DropdownMenuItem(value: friend, child: Text(friend)))
-            .toList(),
-        validator: (value) {
-          if (value == null || participants.isEmpty) {
-            return 'Please select a participant';
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildSelectedParticipantsChips() {
-    return Wrap(
-      spacing: 8.0,
-      children: participants
-          .map((participant) => Chip(
-        label: Text(participant),
-        onDeleted: () {
-          setState(() {
-            participants.remove(participant);
-          });
-        },
-        backgroundColor: const Color(0xFF85C83E),
-        deleteIconColor: Colors.white,
-      ))
-          .toList(),
-    );
-  }
-
-  Widget _buildVideoPickerButton() {
-    return ElevatedButton(
-      onPressed: pickVideo,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF85C83E),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      ),
-      child: const Text('Pick Video', style: TextStyle(fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _buildVideoPlayer() {
-    return Column(
-      children: [
-        VideoPlayer(videoPlayerController!),
-        ElevatedButton(
-          onPressed: () {
-            videoPlayerController?.value.isPlaying == true
-                ? videoPlayerController?.pause()
-                : videoPlayerController?.play();
-          },
-          child: Icon(videoPlayerController?.value.isPlaying == true ? Icons.pause : Icons.play_arrow),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNotifyOpponentsButton() {
-    return ElevatedButton(
-      onPressed: _showPreloadedChallenges,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF85C83E),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      ),
-      child: const Text('Notify Opponents', style: TextStyle(fontWeight: FontWeight.bold)),
-    );
-  }
-
-  Widget _buildCreateChallengeButton() {
-    return ElevatedButton(
-      onPressed: createChallenge,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF85C83E),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      ),
-      child: const Text('Create Challenge', style: TextStyle(fontWeight: FontWeight.bold)),
-    );
-  }
 }
 
-class Challenge {
-  final String id;
-  final String name;
-  final String description;
+class CameraPage extends StatefulWidget {
+  final CameraDescription camera;
 
-  Challenge({required this.id, required this.name, required this.description});
+  const CameraPage({super.key, required this.camera});
+
+  // The getter will return a future list of available cameras
+  static Future<List<CameraDescription>> get cameras async => await availableCameras();
+
+  @override
+  CameraPageState createState() => CameraPageState();
+}
+
+class CameraPageState extends State<CameraPage> {
+  late CameraController _controller;
+  late Future<void> _initializeControllerFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = CameraController(
+      widget.camera,
+      ResolutionPreset.high,
+    );
+
+    _initializeControllerFuture = _controller.initialize();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _takeVideo() async {
+    try {
+      await _initializeControllerFuture;
+
+      // Start recording video
+      await _controller.startVideoRecording();
+
+      // Wait for the user to finish recording (you might want to adjust this)
+      await Future.delayed(const Duration(seconds: 10));
+
+      // Stop recording video
+      final videoPath = await _controller.stopVideoRecording();
+
+      // Check if the widget is still mounted before using context
+      if (!mounted) return;
+
+      // Return the video path to the previous screen
+      Navigator.pop(context, videoPath.path);
+    } catch (e) {
+      // Handle errors here
+      if (!mounted) return; // Check if the widget is still mounted
+      Navigator.pop(context); // Navigate back without returning a video path
+    }
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Record a Video'),
+      ),
+      body: FutureBuilder<void>(
+        future: _initializeControllerFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return Stack(
+              children: [
+                CameraPreview(_controller),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: ElevatedButton(
+                    onPressed: _takeVideo,
+                    child: const Text('Record Video'),
+                  ),
+                ),
+              ],
+            );
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
+      ),
+    );
+  }
 }

@@ -1,13 +1,15 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logger/logger.dart';
+import 'package:fitbattles/settings/app_strings.dart'; // Import your strings file
+import 'package:flutter/material.dart'; // Import this for BuildContext and navigatorKey
 
-class NotificationsHandler {
+class GoalNotificationsHandler {
   final FirebaseMessaging firebaseMessaging;
   final FlutterLocalNotificationsPlugin localNotificationsPlugin;
   final Logger loggerInstance;
 
-  NotificationsHandler({
+  GoalNotificationsHandler({
     required this.firebaseMessaging,
     required this.localNotificationsPlugin,
     required this.loggerInstance,
@@ -22,13 +24,13 @@ class NotificationsHandler {
   Future<void> showNotification(RemoteNotification notification) async {
     try {
       const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        'general_notifications_channel',
-        'General Notifications',
-        channelDescription: 'General notifications for the app',
+        'goal_notifications_channel',
+        AppStrings.goalNotificationChannel, // Use string from AppStrings
+        channelDescription: AppStrings.goalNotificationChannelDescription, // Use string from AppStrings
         importance: Importance.max,
         priority: Priority.high,
         showWhen: false,
-        sound: RawResourceAndroidNotificationSound('your_sound_file'), // Ensure this sound file exists
+        sound: RawResourceAndroidNotificationSound('sound'), // Correct sound file name
       );
 
       const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
@@ -38,18 +40,18 @@ class NotificationsHandler {
         notification.title,
         notification.body,
         platformChannelSpecifics,
-        payload: 'general_notification',
+        payload: 'goal_notification', // Adjust payload as needed
       );
 
-      loggerInstance.i('Notification displayed: ${notification.title}');
+      loggerInstance.i('${AppStrings.goalNotificationDisplayed} ${notification.title}'); // Use string from AppStrings
     } catch (e) {
-      loggerInstance.e('Error showing notification: $e');
+      loggerInstance.e('${AppStrings.errorShowingGoalNotification}: $e'); // Use string from AppStrings
     }
   }
 
   void _setupNotificationListeners() {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      loggerInstance.d('Notification tapped: ${message.data}');
+      loggerInstance.d('${AppStrings.notificationTapped} ${message.data}'); // Use string from AppStrings
       String? payload = message.data['payload'];
       if (payload != null) {
         handleNotificationAction(payload);
@@ -66,15 +68,15 @@ class NotificationsHandler {
   void handleNotificationAction(String payload) {
     if (payload == 'goal_completed') {
       loggerInstance.d('Navigating to goal completion details.');
-      // Implement navigation logic
+      // Implement navigation logic here
+      navigatorKey.currentState?.pushNamed('/goalDetails'); // Update with actual route
     }
   }
 
   static Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    // Initialize dependencies for background handler
     final localNotificationsPlugin = FlutterLocalNotificationsPlugin();
     final loggerInstance = Logger();
-    final notificationsHandler = NotificationsHandler(
+    final notificationsHandler = GoalNotificationsHandler(
       firebaseMessaging: FirebaseMessaging.instance,
       localNotificationsPlugin: localNotificationsPlugin,
       loggerInstance: loggerInstance,
@@ -84,16 +86,16 @@ class NotificationsHandler {
       if (message.notification != null) {
         await notificationsHandler.showNotification(message.notification!);
       }
-      loggerInstance.i('Background message handled: ${message.notification?.title}');
+      loggerInstance.i('${AppStrings.backgroundMessageHandled} ${message.notification?.title}'); // Use string from AppStrings
     } catch (e) {
-      loggerInstance.e('Error handling background message: $e');
+      loggerInstance.e('${AppStrings.errorShowingBackgroundMessage}: $e'); // Updated error message
     }
   }
 
   Future<void> _initializeNotifications() async {
     try {
       const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('@mipmap-hdpi/logo_image.png');
 
       const InitializationSettings initializationSettings =
       InitializationSettings(android: initializationSettingsAndroid);
@@ -101,10 +103,13 @@ class NotificationsHandler {
       await localNotificationsPlugin.initialize(initializationSettings);
       await firebaseMessaging.requestPermission();
 
-      loggerInstance.i('Notifications initialized successfully.');
+      loggerInstance.i(AppStrings.goalNotificationsInitializedSuccessfully); // Use string from AppStrings
     } catch (e) {
-      loggerInstance.e('Failed to initialize notifications: $e');
+      loggerInstance.e('${AppStrings.failedToInitializeGoalNotifications}: $e'); // Use string from AppStrings
     }
   }
 }
+
+// Ensure you define your navigatorKey in your main.dart or a relevant file
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 

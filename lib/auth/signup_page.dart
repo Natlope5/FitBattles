@@ -184,21 +184,28 @@ class _SignupPageState extends State<SignupPage> {
                         borderRadius: BorderRadius.circular(20.0), // Rounded corners for the button
                       ),
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.black) // Show loading indicator if loading
+                    child: _isLoading // Show loading indicator if loading
+                        ? const CircularProgressIndicator() // Circular loading indicator
                         : const Text('Sign Up'), // Button text
                   ),
                 ),
                 const SizedBox(height: 20),
-                // Already have an account? Link
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Navigate back to the previous page (LoginPage)
-                  },
-                  child: const Text(
-                    "Already have an account? Log In",
-                    style: TextStyle(color: Colors.white), // Style for the link
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center, // Center the row contents
+                  children: <Widget>[
+                    const Text("Already have an account? "), // Text prompt
+                    GestureDetector(
+                      onTap: () {
+                        // Navigate to login page (not implemented here)
+                      },
+                      child: const Text(
+                        'Log In',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold, // Bold text for link
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

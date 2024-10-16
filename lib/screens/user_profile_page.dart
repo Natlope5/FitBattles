@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../settings/app_dimens.dart';
+import '../settings/app_strings.dart';
 
 class UserProfilePage extends StatefulWidget {
   final String id;
@@ -11,9 +13,9 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class UserProfilePageState extends State<UserProfilePage> {
-  late String name = 'Loading...'; // Default loading text
+  late String name = AppStrings.loading; // Default loading text
   late String imageUrl = ''; // Default value
-  late String privacySetting = 'Loading...'; // Default loading text
+  late String privacySetting = AppStrings.loading; // Default loading text
   bool isLoading = true; // State to manage loading status
 
   @override
@@ -30,16 +32,16 @@ class UserProfilePageState extends State<UserProfilePage> {
           .get();
       if (userDoc.exists) {
         setState(() {
-          name = userDoc['name'] ?? 'No Name'; // Default value if name not found
+          name = userDoc['name'] ?? AppStrings.noName; // Default value if name not found
           imageUrl = userDoc['image'] ?? ''; // Default value if image not found
-          privacySetting = userDoc['privacy'] ?? 'public'; // Default privacy setting
+          privacySetting = userDoc['privacy'] ?? AppStrings.defaultPrivacy; // Default privacy setting
           isLoading = false; // Stop loading
         });
       } else {
-        _showErrorDialog('User profile not found.');
+        _showErrorDialog(AppStrings.userProfileNotFound);
       }
     } catch (e) {
-      _showErrorDialog('Failed to fetch user profile: $e');
+      _showErrorDialog('${AppStrings.failedToFetchProfile}: $e');
     }
   }
 
@@ -48,14 +50,14 @@ class UserProfilePageState extends State<UserProfilePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: const Text(AppStrings.error),
           content: Text(message),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child: const Text(AppStrings.ok),
             ),
           ],
         );
@@ -67,10 +69,10 @@ class UserProfilePageState extends State<UserProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('User Profile'),
+        title: const Text(AppStrings.userProfile),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(AppDimens.padding),
         child: isLoading
             ? const Center(child: CircularProgressIndicator()) // Show loading indicator
             : Column(
@@ -78,21 +80,21 @@ class UserProfilePageState extends State<UserProfilePage> {
           children: [
             if (imageUrl.isNotEmpty) ...[
               CircleAvatar(
-                radius: 50,
+                radius: AppDimens.avatarRadius,
                 backgroundImage: NetworkImage(imageUrl),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: AppDimens.spaceBetweenEntries),
             ],
-            Text('Name: $name', style: const TextStyle(fontSize: 20)),
-            const SizedBox(height: 10),
-            Text('Privacy Setting: $privacySetting', style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 20),
+            Text('${AppStrings.name}: $name', style: const TextStyle(fontSize: AppDimens.nameFontSize)),
+            const SizedBox(height: AppDimens.spaceBetweenEntries),
+            Text('${AppStrings.privacySetting}: $privacySetting', style: const TextStyle(fontSize: AppDimens.privacyFontSize)),
+            const SizedBox(height: AppDimens.spaceBetweenEntries),
             ElevatedButton(
               onPressed: () {
                 // Navigate to privacy settings or any other page if needed
                 Navigator.pushNamed(context, '/privacySettings', arguments: widget.id);
               },
-              child: const Text('Edit Privacy Settings'),
+              child: const Text(AppStrings.editPrivacySettings),
             ),
           ],
         ),

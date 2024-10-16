@@ -15,6 +15,7 @@ admin.initializeApp({
 
 app.use(bodyParser.json());
 
+// Route to send notifications
 app.post('/sendNotification', (req, res) => {
   const message = {
     notification: {
@@ -34,6 +35,36 @@ app.post('/sendNotification', (req, res) => {
     .catch((error) => {
       res.status(500).send(`Error sending notification: ${error}`);
     });
+});
+
+// Route to sign up a new user and create a Firestore document
+app.post('/signup', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Create user in Firebase Authentication
+    const userRecord = await admin.auth().createUser({
+      email: email,
+      password: password,
+    });
+
+    // Create user document in Firestore
+    const userDoc = {
+      email: email,
+      username: email.split('@')[0], // Default username from email
+      profileImageUrl: '', // Default or empty profile image URL
+      points: 0, // Initial points
+      friends: [], // Initial friends array
+      createdAt: new Date().toISOString(), // Timestamp
+    };
+
+    // Save user document to Firestore
+    await admin.firestore().collection('users').doc(userRecord.uid).set(userDoc);
+
+    res.status(201).send(`User created successfully: ${userRecord.uid}`);
+  } catch (error) {
+    res.status(500).send(`Error creating user: ${error}`);
+  }
 });
 
 app.listen(PORT, () => {

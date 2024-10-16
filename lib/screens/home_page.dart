@@ -7,6 +7,9 @@ import 'package:logger/logger.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
 import 'package:provider/provider.dart';
 
+import '../settings/app_colors.dart';
+import '../settings/app_strings.dart';
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
 
@@ -34,29 +37,32 @@ class _HomePageState extends State<HomePage> {
   ];
 
   Future<void> _pickAndUploadImage() async {
-    try {
-      final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      // Use a local variable to hold the selected image
+      final selectedImage = File(pickedFile.path);
+
+      // Check if the widget is still mounted before updating state
+      if (mounted) {
         setState(() {
-          _image = File(pickedFile.path); // Store the selected image
+          _image = selectedImage; // Store the selected image
         });
         logger.d('Image picked: ${pickedFile.path}');
-      } else {
-        logger.w('No image selected.');
       }
-    } catch (e) {
-      logger.e('Error picking image: $e');
+    } else {
+      logger.w('No image selected.');
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      backgroundColor: themeProvider.isDarkMode ? Colors.black : const Color(0xFF5D6C8A), // Background color based on theme
+      backgroundColor: themeProvider.isDarkMode ? AppColors.backgroundColorDark : AppColors.backgroundColorLight,
       appBar: AppBar(
-        title: const Text('Home'),
+        title: const Text(AppStrings.appName),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -438,6 +444,35 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
       ),
       child: const Text('Start Workout Tracking'),
+    );
+  }
+}
+class DetailsScreen extends StatelessWidget {
+  const DetailsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final Challenge challenge = ModalRoute.of(context)!.settings.arguments as Challenge;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(challenge.name), // Display challenge name in the app bar
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Type: ${challenge.type}', style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 10),
+            Text('Start Date: ${challenge.startDate.toLocal()}'),
+            const SizedBox(height: 5),
+            Text('End Date: ${challenge.endDate.toLocal()}'),
+            const SizedBox(height: 20),
+            // Add any additional information you want to show
+          ],
+        ),
+      ),
     );
   }
 }

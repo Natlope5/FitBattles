@@ -6,10 +6,13 @@ plugins {
 }
 
 android {
+    aaptOptions {
+        ignoreAssetsPattern "!*.svn:!*.git:!.ds_store:!*~"
+    }
     namespace = "com.example.fitbattles"    // Ensure this matches your actual package name
-    compileSdk = 34
+    compileSdk = 35
     // Use the correct SDK version (33 is common for modern Flutter projects)
-    ndkVersion '23.1.7779620'
+    ndkVersion '26.1.10909125'
     // Ensure this matches your NDK version or is needed for native code
 
     lintOptions {
@@ -19,8 +22,10 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17   // Set source compatibility to Java 17
-        targetCompatibility = JavaVersion.VERSION_17   // Set target compatibility to Java 17
+        sourceCompatibility = JavaVersion.VERSION_17  // Set source compatibility to Java 17
+        targetCompatibility = JavaVersion.VERSION_17 // Set target compatibility to Java 17
+        coreLibraryDesugaringEnabled true
+
     }
 
     kotlinOptions {
@@ -29,29 +34,36 @@ android {
     }
 
     defaultConfig {
+
+        multiDexEnabled true
         applicationId = "com.example.fitbattles"         // Application ID
         minSdkVersion 26
 
-        targetSdk = 34
+        targetSdk = 35
 
         versionCode = 1                                  // Use correct versionCode for versioning
-        versionName = "1.0.0"                            // Use correct versionName
-    }
+        versionName = "1.0.0"
 
-    buildTypes {
-        release {
-            // Enables code shrinking, obfuscation, and optimization for release builds
-            minifyEnabled true
-            // Enables resource shrinking, which removes unused resources
-            shrinkResources true
-            // Proguard rules file for code shrinking
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        packagingOptions {
+            doNotStrip '**/*.so'
+
+        }
+
+        buildTypes {
+            release {
+                // Enables code shrinking, obfuscation, and optimization for release builds
+                minifyEnabled true
+                // Enables resource shrinking, which removes unused resources
+                shrinkResources true
+                // Proguard rules file for code shrinking
+                proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            }
+        }
+        tasks.withType(JavaCompile) {
+            options.compilerArgs << "-Xlint:deprecation"
+            options.compilerArgs << "-Xlint:unchecked"
         }
     }
-    tasks.withType(JavaCompile) {
-        options.compilerArgs << "-Xlint:deprecation"
-    }
-}
     flutter {
         source = "../.."                                      // Flutter project source path
     }
@@ -67,7 +79,10 @@ android {
         implementation 'com.google.firebase:firebase-storage'     // Firebase Storage
         implementation 'com.google.firebase:firebase-messaging'   // Firebase Cloud Messaging
         implementation 'com.google.firebase:firebase-dynamic-links' // Firebase Dynamic Links
+        coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'  // Add this line
         implementation 'androidx.appcompat:appcompat:1.4.0'
+        implementation 'com.android.support:multidex:1.0.3'
         // Other dependencies
         // Add any other dependencies like Google Play services, HTTP, etc.
     }
+}

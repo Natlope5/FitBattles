@@ -1,16 +1,2 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--suppress ALL -->
 <resources>
-    <!-- Base application theme -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowBackground">@color/your_color_name</item>
-    </style>
-
-    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">@color/color_name</item>
-    </style>
-
-    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
-        <item name="android:windowBackground">#5D6C8A</item>
-    </style>
 </resources>

@@ -1,34 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:fitbattles/settings/app_colors.dart';
 
 class ThemeModel {
   // Light theme settings
   final ThemeData lightTheme = ThemeData(
-    primaryColor: Color(0xFF5D6C8A), // App bar color
-    scaffoldBackgroundColor: Color(0xFF5D6C8A), // Background color for the app
+    primaryColor: AppColors.appBarColor,
+    scaffoldBackgroundColor: AppColors.scaffoldBackgroundColor,
     buttonTheme: ButtonThemeData(
-      buttonColor: Color(0xFF85C83E), // Button background color
-      textTheme: ButtonTextTheme.primary, // Button text color (black)
+      buttonColor: AppColors.buttonBackgroundColor,
+      textTheme: ButtonTextTheme.primary,
     ),
     textTheme: TextTheme(
-      bodyLarge: TextStyle(color: Colors.black), // Body text color
-      bodyMedium: TextStyle(color: Colors.black), // Body text color
+      bodyLarge: TextStyle(color: Colors.black),
+      bodyMedium: TextStyle(color: Colors.black),
     ),
   );
 
   // Dark theme settings
   final ThemeData darkTheme = ThemeData(
-    scaffoldBackgroundColor: Colors.black, // Background color for dark mode
+    scaffoldBackgroundColor: Colors.black,
     appBarTheme: AppBarTheme(
-      backgroundColor: Colors.black, // App bar color in dark mode
+      backgroundColor: Colors.black,
     ),
-    cardColor: Color(0xFF5D6C8A), // Container background color
+    cardColor: AppColors.cardColor,
     buttonTheme: ButtonThemeData(
-      buttonColor: Color(0xFF85C83E), // Button background color in dark mode
-      textTheme: ButtonTextTheme.primary, // Button text color
+      buttonColor: AppColors.buttonBackgroundColor,
+      textTheme: ButtonTextTheme.primary,
     ),
     textTheme: TextTheme(
-      bodyLarge: TextStyle(color: Colors.white), // Body text color in dark mode
-      bodyMedium: TextStyle(color: Colors.white), // Body text color in dark mode
+      bodyLarge: TextStyle(color: Colors.white),
+      bodyMedium: TextStyle(color: Colors.white),
     ),
   );
 }

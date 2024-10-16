@@ -1,5 +1,6 @@
-<!--suppress AndroidDomInspection, AndroidDomInspection, XmlHighlighting, lHighlighting, lHighlighting, lHighlighting, lHighlighting, lHighlighting -->
+<!--suppress ALL -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.fitbattles">
 
     <!-- Permissions -->
@@ -10,6 +11,9 @@
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!-- Firebase Cloud Messaging permissions -->
     <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
@@ -20,7 +24,10 @@
 
         <!-- Firebase Messaging Service -->
         <service
-            android:name="com.google.firebase.messaging.FirebaseMessagingService">
+            android:name="com.google.firebase.messaging.FirebaseMessagingService"
+            android:exported="true"
+            tools:replace="android:exported"
+            tools:ignore="ExportedReceiver">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
@@ -28,17 +35,15 @@
 
         <!-- Handle notifications -->
         <receiver
-            android:name="com.dexterous.flutterlocalnotifications.receivers.ActionBroadcastReceiver" />
+            android:name="com.dexterous.flutterlocalnotifications.receivers.ActionBroadcastReceiver"
+            android:exported="false" />
 
         <receiver
-            android:name="com.dexterous.flutterlocalnotifications.receivers.NotificationBroadcastReceiver" />
-
-        <!-- Receive notification on boot -->
-        <receiver
-            android:name="com.dexterous.flutterlocalnotifications.receivers.BootBroadcastReceiver">
+            android:name="com.dexterous.flutterlocalnotifications.receivers.BootBroadcastReceiver"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
 

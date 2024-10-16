@@ -1,218 +1,247 @@
-import 'package:flutter/material.dart'; // Importing Flutter material package
-import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
-import 'package:logger/logger.dart'; // Importing Logger for error logging
-import 'package:fitbattles/screens/home_page.dart'; // Importing the home page to navigate after login
-import 'package:fitbattles/auth/session_manager.dart'; // Import your SessionManager
-import 'package:fitbattles/auth/signup_page.dart'; // Adjust the import path based on your project structure
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logger/logger.dart';
+import 'package:fitbattles/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:fitbattles/auth/session_manager.dart';
+import 'package:fitbattles/screens/home_page.dart';
+import 'package:fitbattles/auth/signup_page.dart';
+import 'package:fitbattles/l10n/custom_localization.dart';
 
-// Login page widget
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.title}); // Constructor with title parameter
-  final String title; // Title of the login page
+  const LoginPage({super.key, required this.title, required this.setLocale});
+
+  final String title;
+  final Function(Locale) setLocale;
 
   @override
-  State<LoginPage> createState() => _LoginPageState(); // State management for the login page
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-// State class for login page
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController(); // Controller for email input
-  final TextEditingController _passwordController = TextEditingController(); // Controller for password input
-  final Logger logger = Logger(); // Logger instance for logging errors
-  String? errorMessage; // Variable to hold error messages
-  final SessionManager _sessionManager = SessionManager(); // Instance of SessionManager
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final Logger logger = Logger();
+  final SessionManager _sessionManager = SessionManager();
 
-  // Method to authenticate user
-  Future<void> authenticateUser(String email, String password) async {
+  String _selectedLanguage = 'English'; // Default language
+  final Map<String, String> _languages = {
+    'English': 'en',
+    'Spanish': 'es',
+    'French': 'fr',
+    'German': 'de',
+    'Chinese': 'zh',
+  };
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedLanguage();
+  }
+
+  // Load the selected language from shared preferences
+  Future<void> _loadSelectedLanguage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? languageCode = prefs.getString('selectedLanguage');
+    if (languageCode != null) {
+      setState(() {
+        _selectedLanguage = _languages.keys.firstWhere(
+              (lang) => _languages[lang] == languageCode,
+          orElse: () => 'English',
+        );
+      });
+      widget.setLocale(Locale(languageCode)); // Set initial locale
+    }
+  }
+
+  // Change the language and save it in shared preferences
+  Future<void> _changeLanguage(String language, String languageCode) async {
+    setState(() {
+      _selectedLanguage = language;
+      widget.setLocale(Locale(languageCode));
+    });
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('selectedLanguage', languageCode);
+  }
+
+  // Authenticate user
+  Future<void> _loginUser(AppLocalizations appLocalizations) async {
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+    final customLocalizations = CustomLocalizations.of(context);
+
+    // Check for empty fields
     if (email.isEmpty || password.isEmpty) {
       setState(() {
-        errorMessage = 'Email and password cannot be empty.'; // Set error message for empty fields
+        errorMessage = customLocalizations?.emptyFieldsError;
       });
       return;
     }
 
     try {
-      // Attempt to sign in using Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-
-      // Retrieve user ID and email upon successful authentication
-      String uid = userCredential.user!.uid; // User ID
-      String userEmail = userCredential.user!.email!; // User email
-
-      // Store the user email in shared preferences using SessionManager
-      await _sessionManager.saveUserEmail(userEmail); // Call to SessionManager to handle session
-
-      // Clear error message and navigate to home page
-      errorMessage = null;
+      String uid = userCredential.user!.uid;
+      String userEmail = userCredential.user!.email!;
+      await _sessionManager.saveUserEmail(userEmail);
+      setState(() {
+        errorMessage = null; // Clear any previous error messages
+      });
       _navigateToHomePage(uid, userEmail);
     } on FirebaseAuthException catch (e) {
-      logger.e("Error code: ${e.code}, Message: ${e.message}"); // Log Firebase error
+      logger.e("Error code: ${e.code}, Message: ${e.message}");
       setState(() {
-        errorMessage = _getErrorMessage(e); // Set error message
+        errorMessage = _getErrorMessage(e, customLocalizations); // Ensure error messages are localized
       });
     } catch (e) {
-      logger.e("Unexpected error: $e"); // Log unexpected errors
+      logger.e("Unexpected error: $e");
       setState(() {
-        errorMessage = 'An unexpected error occurred: $e'; // Set generic error message
+        errorMessage = customLocalizations?.unexpectedError;
       });
     }
   }
 
-  // Method to navigate to the home page
+  // Navigate to the home page
   void _navigateToHomePage(String id, String email) {
-    if (!mounted) return; // Ensure widget is still mounted
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, uid: '',)), // Navigate to home page with user data
+      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, uid: id)), // Changed to uid
     );
   }
 
-  // Method to get error messages based on Firebase error codes
-  String _getErrorMessage(FirebaseAuthException e) {
+  // Get error messages based on Firebase error codes
+  String _getErrorMessage(FirebaseAuthException e, CustomLocalizations? customLocalizations) {
     switch (e.code) {
       case 'user-not-found':
-        return 'No user found for that email.'; // Error for no user found
+        return customLocalizations?.userNotFoundError ?? 'User not found';
       case 'wrong-password':
-        return 'Wrong password provided for that user.'; // Error for wrong password
+        return customLocalizations?.wrongPasswordError ?? 'Wrong password, please try again!';
       default:
-        return 'An error occurred. Please try again.'; // Default error message
+        return customLocalizations?.defaultError ?? 'An unknown error occurred';
     }
   }
 
-  // Method to handle password reset
-  Future<void> _resetPassword(String email) async {
-    if (email.isEmpty) {
-      setState(() {
-        errorMessage = 'You must enter an email address to receive the reset link.'; // Update error message for empty email
-      });
-      return; // Exit the method early
-    }
-
-    try {
-      // Send a password reset email
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      setState(() {
-        errorMessage = 'Password reset email sent! Please check your inbox.'; // Inform user about the email sent
-      });
-    } on FirebaseAuthException catch (e) {
-      logger.e("Error code: ${e.code}, Message: ${e.message}"); // Log Firebase error
-      setState(() {
-        errorMessage = _getErrorMessage(e); // Set error message
-      });
-    } catch (e) {
-      logger.e("Unexpected error: $e"); // Log unexpected errors
-      setState(() {
-        errorMessage = 'An unexpected error occurred: $e'; // Set generic error message
-      });
-    }
-  }
-
-  // Build method to render the login page UI
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = AppLocalizations.of(context);
+    final customLocalizations = CustomLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF5D6C8A), // App bar color
-        title: Text(widget.title), // Title of the app bar
+        title: Text(widget.title),
+        backgroundColor: const Color(0xFF5D6C8A),
       ),
       body: Container(
-        color: const Color(0xFF5D6C8A), // Background color for the login page
+        color: const Color(0xFF5D6C8A),
         child: Center(
-          child: SingleChildScrollView( // Enable scrolling for the content
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                const SizedBox(height: 0),
-                Image.asset( // Logo image for the app
-                  'assets/images/logo2.png',
-                  height: 250,
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
-                  child: TextField(
-                    controller: _emailController, // Controller for email input
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  // Logo
+                  Image.asset('assets/images/logo2.png', height: 250),
+                  const SizedBox(height: 20),
+
+                  // Language dropdown
+                  DropdownButton<String>(
+                    value: _selectedLanguage,
+                    items: _languages.keys.map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        // Get language code from the map
+                        String languageCode = _languages[newValue]!;
+                        _changeLanguage(newValue, languageCode);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Email field
+                  TextField(
+                    controller: _emailController,
                     decoration: InputDecoration(
-                      labelText: 'Email', // Label for email input
-                      fillColor: Colors.white, // Background color of input field
-                      filled: true, // Fill background color
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0), // Rounded corners for the input field
-                      ),
+                      labelText: appLocalizations.emailLabel,
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Password field
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: appLocalizations.passwordLabel,
+                      border: const OutlineInputBorder(),
+                      filled: true,
+                      fillColor: Colors.white,
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
-                  child: TextField(
-                    controller: _passwordController, // Controller for password input
-                    obscureText: true, // Hide password input
-                    decoration: InputDecoration(
-                      labelText: 'Password', // Label for password input
-                      fillColor: Colors.white, // Background color of input field
-                      filled: true, // Fill background color
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0), // Rounded corners for the input field
+                  const SizedBox(height: 20),
+
+                  // Login button
+                  ElevatedButton(
+                    onPressed: () => _loginUser(appLocalizations),
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: const Color(0xFF85C83E),
+                    ),
+                    child: Text(appLocalizations.loginButton),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Display error message if any
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red),
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    // Call authenticateUser without using context
-                    authenticateUser(_emailController.text, _passwordController.text);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF85C83E), // Button background color
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20), // Button padding
-                  ),
-                  child: const Text('Fitbattles'), // Button text
-                ),
-                const SizedBox(height: 20),
-                // Display error message if any
-                if (errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  const SizedBox(height: 20),
+
+                  // Link to sign up page
+                  TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SignupPage()),
+                      );
+                    },
                     child: Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Colors.red), // Error message style
+                      customLocalizations?.signupPrompt ?? 'Don’t have an account? Sign up!',
+                      style: const TextStyle(color: Colors.black),
                     ),
                   ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    // Call _resetPassword when clicked
-                    _resetPassword(_emailController.text);
-                  },
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(color: Colors.black), // Make text black
-                  ), // Forgot password prompt text
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    // Navigate to the Signup page
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignupPage()), // Ensure to use SignupPage
-                    );
-                  },
-                  child: const Text(
-                    'Don’t have an account? Sign up here.',
-                    style: TextStyle(color: Colors.black), // Make text black
-                  ), // Sign up prompt text
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

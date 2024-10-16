@@ -1,26 +1,38 @@
-// strength_progress_tracker.dart
+import 'package:fitbattles/settings/app_colors.dart';
+import 'package:fitbattles/settings/app_dimens.dart';
+import 'package:fitbattles/settings/app_strings.dart';
+import 'package:flutter/material.dart';
 
-/// Class representing a strength workout session with properties for repetitions, sets, and weight lifted.
-class StrengthWorkout {
-  final int reps; // The number of repetitions performed in each set.
-  final int sets; // The number of sets completed.
-  final double weight; // The weight used for the exercise, typically in kilograms or pounds.
 
-  /// Constructor for initializing the StrengthWorkout with required parameters.
-  /// Throws an ArgumentError if any parameter is invalid (non-positive).
-  StrengthWorkout({required this.reps, required this.sets, required this.weight}) :
-        assert(reps > 0, 'Reps must be a positive number.'),
-        assert(sets > 0, 'Sets must be a positive number.'),
-        assert(weight > 0, 'Weight must be a positive number.');
+class StrengthWorkoutPage extends StatelessWidget {
+  const StrengthWorkoutPage({super.key});
 
-  /// Method to calculate the total volume of the workout, which is the product of reps, sets, and weight.
-  double calculateVolume() {
-    return reps * sets * weight; // Returns the calculated volume.
-  }
-
-  /// Returns a string representation of the StrengthWorkout.
   @override
-  String toString() {
-    return 'StrengthWorkout(reps: $reps, sets: $sets, weight: $weight, volume: ${calculateVolume()})';
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppStrings.workoutTitle),
+        backgroundColor: AppColors.primaryColor,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(AppDimens.paddingMedium),
+        child: Column(
+          children: [
+            Text(AppStrings.workoutDescription, style: TextStyle(fontSize: AppDimens.fontSizeMedium)),
+            SizedBox(height: AppDimens.paddingLarge),
+            // Other UI components like input fields and buttons
+            ElevatedButton(
+              onPressed: () {
+                // Calculate volume logic
+              },
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, AppDimens.buttonHeight), backgroundColor: AppColors.accentColor,
+              ),
+              child: Text(AppStrings.calculateVolumeButton),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
