@@ -1,135 +1,242 @@
-import 'package:fitbattles/settings/app_colors.dart';
-import 'package:fitbattles/settings/app_dimens.dart';
-import 'package:fitbattles/settings/app_strings.dart';
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-/// A page that allows users to send a notification once they complete a fitness goal.
-/// It sends a push notification via Firebase Cloud Messaging (FCM) using the user's token.
+class AppColors {
+  static const Color primary = Color(0xFF5D6C8A);
+  static const Color buttonColor = Color(0xFF85C83E);
+  static const Color background = Color(0xFFEFEFEF);
+  static const Color zenTextColor = Color(0xFF6D8299);
+}
+
 class GoalCompletionPage extends StatefulWidget {
-  /// The FCM token of the user, used to target the notification.
-  final String userToken;
-
-  const GoalCompletionPage({super.key, required this.userToken});
+  const GoalCompletionPage({super.key, required String userToken});
 
   @override
   GoalCompletionPageState createState() => GoalCompletionPageState();
 }
 
 class GoalCompletionPageState extends State<GoalCompletionPage> {
-  bool _isSending = false; // Track if a notification is being sent
-  bool _isError = false;   // Track if an error occurred
-  String _errorMessage = ''; // Store the error message if any
+  final TextEditingController _goalNameController = TextEditingController();
+  final TextEditingController _goalAmountController = TextEditingController();
+  List<Map<String, dynamic>> _goalHistory = [];
 
-  /// Sends a notification to the user when they complete a fitness goal.
-  ///
-  /// This function makes an HTTP POST request to the server, including the FCM
-  /// token and other notification details in the request body. If the request is
-  /// successful, a success message is displayed; otherwise, an error message is shown.
-  Future<void> sendNotification() async {
-    setState(() {
-      _isSending = true;   // Show loading state
-      _isError = false;    // Reset error state before sending
-      _errorMessage = '';  // Clear previous error messages
-    });
+  // Predefined goal recommendations
+  final List<String> _recommendedGoals = [
+    "Run 5 kilometers",
+    "Drink 2 liters of water",
+    "Complete 10,000 steps",
+    "Lose 5 pounds",
+    "Strength training for 1 hour",
+  ];
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://10.0.0.30:3000/sendNotification'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'title': AppStrings.goalCompletionTitle,
-          'body': 'You have completed your fitness goal! Keep pushing forward!',
-          'payload': 'goal_completed',
-          'route': '/goalDetails', // Navigate to goal details in the app
-          'token': widget.userToken, // Use the user's FCM token
-        }),
-      );
+  // Inspirational quotes
+  final List<String> _quotes = [
+    "The journey of a thousand miles begins with one step.",
+    "Be the change you wish to see in the world.",
+    "Peace comes from within. Do not seek it without.",
+    "Every day is a new beginning.",
+    "Believe in yourself and all that you are.",
+  ];
 
-      // Check if the widget is still mounted before showing SnackBar
-      if (!mounted) return; // Early return if widget is not mounted
+  String _randomQuote = '';
 
-      if (response.statusCode == 200) {
-        // Notification sent successfully, show success SnackBar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.notificationSuccess)),
-        );
-      } else {
-        // If there's a server-side error, display the error message
-        setState(() {
-          _isError = true;
-          _errorMessage = '${AppStrings.notificationFailure} - ${response.body}';
-        });
-      }
-    } catch (e) {
-      // Handle any network errors or exceptions
-      if (mounted) {
-        setState(() {
-          _isError = true;
-          _errorMessage = '${AppStrings.errorOccurred}: $e';
-        });
-      }
-    } finally {
-      // Reset the loading state
-      if (mounted) {
-        setState(() {
-          _isSending = false;
-        });
-      }
+  @override
+  void initState() {
+    super.initState();
+    _loadGoalHistory(); // Load goal history on page load
+    _generateRandomQuote(); // Display a random quote on page load
+  }
+
+  // Save goals to local storage
+  Future<void> _saveGoalHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('goalHistory', jsonEncode(_goalHistory));
+  }
+
+  // Load goals from local storage
+  Future<void> _loadGoalHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedGoals = prefs.getString('goalHistory');
+    if (savedGoals != null) {
+      setState(() {
+        _goalHistory = List<Map<String, dynamic>>.from(jsonDecode(savedGoals));
+      });
     }
   }
 
+  // Clear goal history
+  Future<void> _clearGoalHistory() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('goalHistory');
+    setState(() {
+      _goalHistory.clear();
+    });
+  }
 
+  // Add a new goal
+  void _addGoal() {
+    final String goalName = _goalNameController.text;
+    final String goalAmount = _goalAmountController.text;
+    if (goalName.isNotEmpty && goalAmount.isNotEmpty) {
+      setState(() {
+        _goalHistory.add({
+          'name': goalName,
+          'amount': double.tryParse(goalAmount) ?? 0.0,
+        });
+        _goalNameController.clear();
+        _goalAmountController.clear();
+      });
+      _saveGoalHistory(); // Save updated goal history
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter both goal name and amount.')),
+      );
+    }
+  }
 
+  // Handle selecting a recommended goal
+  void _selectRecommendedGoal(String goal) {
+    _goalNameController.text = goal;
+  }
+
+  // Generate a random quote
+  void _generateRandomQuote() {
+    final random = Random();
+    setState(() {
+      _randomQuote = _quotes[random.nextInt(_quotes.length)];
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.goalCompletionTitle),
-        backgroundColor: AppColors.primary, // Use predefined color
+        title: const Text('Goal Completion'),
+        backgroundColor: AppColors.primary,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: _clearGoalHistory, // Clear the goal history
+          ),
+        ],
       ),
       body: Padding(
-        padding: EdgeInsets.all(AppDimens.pagePadding), // Use padding resource
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Message displayed when an error occurs
-              if (_isError)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
-                  child: Text(
-                    _errorMessage,
-                    style: TextStyle(color: Colors.red),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Inspirational quote section
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 20.0),
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(12.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withValues(), // Updated to use withValues
+                    spreadRadius: 3,
+                    blurRadius: 5,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const Text(
+                    'Zen Thought of the Day',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.zenTextColor,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    _randomQuote,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontStyle: FontStyle.italic,
+                      color: AppColors.zenTextColor,
+                    ),
                     textAlign: TextAlign.center,
                   ),
-                ),
+                ],
+              ),
+            ),
+            const Divider(),
 
-              // Show a loading indicator while sending the notification
-              if (_isSending)
-                const CircularProgressIndicator()
-              else
-                ElevatedButton(
-                  onPressed: sendNotification, // Send notification on button press
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.buttonColor, // Use button color resource
-                    padding: EdgeInsets.all(AppDimens.buttonPadding), // Use button padding resource
-                  ),
-                  child: const Text(AppStrings.sendNotificationButton), // Use string resource for button text
-                ),
+            // Goal recommendation section
+            const Text(
+              'Goal Recommendations',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: _recommendedGoals.map((goal) {
+                return ActionChip(
+                  label: Text(goal),
+                  onPressed: () => _selectRecommendedGoal(goal),
+                  backgroundColor: AppColors.buttonColor,
+                  labelStyle: const TextStyle(color: Colors.white),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            const Divider(),
+            const Text(
+              'Set a New Goal',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _goalNameController,
+              decoration: const InputDecoration(
+                labelText: 'Goal Name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _goalAmountController,
+              decoration: const InputDecoration(
+                labelText: 'Goal Amount',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _addGoal,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.buttonColor,
+                padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
+              ),
+              child: const Text('Add Goal'),
+            ),
+            const SizedBox(height: 20),
+            const Divider(),
 
-              const SizedBox(height: 20), // Add some space between button and retry message
-
-              // Option to retry sending notification if an error occurred
-              if (_isError)
-                TextButton(
-                  onPressed: sendNotification, // Retry sending the notification
-                  child: const Text(AppStrings.retryButton),
-                ),
-            ],
-          ),
+            // Goal history section
+            Expanded(
+              child: _goalHistory.isEmpty
+                  ? const Center(
+                child: Text('No goals set yet.'),
+              )
+                  : ListView.builder(
+                itemCount: _goalHistory.length,
+                itemBuilder: (context, index) {
+                  final goal = _goalHistory[index];
+                  return ListTile(
+                    title: Text(goal['name']),
+                    subtitle: Text('Goal Amount: ${goal['amount']}'),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'hydration_page.dart'; // Import the HydrationPage
+import 'package:fitbattles/screens/goals_completion.dart'; // Import the GoalsPage
 
 class MyHistoryPage extends StatefulWidget {
   const MyHistoryPage({super.key});
@@ -138,6 +139,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
       'Challenges Lost': 2,
       'Challenges Tied': 1,
       'Friends Involved': [], // This will be fetched on tap
+      'Goals': 'View your goals', // Add the Goals entry
     };
 
     return historyData.entries.map((entry) {
@@ -158,8 +160,8 @@ class MyHistoryPageState extends State<MyHistoryPage> {
             ),
           ),
           subtitle: Text(
-            entry.key == 'Friends Involved'
-                ? 'Tap to fetch friends data'
+            entry.key == 'Friends Involved' || entry.key == 'Goals'
+                ? 'Tap to view'
                 : '${entry.value}',
             style: const TextStyle(
               fontSize: 16,
@@ -182,6 +184,14 @@ class MyHistoryPageState extends State<MyHistoryPage> {
             } else if (entry.key == 'Friends Involved') {
               final friendsList = await _fetchFriendsData();
               _showDialog('Friends Involved', friendsList.join(', '));
+            } else if (entry.key == 'Goals') {
+              // Navigate to the GoalCompletionPage
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const GoalCompletionPage(userToken: 'abcd1234efgh5678'),
+                ),
+              );
             } else {
               final data = await _fetchData(entry.key);
               _showDialog(entry.key, data.toString());
@@ -209,6 +219,8 @@ class MyHistoryPageState extends State<MyHistoryPage> {
         return const Icon(Icons.sentiment_dissatisfied, color: Colors.grey);
       case 'Challenges Tied':
         return const Icon(Icons.thumbs_up_down, color: Colors.blueGrey);
+      case 'Goals':
+        return const Icon(Icons.flag, color: Colors.blueAccent); // Icon for Goals
       default:
         return const Icon(Icons.help_outline, color: Colors.teal);
     }

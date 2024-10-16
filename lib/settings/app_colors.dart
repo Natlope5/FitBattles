@@ -128,6 +128,7 @@ class AppColors {
 
 
 
+  static const Color background = Color(0xFFF0F4F8); // Light background color
 
 
 
