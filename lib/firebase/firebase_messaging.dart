@@ -25,7 +25,7 @@ Future<void> setupFirebaseMessaging() async {
 
     // Listen for messages while the app is in the foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      logger.i(AppStrings.foregroundMessageReceived, error: [message.notification?.title]);
+      logger.i('${AppStrings.foregroundMessageReceived}: ${message.notification?.title}');
       if (message.notification != null) {
         logger.i('Message data: ${message.data}');
       }
@@ -34,14 +34,14 @@ Future<void> setupFirebaseMessaging() async {
 
     // Listen for messages when the app is opened from a notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      logger.i(AppStrings.backgroundMessageOpened, error: [message.notification?.title]);
+      logger.i('${AppStrings.backgroundMessageOpened}: ${message.notification?.title}');
       handleMessage(message);
     });
 
     // Check if the app was opened from a notification
     RemoteMessage? initialMessage = await messaging.getInitialMessage();
     if (initialMessage != null) {
-      logger.i(AppStrings.appOpenedByNotification, error: [initialMessage.notification?.title]);
+      logger.i('${AppStrings.appOpenedByNotification}: ${initialMessage.notification?.title}');
       handleMessage(initialMessage);
     }
 
@@ -51,13 +51,13 @@ Future<void> setupFirebaseMessaging() async {
     // Call the function to update the leaderboard
     await _updateLeaderboard();
   } catch (e) {
-    logger.e(AppStrings.errorSettingUpMessaging, error: [e.toString()]);
+    logger.e('${AppStrings.errorSettingUpMessaging}: $e');
   }
 }
 
 // Function to handle incoming messages
 void handleMessage(RemoteMessage message) {
-  logger.i('${AppStrings.handlingMessage} ${message.data}');
+  logger.i('${AppStrings.handlingMessage}: ${message.data}');
 }
 
 // Function to set user history in Firestore

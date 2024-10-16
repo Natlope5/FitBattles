@@ -4,16 +4,15 @@ import 'package:intl/intl.dart';
 class AppLocalizations {
   final Locale locale;
 
-  static get delegate => AppLocalizations.delegate;
-
-
   AppLocalizations(this.locale);
+
+  static const LocalizationsDelegate<
+      AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   static AppLocalizations of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 
-  // Add this method to initialize messages based on locale
   static Future<void> initializeMessages(String localeName) async {
     switch (localeName) {
       case 'en':
@@ -36,7 +35,6 @@ class AppLocalizations {
     }
   }
 
-  // Define initialization for each locale
   static Future<void> initializeMessagesForLocaleEn() async {
     Intl.defaultLocale = 'en';
   }
@@ -57,7 +55,7 @@ class AppLocalizations {
     Intl.defaultLocale = 'zh';
   }
 
-  // Example of localized strings
+  // Example of localized strings for login errors
   String get loginFailedWithError {
     switch (locale.languageCode) {
       case 'es':
@@ -74,7 +72,125 @@ class AppLocalizations {
     }
   }
 
-// ========================
+  // ========================
+  // Streak and Leaderboard Related Strings
+  // ========================
+  String get streak {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Racha';
+      case 'fr':
+        return 'Série';
+      case 'de':
+        return 'Serie';
+      case 'zh':
+        return '连胜';
+      case 'en':
+      default:
+        return 'Streak';
+    }
+  }
+
+  String get days {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Días';
+      case 'fr':
+        return 'Jours';
+      case 'de':
+        return 'Tage';
+      case 'zh':
+        return '天';
+      case 'en':
+      default:
+        return 'Days';
+    }
+  }
+
+  String get noLeaderboardData {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'No hay datos de la tabla de líderes';
+      case 'fr':
+        return 'Pas de données de classement';
+      case 'de':
+        return 'Keine Ranglistendaten';
+      case 'zh':
+        return '没有排行榜数据';
+      case 'en':
+      default:
+        return 'No leaderboard data';
+    }
+  }
+
+  // ========================
+  // Newly Added Getters
+  // ========================
+  String get strengthWorkoutTitle {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Título del Entrenamiento de Fuerza';
+      case 'fr':
+        return 'Titre de l\'Entraînement de Force';
+      case 'de':
+        return 'Titel des Krafttrainings';
+      case 'zh':
+        return '力量训练标题';
+      case 'en':
+      default:
+        return 'Strength Workout Title';
+    }
+  }
+
+  String get strengthWorkoutDescription {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Descripción del Entrenamiento de Fuerza';
+      case 'fr':
+        return 'Description de l\'Entraînement de Force';
+      case 'de':
+        return 'Beschreibung des Krafttrainings';
+      case 'zh':
+        return '力量训练说明';
+      case 'en':
+      default:
+        return 'Strength Workout Description';
+    }
+  }
+
+  String get workoutStartedMessage {
+    switch (locale.languageCode) {
+      case 'es':
+        return '¡Entrenamiento Iniciado!';
+      case 'fr':
+        return 'Entraînement Commencé!';
+      case 'de':
+        return 'Training Gestartet!';
+      case 'zh':
+        return '训练开始了！';
+      case 'en':
+      default:
+        return 'Workout Started!';
+    }
+  }
+
+  String get startWorkoutButton {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Comenzar Entrenamiento';
+      case 'fr':
+        return 'Commencer l\'Entraînement';
+      case 'de':
+        return 'Training Starten';
+      case 'zh':
+        return '开始训练';
+      case 'en':
+      default:
+        return 'Start Workout';
+    }
+  }
+
+  // ========================
   // Theme Related Strings
   // ========================
   String get themeTitle {
@@ -129,7 +245,7 @@ class AppLocalizations {
   // App and Login Related Strings
   // ========================
   String get appTitle {
-    return 'FitBattles'; // Common title
+    return 'FitBattles';
   }
 
   String get emailLabel {
@@ -266,28 +382,47 @@ class AppLocalizations {
     }
   }
 
-  String get leaderboardRefreshed {
+  String get replacePlaceholder {
     switch (locale.languageCode) {
       case 'es':
-        return 'Tabla de líderes actualizada';
+        return 'Reemplazar marcador de posición';
       case 'fr':
-        return 'Classement actualisé';
+        return 'Remplacer le paramètre fictif';
       case 'de':
-        return 'Rangliste aktualisiert';
+        return 'Platzhalter ersetzen';
       case 'zh':
-        return '排行榜已更新';
+        return '替换占位符';
       case 'en':
       default:
-        return 'Leaderboard refreshed';
+        return 'Replace Placeholder';
     }
   }
 
+  String get strengthWorkoutChallengesTitle {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Desafíos de Entrenamiento de Fuerza';
+      case 'fr':
+        return 'Défis d\'Entraînement de Force';
+      case 'de':
+        return 'Krafttrainings-Herausforderungen';
+      case 'zh':
+        return '力量训练挑战';
+      case 'en':
+      default:
+        return 'Strength Workout Challenges';
+    }
+  }
+
+  // ========================
+  // Error Handling Strings
+  // ========================
   String get errorLoadingLeaderboard {
     switch (locale.languageCode) {
       case 'es':
         return 'Error al cargar la tabla de líderes';
       case 'fr':
-        return 'Erreur de chargement du classement';
+        return 'Erreur lors du chargement du classement';
       case 'de':
         return 'Fehler beim Laden der Rangliste';
       case 'zh':
@@ -298,169 +433,41 @@ class AppLocalizations {
     }
   }
 
-  // ========================
-  // Workout Related Strings
-  // ========================
-  String get strengthWorkoutTitle {
+  String get leaderboardRefreshed {
     switch (locale.languageCode) {
       case 'es':
-        return 'Entrenamiento de Fuerza';
+        return 'Tabla de líderes actualizada';
       case 'fr':
-        return 'Entraînement de Force';
+        return 'Classement mis à jour';
       case 'de':
-        return 'Krafttraining';
+        return 'Rangliste aktualisiert';
       case 'zh':
-        return '力量训练';
+        return '排行榜已刷新';
       case 'en':
       default:
-        return 'Strength Workout';
+        return 'Leaderboard refreshed';
     }
   }
 
-  String get strengthWorkoutDescription {
-    switch (locale.languageCode) {
-      case 'es':
-        return 'Participa en desafíos de entrenamiento de fuerza y mejora tus habilidades.';
-      case 'fr':
-        return 'Participez à des défis d\'entraînement de force et améliorez vos compétences.';
-      case 'de':
-        return 'Nehmen Sie an Krafttraining-Herausforderungen teil und verbessern Sie Ihre Fähigkeiten.';
-      case 'zh':
-        return '参与力量训练挑战，提升你的技能。';
-      case 'en':
-      default:
-        return 'Join strength workout challenges and improve your skills.';
-    }
+  String? get emptyFieldsError => null;
+
+  String? get unexpectedError => null;
+}
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  bool isSupported(Locale locale) {
+    return ['en', 'es', 'fr', 'de', 'zh'].contains(locale.languageCode);
   }
 
-  String get workoutStartedMessage {
-    switch (locale.languageCode) {
-      case 'es':
-        return 'El entrenamiento ha comenzado. ¡Buena suerte!';
-      case 'fr':
-        return 'L\'entraînement a commencé. Bonne chance!';
-      case 'de':
-        return 'Das Training hat begonnen. Viel Glück!';
-      case 'zh':
-        return '训练已开始。祝你好运！';
-      case 'en':
-      default:
-        return 'The workout has started. Good luck!';
-    }
+  @override
+  Future<AppLocalizations> load(Locale locale) async {
+    final localizations = AppLocalizations(locale);
+    await AppLocalizations.initializeMessages(locale.languageCode);
+    return localizations;
   }
 
-  String get startWorkoutButton {
-    switch (locale.languageCode) {
-      case 'es':
-        return 'Iniciar Entrenamiento';
-      case 'fr':
-        return 'Commencer l\'Entraînement';
-      case 'de':
-        return 'Training Starten';
-      case 'zh':
-        return '开始训练';
-      case 'en':
-      default:
-        return 'Start Workout';
-    }
-  }
-
-  String get signupLink {
-    switch (locale.languageCode) {
-      case 'es':
-        return '¿No tienes una cuenta? ¡Regístrate aquí!';
-      case 'fr':
-        return 'Vous n\'avez pas de compte ? Inscrivez-vous ici!';
-      case 'de':
-        return 'Haben Sie kein Konto? Melden Sie sich hier an!';
-      case 'zh':
-        return '没有帐户？在这里注册！';
-      case 'en':
-      default:
-        return 'Don\'t have an account? Sign up here!';
-    }
-  }
-
-  String streak(int days) {
-    switch (locale.languageCode) {
-      case 'es':
-        return 'Racha de $days días';
-      case 'fr':
-        return 'Série de $days jours';
-      case 'de':
-        return '$days-Tage-Serie';
-      case 'zh':
-        return '$days 天的连胜纪录';
-      case 'en':
-      default:
-        return '$days-day streak';
-    }
-  }
-
-
-  String strengthWorkoutChallengesTitle(String workoutType) {
-    switch (locale.languageCode) {
-      case 'es':
-        return 'Desafíos de entrenamiento de fuerza: $workoutType';
-      case 'fr':
-        return 'Défis d\'entraînement de force : $workoutType';
-      case 'de':
-        return 'Krafttrainingsherausforderungen: $workoutType';
-      case 'zh':
-        return '力量训练挑战: $workoutType';
-      case 'en':
-      default:
-        return 'Strength Workout Challenges: $workoutType';
-    }
-  }
-
-  String get noLeaderboardData {
-    switch (locale.languageCode) {
-      case 'es':
-        return 'No hay datos disponibles en la tabla de clasificación.';
-      case 'fr':
-        return 'Aucune donnée disponible sur le classement.';
-      case 'de':
-        return 'Keine Daten auf der Bestenliste verfügbar.';
-      case 'zh':
-        return '排行榜上没有可用的数据。';
-      case 'en':
-      default:
-        return 'No leaderboard data available.';
-    }
-  }
-
-
-  String get days {
-    switch (locale.languageCode) {
-      case 'es':
-        return 'días';
-      case 'fr':
-        return 'jours';
-      case 'de':
-        return 'Tage';
-      case 'zh':
-        return '天';
-      case 'en':
-      default:
-        return 'days';
-    }
-  }
-
-
-  String replacePlaceholder(String placeholder) {
-    switch (locale.languageCode) {
-      case 'es':
-        return 'Reemplazar {placeholder}';
-      case 'fr':
-        return 'Remplacer {placeholder}';
-      case 'de':
-        return 'Ersetzen {placeholder}';
-      case 'zh':
-        return '替换 {placeholder}';
-      case 'en':
-      default:
-        return 'Replace {placeholder}';
-    }
-  }
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
 }

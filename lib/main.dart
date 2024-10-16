@@ -3,7 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
 import 'package:fitbattles/challenges/strength_workout_page.dart';
-import 'package:fitbattles/firebase/firebase_notifications_handler.dart';
 import 'package:fitbattles/screens/friends_list_page.dart';
 import 'package:fitbattles/screens/home_page.dart';
 import 'package:fitbattles/screens/my_history.dart';
@@ -15,10 +14,9 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-
-import 'challenges/create_challenge_page.dart';
-import 'challenges/leaderboard_page.dart';
-import 'auth/login_page.dart'; // Correct the import for auth-related files
+import 'package:fitbattles/challenges/create_challenge_page.dart';
+import 'package:fitbattles/challenges/leaderboard_page.dart';
+import 'package:fitbattles/auth/login_page.dart'; // Correct the import for auth-related files
 
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -43,7 +41,6 @@ class MyApp extends StatelessWidget {
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,
-            AppLocalizationsDelegate(), // Remove `const` here
           ],
           supportedLocales: const [
             Locale('en', ''),
@@ -77,7 +74,57 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AppLocalizationsDelegate {
+class NotificationsHandler {
+  final FlutterLocalNotificationsPlugin localNotificationsPlugin;
+
+  NotificationsHandler({required this.localNotificationsPlugin});
+
+  Future<void> initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('your_image'); // Ensure app_icon exists in drawable
+
+    final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await localNotificationsPlugin.initialize(initializationSettings);
+
+    // Handle foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _showNotification(message);
+    });
+
+    // Handle background messages
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
+
+  Future<void> _showNotification(RemoteMessage message) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'your_channel_id', // Your channel ID
+      'your_channel_name', // Your channel name
+      channelDescription: 'your_channel_description',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
+
+    await localNotificationsPlugin.show(
+      0,
+      message.notification?.title ?? 'Default Title', // Default Title if null
+      message.notification?.body ?? 'Default Body',   // Default Body if null
+      platformChannelSpecifics,
+      payload: message.data['payload'] ?? '', // Handle payload safely
+    );
+  }
+
+  static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    await Firebase.initializeApp();
+    // Handle background notification data here if needed
+  }
 }
 
 void main() async {
@@ -87,11 +134,8 @@ void main() async {
   await Firebase.initializeApp();
 
   // Initialize NotificationsHandler with proper values
-  final notificationsHandler = NotificationsHandler(
-    firebaseMessaging as GlobalKey<NavigatorState>, // Pass initialized instance
-    localNotificationsPlugin: localNotificationsPlugin, // Pass initialized instance
-    loggerInstance: logger, firebaseMessaging: null, // Pass initialized instance
-  );
+  final notificationsHandler = NotificationsHandler(localNotificationsPlugin: localNotificationsPlugin);
+  await notificationsHandler.initializeNotifications();
 
   runApp(
     ChangeNotifierProvider(

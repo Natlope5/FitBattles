@@ -2,7 +2,9 @@ import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore package
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart'; // Import animation package
-import 'package:fitbattles/l10n/app_localizations.dart'; // Import localization
+import 'package:fitbattles/l10n/app_localizations.dart';
+
+
 
 // This widget represents a page that displays the leaderboard.
 class LeaderboardPage extends StatelessWidget {

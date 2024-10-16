@@ -25,7 +25,7 @@ class StrengthWorkoutPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              localizations.strengthWorkoutChallengesTitle as String, // Use localized challenges title
+              localizations.strengthWorkoutChallengesTitle, // Use localized challenges title
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
