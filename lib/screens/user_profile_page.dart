@@ -4,9 +4,9 @@ import '../settings/app_dimens.dart';
 import '../settings/app_strings.dart';
 
 class UserProfilePage extends StatefulWidget {
-  final String id;
+  final String heading;
 
-  const UserProfilePage({super.key, required this.id});
+  const UserProfilePage({super.key, required this.heading});
 
   @override
   UserProfilePageState createState() => UserProfilePageState();
@@ -28,7 +28,7 @@ class UserProfilePageState extends State<UserProfilePage> {
     try {
       DocumentSnapshot userDoc = await FirebaseFirestore.instance
           .collection('users')
-          .doc(widget.id)
+          .doc(widget.heading)
           .get();
       if (userDoc.exists) {
         setState(() {
@@ -92,7 +92,7 @@ class UserProfilePageState extends State<UserProfilePage> {
             ElevatedButton(
               onPressed: () {
                 // Navigate to privacy settings or any other page if needed
-                Navigator.pushNamed(context, '/privacySettings', arguments: widget.id);
+                Navigator.pushNamed(context, '/privacySettings', arguments: widget.heading);
               },
               child: const Text(AppStrings.editPrivacySettings),
             ),

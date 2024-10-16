@@ -16,6 +16,8 @@ class SettingsPage extends StatefulWidget {
 }
 
 class SettingsPageState extends State<SettingsPage> {
+  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+  GlobalKey<ScaffoldMessengerState>(); // Step 1: Create a GlobalKey
   bool _shareData = false;
   bool _receiveNotifications = true;
   bool _receiveChallengeNotifications = true;
@@ -23,7 +25,13 @@ class SettingsPageState extends State<SettingsPage> {
   String _selectedLanguage = 'English';
 
   // Languages: Added more options including Chinese, Italian, and German
-  final List<String> _languages = ['English', 'Spanish', 'French', 'Chinese', 'German'];
+  final List<String> _languages = [
+    'English',
+    'Spanish',
+    'French',
+    'Chinese',
+    'German'
+  ];
 
   @override
   void initState() {
@@ -36,7 +44,8 @@ class SettingsPageState extends State<SettingsPage> {
     setState(() {
       _shareData = prefs.getBool('shareData') ?? false;
       _receiveNotifications = prefs.getBool('receiveNotifications') ?? true;
-      _receiveChallengeNotifications = prefs.getBool('receiveChallengeNotifications') ?? true;
+      _receiveChallengeNotifications =
+          prefs.getBool('receiveChallengeNotifications') ?? true;
       _dailyReminder = prefs.getBool('dailyReminder') ?? false;
       _selectedLanguage = prefs.getString('selectedLanguage') ?? 'English';
 
@@ -52,166 +61,169 @@ class SettingsPageState extends State<SettingsPage> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     AppTheme selectedTheme = themeProvider.selectedTheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(AppStrings.settings),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppDimens.padding),
-        children: [
-          Text(AppStrings.selectTheme, style: const TextStyle(fontSize: AppDimens.sectionTitleFontSize)),
-          ListTile(
-            title: Text(
-              AppStrings.lightTheme,
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
+    return ScaffoldMessenger(
+      key: scaffoldMessengerKey, // Step 2: Use the GlobalKey here
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            AppStrings.settings,
+            style: TextStyle(
+              color: isDarkTheme ? Colors.white : Colors.black,
+            ),
+          ),
+          backgroundColor: isDarkTheme ? Colors.black : AppColors.appBarColor,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(AppDimens.padding),
+          children: [
+            Text(
+              AppStrings.selectTheme,
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white // White in dark mode
-                    : Colors.white, // Black in light mode
+                fontSize: AppDimens.sectionTitleFontSize,
+                color: isDarkTheme ? Colors.white : Colors.black,
               ),
             ),
-            leading: Radio<AppTheme>(
-              value: AppTheme.light,
-              groupValue: selectedTheme,
-              onChanged: (AppTheme? value) {
-                if (value != null) {
-                  themeProvider.toggleTheme();
-                  _showMessage(AppStrings.lightThemeSelected);
-                }
+            ListTile(
+              title: Text(
+                AppStrings.lightTheme,
+                style: TextStyle(
+                  color: isDarkTheme ? Colors.white : Colors.black,
+                ),
+              ),
+              leading: Radio<AppTheme>(
+                value: AppTheme.light,
+                groupValue: selectedTheme,
+                onChanged: (AppTheme? value) {
+                  if (value != null) {
+                    themeProvider.toggleTheme();
+                    _showMessage(AppStrings.lightThemeSelected);
+                  }
+                },
+              ),
+            ),
+            ListTile(
+              title: Text(
+                AppStrings.darkTheme,
+                style: TextStyle(
+                  color: isDarkTheme ? Colors.white : Colors.black,
+                ),
+              ),
+              leading: Radio<AppTheme>(
+                value: AppTheme.dark,
+                groupValue: selectedTheme,
+                onChanged: (AppTheme? value) {
+                  if (value != null) {
+                    themeProvider.toggleTheme();
+                    _showMessage(AppStrings.darkThemeSelected);
+                  }
+                },
+              ),
+            ),
+            // Switch tiles for settings like notifications and reminders
+            _buildSwitchTile(
+              title: AppStrings.shareData,
+              subtitle: AppStrings.shareDataDesc,
+              value: _shareData,
+              onChanged: (bool newValue) {
+                setState(() {
+                  _shareData = newValue;
+                });
               },
             ),
-          ),
-          ListTile(
-            title: Text(
-              AppStrings.darkTheme,
-              style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white // White in dark mode
-                    : Colors.black, // Black in light mode
-              ),
-            ),
-            leading: Radio<AppTheme>(
-              value: AppTheme.dark,
-              groupValue: selectedTheme,
-              onChanged: (AppTheme? value) {
-                if (value != null) {
-                  themeProvider.toggleTheme();
-                  _showMessage(AppStrings.darkThemeSelected);
-                }
+            _buildSwitchTile(
+              title: AppStrings.receiveNotifications,
+              subtitle: AppStrings.receiveNotificationsDesc,
+              value: _receiveNotifications,
+              onChanged: (bool newValue) {
+                setState(() {
+                  _receiveNotifications = newValue;
+                });
               },
             ),
-          ),
-
-          // Switch tiles for settings like notifications and reminders
-          _buildSwitchTile(
-            title: AppStrings.shareData,
-            subtitle: AppStrings.shareDataDesc,
-            value: _shareData,
-            onChanged: (bool newValue) {
-              setState(() {
-                _shareData = newValue;
-              });
-            },
-          ),
-          _buildSwitchTile(
-            title: AppStrings.receiveNotifications,
-            subtitle: AppStrings.receiveNotificationsDesc,
-            value: _receiveNotifications,
-            onChanged: (bool newValue) {
-              setState(() {
-                _receiveNotifications = newValue;
-              });
-            },
-          ),
-          _buildSwitchTile(
-            title: 'Receive Challenge Notifications',
-            subtitle: 'Get notified about new challenges.',
-            value: _receiveChallengeNotifications,
-            onChanged: (bool newValue) {
-              setState(() {
-                _receiveChallengeNotifications = newValue;
-              });
-            },
-          ),
-          _buildSwitchTile(
-            title: 'Daily Reminder',
-            subtitle: 'Receive a daily reminder for your tasks.',
-            value: _dailyReminder,
-            onChanged: (bool newValue) {
-              setState(() {
-                _dailyReminder = newValue;
-              });
-            },
-          ),
-
-          // DropdownButton for language selection
-          ListTile(
-            title: Text(
-              'Select Language',
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodyLarge!.color,
-              ),
+            _buildSwitchTile(
+              title: 'Receive Challenge Notifications',
+              subtitle: 'Get notified about new challenges.',
+              value: _receiveChallengeNotifications,
+              onChanged: (bool newValue) {
+                setState(() {
+                  _receiveChallengeNotifications = newValue;
+                });
+              },
             ),
-            trailing: DropdownButton<String>(
-              value: _selectedLanguage,
-              dropdownColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.black // Black background for dropdown in dark mode
-                  : Theme.of(context).cardColor, // Default color in light mode
-              style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white // White text in dark mode
-                    : Colors.black, // Black text in light mode
+            _buildSwitchTile(
+              title: 'Daily Reminder',
+              subtitle: 'Receive a daily reminder for your tasks.',
+              value: _dailyReminder,
+              onChanged: (bool newValue) {
+                setState(() {
+                  _dailyReminder = newValue;
+                });
+              },
+            ),
+            // DropdownButton for language selection
+            ListTile(
+              title: Text(
+                'Select Language',
+                style: TextStyle(
+                  color: isDarkTheme ? Colors.white : Colors.black,
+                ),
               ),
-              iconEnabledColor: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white // White button in dark mode
-                  : Colors.black, // Default (black) button in light mode
-              items: _languages.map<DropdownMenuItem<String>>((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(
-                    value,
-                    style: TextStyle(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white // White text in dark mode
-                          : Colors.black, // Black text in light mode
+              trailing: DropdownButton<String>(
+                value: _selectedLanguage,
+                dropdownColor: isDarkTheme ? Colors.black : Colors.white,
+                style: TextStyle(
+                  color: isDarkTheme ? Colors.white : Colors.black,
+                ),
+                iconEnabledColor: isDarkTheme ? Colors.white : Colors.black,
+                items: _languages.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: isDarkTheme ? Colors.white : Colors.black,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                if (newValue != null) {
-                  setState(() {
-                    _selectedLanguage = newValue;
-                  });
-                }
-              },
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedLanguage = newValue;
+                    });
+                  }
+                },
+              ),
             ),
-          ),
-
-          const SizedBox(height: AppDimens.spaceBetweenEntries),
-          ElevatedButton(
-            onPressed: _saveSettings,
-            style: ElevatedButton.styleFrom(
-              foregroundColor: AppColors.textColor,
-              backgroundColor: AppColors.buttonColor,
+            const SizedBox(height: AppDimens.spaceBetweenEntries),
+            ElevatedButton(
+              onPressed: _saveSettings,
+              style: ElevatedButton.styleFrom(
+                foregroundColor: isDarkTheme ? Colors.white : Colors.black,
+                backgroundColor:
+                isDarkTheme ? Colors.black : AppColors.appBarColor,
+              ),
+              child: const Text(
+                AppStrings.saveSettings,
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
-            child: const Text(
-              AppStrings.saveSettings,
-              style: TextStyle(fontWeight: FontWeight.bold),
+            const SizedBox(height: AppDimens.spaceBetweenEntries),
+            ElevatedButton(
+              onPressed: _logOut,
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: Colors.red,
+              ),
+              child: const Text(
+                'Log Out',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
-          ),
-          const SizedBox(height: AppDimens.spaceBetweenEntries),
-          ElevatedButton(
-            onPressed: _logOut,
-            style: ElevatedButton.styleFrom(
-              foregroundColor: AppColors.textColor,
-              backgroundColor: Colors.red, // Log out button should stand out
-            ),
-            child: const Text(
-              'Log Out',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -222,12 +234,26 @@ class SettingsPageState extends State<SettingsPage> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppDimens.cardRadius)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppDimens.cardRadius)),
       elevation: AppDimens.cardElevation,
+      color: isDarkTheme ? Colors.black : Colors.white,
       child: SwitchListTile(
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle, style: const TextStyle(color: AppColors.textColor)),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isDarkTheme ? Colors.white : Colors.black,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            color: isDarkTheme ? Colors.white : Colors.black,
+          ),
+        ),
         value: value,
         onChanged: onChanged,
         activeColor: AppColors.switchActiveColor,
@@ -239,36 +265,39 @@ class SettingsPageState extends State<SettingsPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('shareData', _shareData);
     await prefs.setBool('receiveNotifications', _receiveNotifications);
-    await prefs.setBool('receiveChallengeNotifications', _receiveChallengeNotifications);
+    await prefs.setBool(
+        'receiveChallengeNotifications', _receiveChallengeNotifications);
     await prefs.setBool('dailyReminder', _dailyReminder);
     await prefs.setString('selectedLanguage', _selectedLanguage);
 
-    final message = '${AppStrings.settingsSaved}:\n'
-        '${AppStrings.shareData}: $_shareData\n'
-        '${AppStrings.receiveNotifications}: $_receiveNotifications\n'
-        'Receive Challenge Notifications: $_receiveChallengeNotifications\n'
-        'Daily Reminder: $_dailyReminder\n'
-        'Selected Language: $_selectedLanguage';
-    _showMessage(message);
+    _showMessage(AppStrings.settingsSaved);
   }
 
   Future<void> _logOut() async {
-    try {
-      await FirebaseAuth.instance.signOut();
+    await FirebaseAuth.instance.signOut();
 
-      // Ensure Navigator operations happen after the sign-out
-      if (!mounted) return;
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      const SnackBar(content: Text('Logging out...')),
+    );
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => LoginPage(title: 'Login', setLocale: (locale) {})), // Redirect to login page
-      );
-    } catch (e) {
-      _showMessage('Error during log out: $e');
-    }
+    // Delay navigation to allow the user to see the message
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Navigate to the LoginPage and clear the navigation stack
+    Navigator.of(scaffoldMessengerKey.currentContext!).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (context) => LoginPage(
+          title: '',
+          setLocale: (locale) {},
+        ),
+      ),
+          (Route<dynamic> route) => false,
+    );
   }
 
+
   void _showMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
+    scaffoldMessengerKey.currentState?.showSnackBar(
       SnackBar(content: Text(message)),
     );
   }

@@ -1,3 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fitbattles/challenges/challenge.dart';
 import 'package:fitbattles/settings/theme_provider.dart';
 import 'package:flutter/material.dart';
@@ -37,22 +40,37 @@ class _HomePageState extends State<HomePage> {
   ];
 
   Future<void> _pickAndUploadImage() async {
+    // Picking an image from the gallery
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
-      // Use a local variable to hold the selected image
-      final selectedImage = File(pickedFile.path);
+      // Update the state with the selected image
+      setState(() {
+        _image = File(pickedFile.path);
+      });
 
-      // Check if the widget is still mounted before updating state
-      if (mounted) {
-        setState(() {
-          _image = selectedImage; // Store the selected image
-        });
-        logger.d('Image picked: ${pickedFile.path}');
+      try {
+        // Upload the image to Firebase Storage
+        final storageRef = FirebaseStorage.instance.ref();
+        final userId = FirebaseAuth.instance.currentUser!.uid;
+        final imageRef = storageRef.child('profile_images/$userId.jpg');
+
+        await imageRef.putFile(_image!); // Upload the image
+
+        // Get the download URL of the uploaded image
+        String downloadURL = await imageRef.getDownloadURL();
+
+        // Save the download URL in Firestore under the user's profile
+        await FirebaseFirestore.instance.collection('users').doc(userId).update(
+            {
+              'photoURL': downloadURL,
+            });
+      } catch (e) {
+        // Log any errors during the upload
+        logger.e("Error uploading image: $e");
       }
-    } else {
-      logger.w('No image selected.');
     }
   }
+
 
 
   @override
@@ -174,7 +192,7 @@ class _HomePageState extends State<HomePage> {
                     streakDays: 350,
                     totalChallengesCompleted: 0,
                     pointsEarnedToday: 0,
-                    bestDayPoints: 0,
+                    bestDayPoints: 0, userId: '',
                   ),
                 ),
               );

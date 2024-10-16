@@ -31,3 +31,4 @@ class EarnedPointsAwardsSection extends StatelessWidget {
     );
   }
 }
+

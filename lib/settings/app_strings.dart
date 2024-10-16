@@ -129,7 +129,6 @@ class AppStrings {
   static const String invalidDistanceMessage = "Invalid distance entered. Please try again.";
 
 
-
   static const String localizedErrorTrackingFailed = 'Error tracking localization. Please try again.';
   static const String localizedErrorInitializing = 'Error initializing localization. Please check permissions.';
 
@@ -203,7 +202,6 @@ class AppStrings {
   static const String hintExample = 'e.g. 0.5';
   static const String cancel = 'Cancel';
   static const String add = 'Add';
-
 
 
   static const String myHistory = 'My History';
@@ -384,5 +382,15 @@ class AppStrings {
   static const String receiveNotificationsDesc = 'Receive notifications about app updates, reminders, and friend activities.';
 
 
+  static const String receiveChallengeNotifications = 'Receive Challenge Notifications';
+  static const String receiveChallengeNotificationsDesc = 'Get notified about new challenges.';
 
+  static var dailyReminder = 'Daily Reminder';
+  static var dailyReminderDesc = 'Receive a daily reminder for your tasks.';
+
+  static var selectedLanguage = 'Select Language'; // Default value
+  static var selectedLanguageDesc = 'Choose your preferred language.'; // You can modify this description as needed
+  static const String retryButton = 'Retry';  // New definition for the retry button
+// Example of existing variables
 }
+

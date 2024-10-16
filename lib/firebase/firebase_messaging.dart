@@ -131,9 +131,30 @@ Future<void> _updateLeaderboard() async {
   }
 }
 
-// Sample functions to fetch actual data (implement these)
 Future<int> getPointsWon() async {
-  return 150; // Replace with actual logic to fetch points
+  try {
+    final snapshot = await FirebaseFirestore.instance.collection('users').doc('user_id').get(); // Replace 'user_id' with the actual user ID
+    if (snapshot.exists) {
+      return snapshot.data()?['points'] ?? 0; // Fetch points from the user's document
+    }
+  } catch (e) {
+    // Handle error (you can log the error or return a default value)
+    logger.e("Error fetching points: $e");
+  }
+  return 0; // Default value if fetching fails
+}
+
+Future<List<String>> getAwards() async {
+  try {
+    final snapshot = await FirebaseFirestore.instance.collection('users').doc('user_id').get(); // Replace 'user_id' with the actual user ID
+    if (snapshot.exists) {
+      return List<String>.from(snapshot.data()?['awards'] ?? []); // Fetch awards list from the user's document
+    }
+  } catch (e) {
+    // Handle error
+    logger.i("Error fetching awards: $e");
+  }
+  return []; // Return an empty list if fetching fails
 }
 
 Future<int> getCaloriesLost() async {
@@ -141,7 +162,22 @@ Future<int> getCaloriesLost() async {
 }
 
 Future<double> getWaterIntake() async {
-  return 2.5; // Replace with actual logic to fetch water intake
+  try {
+    DocumentSnapshot snapshot = await FirebaseFirestore.instance
+        .collection('history')
+        .doc('water_intake')
+        .get();
+
+    if (snapshot.exists) {
+      return (snapshot.data() as Map<String, dynamic>)['intake']?.toDouble() ?? 0.0;
+    } else {
+      return 0.0; // Default if no intake is recorded
+    }
+  } catch (e) {
+    // Handle error (e.g., log error)
+    logger.d("Error fetching water intake: $e");
+    return 0.0; // Return default on error
+  }
 }
 
 Future<int> getWorkoutSessions() async {

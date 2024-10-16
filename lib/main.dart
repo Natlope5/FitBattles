@@ -7,6 +7,7 @@ import 'package:fitbattles/screens/friends_list_page.dart';
 import 'package:fitbattles/screens/home_page.dart';
 import 'package:fitbattles/screens/my_history.dart';
 import 'package:fitbattles/screens/settings_page.dart';
+import 'package:fitbattles/screens/user_profile_page.dart';
 import 'package:fitbattles/settings/theme_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,6 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
   final List<CameraDescription> cameras;
-
   const MyApp({super.key, required this.cameras});
 
   @override
@@ -52,6 +52,7 @@ class MyApp extends StatelessWidget {
           initialRoute: '/login',
           routes: {
             '/login': (context) => LoginPage(title: '', setLocale: (locale) {}),
+            '/userProfile': (context) => UserProfilePage(heading: 'Profile',),
             '/home': (context) => HomePage(id: '', email: '', uid: ''),
             '/friendsSearch': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
@@ -60,7 +61,7 @@ class MyApp extends StatelessWidget {
               streakDays: 360,
               totalChallengesCompleted: 0,
               pointsEarnedToday: 0,
-              bestDayPoints: 0,
+              bestDayPoints: 0, userId: '',
             ),
             '/distanceWorkout': (context) => const DistanceWorkoutPage(),
             '/strengthWorkout': (context) => const StrengthWorkoutPage(),

@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
               streakDays: 360,
               totalChallengesCompleted: 0,
               pointsEarnedToday: 0,
-              bestDayPoints: 0,
+              bestDayPoints: 0, userId: '',
             ),
             '/distanceWorkout': (context) => const DistanceWorkoutPage(),
             '/strengthWorkout': (context) => const StrengthWorkoutPage(),

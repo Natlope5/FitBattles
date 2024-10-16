@@ -4,8 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore packa
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart'; // Import animation package
 import 'package:fitbattles/l10n/app_localizations.dart';
 
-
-
 // This widget represents a page that displays the leaderboard.
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});
@@ -102,5 +100,3 @@ class LeaderboardPage extends StatelessWidget {
     );
   }
 }
-
-

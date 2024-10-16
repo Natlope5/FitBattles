@@ -2,6 +2,7 @@ import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:fitbattles/settings/app_strings.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 // Stats section widget for the EarnedPointsPage
 class EarnedPointsStatsSection extends StatelessWidget {
@@ -69,4 +70,39 @@ class EarnedPointsStatsSection extends StatelessWidget {
       ],
     );
   }
+
+  // Function to fetch stats from Firestore
+  static Future<EarnedPointsStats> fetchStats(String userId) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+
+    if (snapshot.exists) {
+      final data = snapshot.data();
+      return EarnedPointsStats(
+        totalChallengesCompleted: data?['totalChallengesCompleted'] ?? 0,
+        pointsEarnedToday: data?['pointsEarnedToday'] ?? 0,
+        bestDayPoints: data?['bestDayPoints'] ?? 0,
+        streakDays: data?['streakDays'] ?? 0,
+      );
+    } else {
+      return EarnedPointsStats(); // Return default stats if user does not exist
+    }
+  }
+}
+
+// Class to hold stats data
+class EarnedPointsStats {
+  final int totalChallengesCompleted;
+  final int pointsEarnedToday;
+  final int bestDayPoints;
+  final int streakDays;
+
+  EarnedPointsStats({
+    this.totalChallengesCompleted = 0,
+    this.pointsEarnedToday = 0,
+    this.bestDayPoints = 0,
+    this.streakDays = 0,
+  });
 }
