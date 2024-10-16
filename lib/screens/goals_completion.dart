@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,6 +19,7 @@ class GoalCompletionPage extends StatefulWidget {
 class GoalCompletionPageState extends State<GoalCompletionPage> {
   final TextEditingController _goalNameController = TextEditingController();
   final TextEditingController _goalAmountController = TextEditingController();
+  final TextEditingController _currentProgressController = TextEditingController();
   List<Map<String, dynamic>> _goalHistory = [];
 
   // Predefined goal recommendations
@@ -31,22 +31,10 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
     "Strength training for 1 hour",
   ];
 
-  // Inspirational quotes
-  final List<String> _quotes = [
-    "The journey of a thousand miles begins with one step.",
-    "Be the change you wish to see in the world.",
-    "Peace comes from within. Do not seek it without.",
-    "Every day is a new beginning.",
-    "Believe in yourself and all that you are.",
-  ];
-
-  String _randomQuote = '';
-
   @override
   void initState() {
     super.initState();
     _loadGoalHistory(); // Load goal history on page load
-    _generateRandomQuote(); // Display a random quote on page load
   }
 
   // Save goals to local storage
@@ -84,9 +72,11 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
         _goalHistory.add({
           'name': goalName,
           'amount': double.tryParse(goalAmount) ?? 0.0,
+          'currentProgress': 0.0, // Initialize current progress
         });
         _goalNameController.clear();
         _goalAmountController.clear();
+        _currentProgressController.clear(); // Clear progress controller
       });
       _saveGoalHistory(); // Save updated goal history
     } else {
@@ -96,17 +86,20 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
     }
   }
 
-  // Handle selecting a recommended goal
-  void _selectRecommendedGoal(String goal) {
-    _goalNameController.text = goal;
-  }
-
-  // Generate a random quote
-  void _generateRandomQuote() {
-    final random = Random();
+  // Update progress for a specific goal
+  void _updateProgress(int index) {
+    final currentProgress = double.tryParse(_currentProgressController.text) ?? 0.0;
     setState(() {
-      _randomQuote = _quotes[random.nextInt(_quotes.length)];
+      if (currentProgress + _goalHistory[index]['currentProgress'] <= _goalHistory[index]['amount']) {
+        _goalHistory[index]['currentProgress'] += currentProgress;
+        _currentProgressController.clear(); // Clear input after updating
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Progress exceeds goal amount.')),
+        );
+      }
     });
+    _saveGoalHistory(); // Save updated goal history
   }
 
   @override
@@ -122,70 +115,12 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView( // Make the entire content scrollable
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, // Align items to the start
           children: [
-            // Inspirational quote section
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 20.0),
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: AppColors.background,
-                borderRadius: BorderRadius.circular(12.0),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withValues(), // Updated to use withValues
-                    spreadRadius: 3,
-                    blurRadius: 5,
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  const Text(
-                    'Zen Thought of the Day',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.zenTextColor,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    _randomQuote,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontStyle: FontStyle.italic,
-                      color: AppColors.zenTextColor,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-            const Divider(),
-
-            // Goal recommendation section
-            const Text(
-              'Goal Recommendations',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 8.0,
-              children: _recommendedGoals.map((goal) {
-                return ActionChip(
-                  label: Text(goal),
-                  onPressed: () => _selectRecommendedGoal(goal),
-                  backgroundColor: AppColors.buttonColor,
-                  labelStyle: const TextStyle(color: Colors.white),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            const Divider(),
+            // Set a New Goal section
             const Text(
               'Set a New Goal',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -207,6 +142,15 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
               ),
               keyboardType: TextInputType.number,
             ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _currentProgressController,
+              decoration: const InputDecoration(
+                labelText: 'Current Progress',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.number,
+            ),
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _addGoal,
@@ -219,22 +163,64 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
             const SizedBox(height: 20),
             const Divider(),
 
+            // Goal recommendation section
+            const Text(
+              'Goal Recommendations',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 8.0,
+              children: _recommendedGoals.map((goal) {
+                return ActionChip(
+                  label: Text(goal),
+                  onPressed: () => _goalNameController.text = goal,
+                  backgroundColor: AppColors.buttonColor,
+                  labelStyle: const TextStyle(color: Colors.white),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            const Divider(),
+
             // Goal history section
-            Expanded(
-              child: _goalHistory.isEmpty
-                  ? const Center(
-                child: Text('No goals set yet.'),
-              )
-                  : ListView.builder(
-                itemCount: _goalHistory.length,
-                itemBuilder: (context, index) {
-                  final goal = _goalHistory[index];
-                  return ListTile(
+            const Text(
+              'Goal Achievements',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            _goalHistory.isEmpty
+                ? const Center(child: Text('No goals set yet.'))
+                : ListView.builder(
+              shrinkWrap: true, // To prevent overflow
+              physics: const NeverScrollableScrollPhysics(), // Disable scrolling for inner list
+              itemCount: _goalHistory.length,
+              itemBuilder: (context, index) {
+                final goal = _goalHistory[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: ListTile(
                     title: Text(goal['name']),
                     subtitle: Text('Goal Amount: ${goal['amount']}'),
-                  );
-                },
-              ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text('Progress: ${goal['currentProgress'].toStringAsFixed(1)} / ${goal['amount']}'),
+                        SizedBox(
+                          height: 10,
+                          child: LinearProgressIndicator(
+                            value: goal['currentProgress'] / goal['amount'],
+                            backgroundColor: Colors.grey[300],
+                            color: AppColors.buttonColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    onTap: () => _updateProgress(index), // Update progress on tap
+                  ),
+                );
+              },
             ),
           ],
         ),
