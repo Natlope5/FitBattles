@@ -9,7 +9,7 @@ import 'package:fitbattles/screens/home_page.dart';
 import 'package:fitbattles/screens/my_history.dart';
 import 'package:fitbattles/screens/settings_page.dart';
 import 'package:fitbattles/screens/user_profile_page.dart';
-import 'package:fitbattles/settings/theme_provider.dart'; // ThemeProvider import
+import 'package:fitbattles/settings/theme_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -18,8 +18,8 @@ import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:fitbattles/challenges/create_challenge_page.dart';
 import 'package:fitbattles/challenges/leaderboard_page.dart';
-import 'package:fitbattles/auth/login_page.dart'; // Correct the import for auth-related files
-import 'package:fitbattles/screens/workout_tracking_page.dart';
+import 'package:fitbattles/auth/login_page.dart';
+
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
 final Logger logger = Logger();
@@ -37,7 +37,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           navigatorKey: navigatorKey,
           title: 'FitBattles',
-          theme: themeProvider.currentTheme, // Theme controlled by ThemeProvider
+          theme: themeProvider.currentTheme,
           localizationsDelegates: [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,

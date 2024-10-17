@@ -1,24 +1,24 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin" // Flutter plugin
-    id 'com.google.gms.google-services'    // Google services plugin
+    id "dev.flutter.flutter-gradle-plugin"
+    id 'com.google.gms.google-services'
 }
 
 android {
     aaptOptions {
         ignoreAssetsPattern "!*.svn:!*.git:!.ds_store:!*~"
     }
-    namespace = "com.example.fitbattles"    // Ensure this matches your actual package name
-    compileSdk = 35  // Setting to SDK 33 for compatibility with Flutter
+    namespace = "com.example.fitbattles"
+    compileSdk = 35
 
-    ndkVersion '26.1.10909125'  // NDK version (update if necessary)
+    ndkVersion '26.1.10909125'
 
-    lintOptions {
-        warningsAsErrors true               // Treat warnings as errors
-        abortOnError false                  // Continue build even if there are lint errors
-        lintConfig file("lint.xml")          // Specify lint configuration file if available
-    }
+//    lintOptions {
+//        warningsAsErrors true               // Treat warnings as errors
+//        abortOnError false                  // Continue build even if there are lint errors
+//        lintConfig file("lint.xml")          // Specify lint configuration file if available
+//    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17  // Java 17 compatibility
@@ -27,40 +27,40 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "17"  // Kotlin JVM target version 17
+        jvmTarget = "17"
     }
 
     defaultConfig {
         multiDexEnabled true
-        applicationId = "com.example.fitbattles"         // Application ID
-        minSdkVersion 26                                 // Minimum SDK version
-        targetSdkVersion 35                             // Target SDK version
+        applicationId = "com.example.fitbattles"
+        minSdkVersion 26
+        targetSdkVersion 35
 
-        versionCode = 1                                  // Version code
-        versionName = "1.0.0"                            // Version name
+        versionCode = 1
+        versionName = "1.0.0"
 
         packagingOptions {
             doNotStrip '**/*.so'
         }
     }
 
-    signingConfigs {
-        release {
-            storeFile file("C:/Users/Natalie/upload-keystore.jks")
-            storePassword "android"  // Replace with actual keystore password
-            keyAlias "upload"        // Alias from your keystore
-            keyPassword "android"    // Replace with actual key password
-        }
-    }
+//    signingConfigs {
+//        release {
+//            storeFile file("C:/Users/Natalie/upload-keystore.jks")
+//            storePassword "android"  // Replace with actual keystore password
+//            keyAlias "upload"        // Alias from your keystore
+//            keyPassword "android"    // Replace with actual key password
+//        }
+//    }
 
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-            minifyEnabled false             // Code shrinking, obfuscation, and optimization
-            shrinkResources false           // Resource shrinking
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
+//    buildTypes {
+//        release {
+//            signingConfig signingConfigs.release
+//            minifyEnabled false             // Code shrinking, obfuscation, and optimization
+//            shrinkResources false           // Resource shrinking
+//            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+//        }
+//   }
 
     tasks.withType(JavaCompile) {
         options.compilerArgs << "-Xlint:deprecation"
@@ -89,6 +89,4 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.4.0'              // AndroidX AppCompat
     implementation 'androidx.multidex:multidex:2.0.1'                // Multidex support
     implementation "androidx.window:window:1.0.0"                    // Jetpack Window API
-
-    // Add any other required dependencies here (e.g., Google Play services, HTTP libraries, etc.)
 }
