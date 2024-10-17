@@ -26,10 +26,16 @@ class _FriendsListPage extends State<FriendsListPage> {
       return friend['name'].toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
 
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkTheme ? Colors.white : Colors.black;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: AppColors.appBarColor,
-        title: const Text(AppStrings.friendsTitle),
+        title: Text(
+          AppStrings.friendsTitle,
+          style: TextStyle(color: textColor),
+        ),
       ),
       body: Column(
         children: [
@@ -38,10 +44,12 @@ class _FriendsListPage extends State<FriendsListPage> {
             child: TextField(
               decoration: InputDecoration(
                 labelText: AppStrings.searchFriendsLabel,
+                labelStyle: TextStyle(color: textColor),
                 border: const OutlineInputBorder(),
-                fillColor: Colors.white,
+                fillColor: isDarkTheme ? Colors.grey[800] : Colors.white,
                 filled: true,
               ),
+              style: TextStyle(color: textColor),
               onChanged: (value) {
                 setState(() {
                   searchQuery = value;
@@ -55,18 +63,29 @@ class _FriendsListPage extends State<FriendsListPage> {
               itemBuilder: (context, index) {
                 return ListTile(
                   leading: ClipOval(
-                    child: Image.asset(filteredFriends[index]['image'], fit: BoxFit.cover),
+                    child: Image.asset(
+                      filteredFriends[index]['image'],
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  title: Text(filteredFriends[index]['name']),
+                  title: Text(
+                    filteredFriends[index]['name'],
+                    style: TextStyle(color: textColor),
+                  ),
                   tileColor: AppColors.tileColor,
                   trailing: IconButton(
-                    icon: const Icon(Icons.add, color: Colors.black),
+                    icon: Icon(Icons.add, color: textColor),
                     onPressed: () {
                       setState(() {
                         addedFriends.add(filteredFriends[index]);
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${filteredFriends[index]['name']}${AppStrings.addedFriendMessage}')),
+                        SnackBar(
+                          content: Text(
+                            '${filteredFriends[index]['name']} ${AppStrings.addedFriendMessage}',
+                            style: TextStyle(color: textColor),
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -76,17 +95,27 @@ class _FriendsListPage extends State<FriendsListPage> {
             ),
           ),
           const Divider(),
-          const Padding(
-            padding: EdgeInsets.all(AppDimens.padding),
+          Padding(
+            padding: const EdgeInsets.all(AppDimens.padding),
             child: Text(
               'Added Friends',
-              style: TextStyle(fontSize: AppDimens.fontSizeTitle, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: AppDimens.fontSizeTitle,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
           ),
           addedFriends.isEmpty
-              ? const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(AppStrings.noFriendsAdded, style: TextStyle(fontSize: AppDimens.fontSizeSubtitle)),
+              ? Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              AppStrings.noFriendsAdded,
+              style: TextStyle(
+                fontSize: AppDimens.fontSizeSubtitle,
+                color: textColor,
+              ),
+            ),
           )
               : Expanded(
             child: ListView.builder(
@@ -94,12 +123,18 @@ class _FriendsListPage extends State<FriendsListPage> {
               itemBuilder: (context, index) {
                 return ListTile(
                   leading: ClipOval(
-                    child: Image.asset(addedFriends[index]['image'], fit: BoxFit.cover),
+                    child: Image.asset(
+                      addedFriends[index]['image'],
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  title: Text(addedFriends[index]['name']),
+                  title: Text(
+                    addedFriends[index]['name'],
+                    style: TextStyle(color: textColor),
+                  ),
                   tileColor: AppColors.tileColor,
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete, color: AppColors.deleteIconColor),
+                    icon: Icon(Icons.delete, color: AppColors.deleteIconColor),
                     onPressed: () {
                       setState(() {
                         addedFriends.removeAt(index);
@@ -116,11 +151,17 @@ class _FriendsListPage extends State<FriendsListPage> {
   }
 
   void showFriendInfoDialog(Map<String, dynamic> friend) {
+    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkTheme ? Colors.white : Colors.black;
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(friend['name']),
+          title: Text(
+            friend['name'],
+            style: TextStyle(color: textColor),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -133,13 +174,19 @@ class _FriendsListPage extends State<FriendsListPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(AppStrings.challengeStats),
+              Text(
+                AppStrings.challengeStats,
+                style: TextStyle(color: textColor),
+              ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(AppStrings.closeButtonLabel),
+              child: Text(
+                AppStrings.closeButtonLabel,
+                style: TextStyle(color: textColor),
+              ),
             ),
           ],
         );

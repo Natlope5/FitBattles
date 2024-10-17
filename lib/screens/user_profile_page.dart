@@ -15,8 +15,10 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class UserProfilePageState extends State<UserProfilePage> {
+  // Controllers for form fields
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
   final TextEditingController _heightController = TextEditingController();
@@ -27,6 +29,7 @@ class UserProfilePageState extends State<UserProfilePage> {
   bool _shareLocation = false;
   bool _receiveNotifications = false;
 
+  // Function to pick an image
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
@@ -36,10 +39,12 @@ class UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
+  // Function to create an account and upload profile data
   Future<void> _uploadData() async {
     // Check if all fields are filled
     if (_usernameController.text.isEmpty ||
         _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
         _ageController.text.isEmpty ||
         _weightController.text.isEmpty ||
         _heightController.text.isEmpty) {
@@ -48,19 +53,21 @@ class UserProfilePageState extends State<UserProfilePage> {
     }
 
     try {
-      // Create the user in Firebase Auth
+      // Try to create the user in Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(
-        email: _emailController.text,
-        password:
-        'defaultPassword', // Replace with a real password entry flow
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
       String userId = userCredential.user?.uid ?? '';
 
-      String imageUrl = await _uploadImageToFirebase(); // Upload image first
+      // Upload image first, if provided
+      String imageUrl = await _uploadImageToFirebase();
 
-      await _createUserProfile(userId, imageUrl); // Create profile
+      // Save user profile data in Firestore
+      await _createUserProfile(userId, imageUrl);
+
       _showSnackBar('Account created successfully! Now navigating to login.');
 
       // Add a delay to show the message before navigating
@@ -68,6 +75,16 @@ class UserProfilePageState extends State<UserProfilePage> {
 
       // Navigate to login page
       _navigateToLogin();
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        _showSnackBar('This email is already in use.');
+      } else if (e.code == 'invalid-email') {
+        _showSnackBar('The email address is not valid.');
+      } else if (e.code == 'weak-password') {
+        _showSnackBar('The password is too weak.');
+      } else {
+        _showSnackBar('Error: ${e.message}');
+      }
     } catch (e) {
       _showSnackBar('Error creating account: ${e.toString()}');
     }
@@ -83,8 +100,8 @@ class UserProfilePageState extends State<UserProfilePage> {
   // Function to create the user profile in Firestore
   Future<void> _createUserProfile(String userId, String imageUrl) async {
     Map<String, dynamic> userProfile = {
-      'username': _usernameController.text,
-      'email': _emailController.text,
+      'username': _usernameController.text.trim(),
+      'email': _emailController.text.trim(),
       'age': int.tryParse(_ageController.text),
       'weight': double.tryParse(_weightController.text),
       'height': double.tryParse(_heightController.text),
@@ -124,6 +141,18 @@ class UserProfilePageState extends State<UserProfilePage> {
   }
 
   @override
+  void dispose() {
+    // Dispose controllers to free up resources
+    _usernameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _ageController.dispose();
+    _weightController.dispose();
+    _heightController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -143,6 +172,12 @@ class UserProfilePageState extends State<UserProfilePage> {
               controller: _emailController,
               decoration: const InputDecoration(labelText: 'Email'),
               keyboardType: TextInputType.emailAddress,
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _passwordController,
+              decoration: const InputDecoration(labelText: 'Password'),
+              obscureText: true,
             ),
             const SizedBox(height: 20),
             TextField(

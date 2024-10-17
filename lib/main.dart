@@ -56,6 +56,7 @@ class MyApp extends StatelessWidget {
             '/': (context) => UserProfilePage(heading: 'Create Profile'),
             '/home': (context) => HomePage(id: '', email: '', uid: ''),
             '/workoutTracking': (context) => const WorkoutTrackingPage(),
+
             '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
             '/pointsInfo': (context) => const EarnedPointsPage(
