@@ -4,14 +4,16 @@ import 'package:logger/logger.dart';
 
 class SessionManager {
   final String _userEmailKey = "user_email"; // Key for email storage
+  final String _userIdKey = "user_id"; // Key for user ID storage
+  final String _sessionExpirationKey = "session_expiration"; // Key for session expiration
   final Logger logger = Logger(); // Logger instance for error handling and info logging
 
   /// Save user email to SharedPreferences after successful login
-  Future<void> saveUserEmail(String email) async {
+  Future<void> saveUserEmail(String userEmail) async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_userEmailKey, email); // Store user email locally
-      logger.i("User email saved: $email");
+      await prefs.setString(_userEmailKey, userEmail); // Store user email locally
+      logger.i("User email saved: $userEmail");
     } catch (e) {
       logger.e("Error saving user email: $e");
     }
@@ -28,17 +30,37 @@ class SessionManager {
     }
   }
 
+  /// Save user session data (email and ID) to SharedPreferences after successful login
+  Future<void> saveUserSession(User? user) async {
+    try {
+      if (user != null) {
+        final SharedPreferences prefs = await SharedPreferences.getInstance();
+        await saveUserEmail(user.email ?? ''); // Store user email locally
+        await prefs.setString(_userIdKey, user.uid); // Store user ID locally
+
+        // Save session expiration time (7 days from login)
+        await prefs.setInt(_sessionExpirationKey,
+            DateTime.now().add(Duration(days: 7)).millisecondsSinceEpoch);
+
+        logger.i("User session saved: ${user.email}");
+      }
+    } catch (e) {
+      logger.e("Error saving user session: $e");
+    }
+  }
+
   /// Firebase login method
   Future<User?> loginWithFirebase(String email, String password) async {
     try {
       // Use Firebase to sign in with email and password
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      UserCredential userCredential =
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Save user email locally after successful login
-      await saveUserEmail(email);
+      // Save user session after successful login
+      await saveUserSession(userCredential.user);
       logger.i("User logged in with email: $email");
 
       // Return the logged-in user
@@ -55,21 +77,23 @@ class SessionManager {
 
   /// Check if the user is logged in by checking FirebaseAuth and SharedPreferences
   Future<bool> isUserLoggedIn() async {
-    try {
-      // Check Firebase for current user
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        return true; // User is logged in
-      }
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userId = prefs.getString(_userIdKey);
 
-      // Optionally check SharedPreferences as fallback for session management
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? email = prefs.getString(_userEmailKey);
-      return email != null;
-    } catch (e) {
-      logger.e("Error checking user login status: $e");
+    // Check for session expiration
+    int? sessionExpiration = prefs.getInt(_sessionExpirationKey);
+    if (sessionExpiration != null &&
+        DateTime.now().millisecondsSinceEpoch > sessionExpiration) {
+      await logoutUser(); // Sign out if session expired
       return false;
+    } else if (userId != null) {
+      // Extend session expiration by another 7 days if session is still valid
+      await prefs.setInt(_sessionExpirationKey,
+          DateTime.now().add(Duration(days: 7)).millisecondsSinceEpoch);
+      return true;
     }
+
+    return false;
   }
 
   /// Firebase sign-out method
@@ -78,27 +102,30 @@ class SessionManager {
       // Sign out from Firebase
       await FirebaseAuth.instance.signOut();
 
-      // Clear locally stored email after signing out
+      // Clear locally stored user data after signing out
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userEmailKey);
+      await prefs.remove(_userIdKey);
+      await prefs.remove(_sessionExpirationKey);
 
-      logger.i("User logged out and email cleared from local storage");
+      logger.i("User logged out and session cleared from local storage");
     } catch (e) {
       logger.e("Error logging out: $e");
     }
   }
 
-  /// Register new user in Firebase
+  /// Register a new user in Firebase
   Future<User?> signUpWithFirebase(String email, String password) async {
     try {
       // Sign up a new user with email and password
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential =
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Save user email after successful signup
-      await saveUserEmail(email);
+      // Save user session after successful signup
+      await saveUserSession(userCredential.user);
       logger.i("User signed up with email: $email");
 
       // Return the new user

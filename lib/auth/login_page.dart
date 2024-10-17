@@ -113,102 +113,115 @@ class _LoginPageState extends State<LoginPage> {
   // Build method to render the login page UI
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF5D6C8A), // App bar color
-        title: Text(widget.title), // Title of the app bar
+    // Custom light theme for login page
+    final ThemeData loginTheme = ThemeData(
+      brightness: Brightness.light, // Force light theme
+      primaryColor: const Color(0xFF5D6C8A), // Your app's primary color
+      inputDecorationTheme: const InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white, // Set input fields to white background
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(20.0)), // Rounded borders
+        ),
+        labelStyle: TextStyle(color: Colors.black), // Black label text
       ),
-      body: Container(
-        color: const Color(0xFF5D6C8A), // Background color for the login page
-        child: Center(
-          child: SingleChildScrollView( // Enable scrolling for the content
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                const SizedBox(height: 0),
-                Image.asset( // Logo image for the app
-                  'assets/images/logo2.png',
-                  height: 250,
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
-                  child: TextField(
-                    controller: _emailController, // Controller for email input
-                    decoration: InputDecoration(
-                      labelText: 'Email', // Label for email input
-                      fillColor: Colors.white, // Background color of input field
-                      filled: true, // Fill background color
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0), // Rounded corners for the input field
-                      ),
-                    ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.black, // Set text button color to black
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF85C83E), // Green color for button
+          foregroundColor: Colors.white, // White text on button
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20), // Button padding
+        ),
+      ),
+    );
+
+    return Theme(
+      data: loginTheme, // Apply custom theme to this page only
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF5D6C8A), // App bar color
+          title: Text(widget.title), // Title of the app bar
+        ),
+        body: Container(
+          color: const Color(0xFF5D6C8A), // Background color for the login page
+          child: Center(
+            child: SingleChildScrollView( // Enable scrolling for the content
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: <Widget>[
+                  const SizedBox(height: 0),
+                  Image.asset( // Logo image for the app
+                    'assets/images/logo2.png',
+                    height: 250,
                   ),
-                ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
-                  child: TextField(
-                    controller: _passwordController, // Controller for password input
-                    obscureText: true, // Hide password input
-                    decoration: InputDecoration(
-                      labelText: 'Password', // Label for password input
-                      fillColor: Colors.white, // Background color of input field
-                      filled: true, // Fill background color
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(20.0), // Rounded corners for the input field
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    // Call authenticateUser without using context
-                    authenticateUser(_emailController.text, _passwordController.text);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF85C83E), // Button background color
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20), // Button padding
-                  ),
-                  child: const Text('Fitbattles'), // Button text
-                ),
-                const SizedBox(height: 20),
-                // Display error message if any
-                if (errorMessage != null)
+                  const SizedBox(height: 20),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Text(
-                      errorMessage!,
-                      style: const TextStyle(color: Colors.red), // Error message style
+                    padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
+                    child: TextField(
+                      controller: _emailController, // Controller for email input
+                      decoration: const InputDecoration(
+                        labelText: 'Email', // Label for email input
+                      ),
                     ),
                   ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    // Call _resetPassword when clicked
-                    _resetPassword(_emailController.text);
-                  },
-                  child: const Text(
-                    'Forgot Password?',
-                    style: TextStyle(color: Colors.black), // Make text black
-                  ), // Forgot password prompt text
-                ),
-                const SizedBox(height: 20),
-                TextButton(
-                  onPressed: () {
-                    // Navigate to the Signup page
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SignupPage()), // Ensure to use SignupPage
-                    );
-                  },
-                  child: const Text(
-                    'Don’t have an account? Sign up here.',
-                    style: TextStyle(color: Colors.black), // Make text black
-                  ), // Sign up prompt text
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
+                    child: TextField(
+                      controller: _passwordController, // Controller for password input
+                      obscureText: true, // Hide password input
+                      decoration: const InputDecoration(
+                        labelText: 'Password', // Label for password input
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Call authenticateUser without using context
+                      authenticateUser(_emailController.text, _passwordController.text);
+                    },
+                    child: const Text('Fitbattles'), // Button text
+                  ),
+                  const SizedBox(height: 20),
+                  // Display error message if any
+                  if (errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        errorMessage!,
+                        style: const TextStyle(color: Colors.red), // Error message style
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      // Call _resetPassword when clicked
+                      _resetPassword(_emailController.text);
+                    },
+                    child: const Text(
+                      'Forgot Password?',
+                    ), // Forgot password prompt text
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      // Navigate to the Signup page
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SignupPage()), // Ensure to use SignupPage
+                      );
+                    },
+                    child: const Text(
+                      'Don’t have an account? Sign up here.',
+                    ), // Sign up prompt text
+                  ),
+                ],
+              ),
             ),
           ),
         ),

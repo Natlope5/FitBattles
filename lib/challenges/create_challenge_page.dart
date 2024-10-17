@@ -1,38 +1,25 @@
-
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'challenge.dart'; // Import the Challenge model
 
-// This widget represents the page for creating a new challenge.
 class CreateChallengePage extends StatefulWidget {
-  const CreateChallengePage({super.key, required List<CameraDescription> cameras, required List friends, required String friend});
+  const CreateChallengePage(
+      {super.key, required List<CameraDescription> cameras, required List friends, required String friend});
 
   @override
   CreateChallengePageState createState() => CreateChallengePageState();
 }
 
-// This is the state class for CreateChallengePage. It holds the state of the page.
 class CreateChallengePageState extends State<CreateChallengePage> {
-  // Controller for the challenge name text field
   final TextEditingController _challengeNameController = TextEditingController();
-
-  // Default type of challenge (e.g., Steps, Time, Distance)
   String _challengeType = 'Steps';
-
-  // Controllers for the date text fields
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
-
-  // Variables to hold the start and end dates for the challenge
   DateTime? _startDate;
   DateTime? _endDate;
-
-  // List to hold the participants' names
   final List<String> _participants = [];
-
-  // Controller for the participant text field
   final TextEditingController _participantController = TextEditingController();
 
   @override
@@ -46,55 +33,73 @@ class CreateChallengePageState extends State<CreateChallengePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context); // Get the current theme
+    final inputDecoration = InputDecoration(
+      filled: true,
+      fillColor: Colors.white, // Set background to white
+      labelStyle: const TextStyle(color: Colors.black), // Set label text color to black
+      contentPadding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0), // Add padding for more space inside
+      focusedBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: theme.primaryColor),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderSide: BorderSide(color: theme.primaryColor),
+      ),
+    );
+
     return Scaffold(
-      // App bar for the page
       appBar: AppBar(
         title: const Text('Create a Challenge'),
+        backgroundColor: theme.primaryColor, // Ensure AppBar uses theme color
       ),
-      // Padding for the body content
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, // Aligns text to the start to prevent cutting off
             children: [
-              // Text field for the challenge name
+              const SizedBox(height: 50), // Adds extra space at the top to push everything down
               TextField(
                 controller: _challengeNameController,
-                decoration: const InputDecoration(labelText: 'Challenge Name'),
+                decoration: inputDecoration.copyWith(
+                  labelText: 'Challenge Name',
+                ),
+                style: const TextStyle(color: Colors.black), // Set text color to black
+                cursorColor: theme.primaryColor,
               ),
-              const SizedBox(height: 16),
-
-              // Dropdown for selecting challenge type
+              const SizedBox(height: 32), // Large spacing before "Challenge Type" field
               DropdownButtonFormField<String>(
                 value: _challengeType,
-                items: <String>['Steps', 'Time', 'Distance'] // Challenge types
-                    .map((String value) => DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                ))
-                    .toList(),
+                items: <String>['Steps', 'Time', 'Distance'].map((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value, style: const TextStyle(color: Colors.black)), // Set dropdown text color to black
+                  );
+                }).toList(),
                 onChanged: (String? newValue) {
-                  // Update the challenge type when a new value is selected
                   setState(() {
                     _challengeType = newValue!;
                   });
                 },
-                decoration: const InputDecoration(labelText: 'Challenge Type'),
+                decoration: inputDecoration.copyWith(
+                  labelText: 'Challenge Type',
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0), // Ensure padding inside dropdown
+                ),
+                style: const TextStyle(color: Colors.black), // Set text color to black
+                dropdownColor: Colors.white, // Ensure dropdown background is visible
               ),
-              const SizedBox(height: 16),
-
-              // Row for selecting start and end dates
+              const SizedBox(height: 32), // Increased spacing between elements
               Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _startDateController,
-                      readOnly: true, // Make the text field read-only
-                      decoration: const InputDecoration(
+                      readOnly: true,
+                      decoration: inputDecoration.copyWith(
                         labelText: 'Start Date',
                       ),
+                      style: const TextStyle(color: Colors.black), // Set text color to black
                       onTap: () async {
-                        // Show date picker for start date
                         DateTime? pickedDate = await showDatePicker(
                           context: context,
                           initialDate: _startDate ?? DateTime.now(),
@@ -103,9 +108,8 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                         );
                         if (pickedDate != null) {
                           setState(() {
-                            _startDate = pickedDate; // Update the start date
-                            _startDateController.text =
-                                DateFormat('yyyy-MM-dd').format(_startDate!);
+                            _startDate = pickedDate;
+                            _startDateController.text = DateFormat('yyyy-MM-dd').format(_startDate!);
                           });
                         }
                       },
@@ -115,23 +119,22 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                   Expanded(
                     child: TextField(
                       controller: _endDateController,
-                      readOnly: true, // Make the text field read-only
-                      decoration: const InputDecoration(
+                      readOnly: true,
+                      decoration: inputDecoration.copyWith(
                         labelText: 'End Date',
                       ),
+                      style: const TextStyle(color: Colors.black), // Set text color to black
                       onTap: () async {
-                        // Show date picker for end date
                         DateTime? pickedDate = await showDatePicker(
                           context: context,
                           initialDate: _endDate ?? (_startDate ?? DateTime.now()),
-                          firstDate: _startDate ?? DateTime.now(), // End date must be after start date
+                          firstDate: _startDate ?? DateTime.now(),
                           lastDate: DateTime(2100),
                         );
                         if (pickedDate != null) {
                           setState(() {
-                            _endDate = pickedDate; // Update the end date
-                            _endDateController.text =
-                                DateFormat('yyyy-MM-dd').format(_endDate!); // Update the end date
+                            _endDate = pickedDate;
+                            _endDateController.text = DateFormat('yyyy-MM-dd').format(_endDate!);
                           });
                         }
                       },
@@ -139,48 +142,48 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // Text field for adding participants
+              const SizedBox(height: 32), // Increased spacing between elements
               TextField(
                 controller: _participantController,
-                decoration: const InputDecoration(labelText: 'Add Participant'),
+                decoration: inputDecoration.copyWith(
+                  labelText: 'Add Participant',
+                ),
+                style: const TextStyle(color: Colors.black), // Set text color to black
+                cursorColor: theme.primaryColor,
               ),
-              // Button to add participant to the list
               ElevatedButton(
                 onPressed: () {
                   setState(() {
                     if (_participantController.text.isNotEmpty) {
-                      _participants.add(_participantController.text); // Add participant
-                      _participantController.clear(); // Clear the text field
+                      _participants.add(_participantController.text);
+                      _participantController.clear();
                     }
                   });
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.primaryColor,
+                ),
                 child: const Text('Add Participant'),
               ),
-              const SizedBox(height: 16),
-
-              // Display the list of participants as Chips
+              const SizedBox(height: 32), // Increased spacing between elements
               Wrap(
                 children: _participants.map((participant) {
                   return Chip(
-                    label: Text(participant), // Display participant name
+                    label: Text(participant),
                     onDeleted: () {
                       setState(() {
-                        _participants.remove(participant); // Remove participant from the list
+                        _participants.remove(participant);
                       });
                     },
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 16),
-
-              // Button to create the challenge
+              const SizedBox(height: 32), // Increased spacing before final button
               ElevatedButton(
-                onPressed: () {
-                  // Handle the logic to create the challenge here
-                  _createChallenge();
-                },
+                onPressed: _createChallenge,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.primaryColor,
+                ),
                 child: const Text('Create Challenge'),
               ),
             ],
@@ -190,22 +193,16 @@ class CreateChallengePageState extends State<CreateChallengePage> {
     );
   }
 
-  // Function to create the challenge
   void _createChallenge() async {
     String challengeName = _challengeNameController.text.trim();
 
-    // Validate that all required fields are filled
-    if (challengeName.isEmpty ||
-        _startDate == null ||
-        _endDate == null ||
-        _participants.isEmpty) {
+    if (challengeName.isEmpty || _startDate == null || _endDate == null || _participants.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields.')), // Show error message
+        const SnackBar(content: Text('Please fill all fields.')),
       );
-      return; // Exit if validation fails
+      return;
     }
 
-    // Create a Challenge object
     Challenge challenge = Challenge(
       name: challengeName,
       type: _challengeType,
@@ -215,25 +212,16 @@ class CreateChallengePageState extends State<CreateChallengePage> {
     );
 
     try {
-      // Save the challenge to Firestore
-      await FirebaseFirestore.instance
-          .collection('challenges')
-          .add(challenge.toMap());
+      await FirebaseFirestore.instance.collection('challenges').add(challenge.toMap());
 
-      // Check if the widget is still mounted before using context
       if (!mounted) return;
 
-      // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Challenge "${challenge.name}" created!')),
       );
-
-      // Navigate back to the previous screen
       Navigator.pop(context);
     } catch (e) {
-      // Check if the widget is still mounted before using context
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error creating challenge: $e')),
       );

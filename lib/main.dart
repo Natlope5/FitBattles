@@ -2,13 +2,13 @@ import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
-import 'package:fitbattles/challenges/strength_workout_page.dart';
+import 'package:fitbattles/workouts/strength_workout_page.dart';
 import 'package:fitbattles/screens/friends_list_page.dart';
 import 'package:fitbattles/screens/home_page.dart';
 import 'package:fitbattles/screens/my_history.dart';
 import 'package:fitbattles/screens/settings_page.dart';
 import 'package:fitbattles/screens/user_profile_page.dart';
-import 'package:fitbattles/settings/theme_provider.dart';
+import 'package:fitbattles/settings/theme_provider.dart'; // ThemeProvider import
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -36,7 +36,7 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           navigatorKey: navigatorKey,
           title: 'FitBattles',
-          theme: themeProvider.currentTheme,
+          theme: themeProvider.currentTheme, // Theme controlled by ThemeProvider
           localizationsDelegates: [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
@@ -140,7 +140,7 @@ void main() async {
 
   runApp(
     ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
+      create: (context) => ThemeProvider(), // Provide ThemeProvider for the whole app
       child: MyApp(cameras: await availableCameras()),
     ),
   );

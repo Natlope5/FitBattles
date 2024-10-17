@@ -391,6 +391,8 @@ class AppStrings {
   static var selectedLanguage = 'Select Language'; // Default value
   static var selectedLanguageDesc = 'Choose your preferred language.'; // You can modify this description as needed
   static const String retryButton = 'Retry';  // New definition for the retry button
+
+
 // Example of existing variables
 }
 

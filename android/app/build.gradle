@@ -10,10 +10,9 @@ android {
         ignoreAssetsPattern "!*.svn:!*.git:!.ds_store:!*~"
     }
     namespace = "com.example.fitbattles"    // Ensure this matches your actual package name
-    compileSdk = 35
-    // Use the correct SDK version (33 is common for modern Flutter projects)
-    ndkVersion '26.1.10909125'
-    // Ensure this matches your NDK version or is needed for native code
+    compileSdk = 35  // Setting to SDK 33 for compatibility with Flutter
+
+    ndkVersion '26.1.10909125'  // NDK version (update if necessary)
 
     lintOptions {
         warningsAsErrors true               // Treat warnings as errors
@@ -22,67 +21,74 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17  // Set source compatibility to Java 17
-        targetCompatibility = JavaVersion.VERSION_17 // Set target compatibility to Java 17
+        sourceCompatibility = JavaVersion.VERSION_17  // Java 17 compatibility
+        targetCompatibility = JavaVersion.VERSION_17
         coreLibraryDesugaringEnabled true
-
     }
 
     kotlinOptions {
-        jvmTarget = "17"
-        // Use JVM target 17 for Kotlin compatibility
+        jvmTarget = "17"  // Kotlin JVM target version 17
     }
 
     defaultConfig {
-
         multiDexEnabled true
         applicationId = "com.example.fitbattles"         // Application ID
-        minSdkVersion 26
+        minSdkVersion 26                                 // Minimum SDK version
+        targetSdkVersion 35                             // Target SDK version
 
-        targetSdk = 35
-
-        versionCode = 1                                  // Use correct versionCode for versioning
-        versionName = "1.0.0"
+        versionCode = 1                                  // Version code
+        versionName = "1.0.0"                            // Version name
 
         packagingOptions {
             doNotStrip '**/*.so'
-
-        }
-
-        buildTypes {
-            release {
-                // Enables code shrinking, obfuscation, and optimization for release builds
-                minifyEnabled true
-                // Enables resource shrinking, which removes unused resources
-                shrinkResources true
-                // Proguard rules file for code shrinking
-                proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            }
-        }
-        tasks.withType(JavaCompile) {
-            options.compilerArgs << "-Xlint:deprecation"
-            options.compilerArgs << "-Xlint:unchecked"
         }
     }
+
+    signingConfigs {
+        release {
+            storeFile file("C:/Users/Natalie/upload-keystore.jks")
+            storePassword "android"  // Replace with actual keystore password
+            keyAlias "upload"        // Alias from your keystore
+            keyPassword "android"    // Replace with actual key password
+        }
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false             // Code shrinking, obfuscation, and optimization
+            shrinkResources false           // Resource shrinking
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:deprecation"
+        options.compilerArgs << "-Xlint:unchecked"
+    }
+
     flutter {
-        source = "../.."                                      // Flutter project source path
+        source = "../.." // Path to Flutter project source
     }
+}
 
-    dependencies {
-        // Import the Firebase BoM (Bill of Materials)
-        implementation platform('com.google.firebase:firebase-bom:33.3.0')
-        // Firebase dependencies using BoM
-        implementation 'com.google.firebase:firebase-auth'        // Firebase Authentication
-        implementation 'com.google.firebase:firebase-database'    // Firebase Realtime Database
-        implementation 'com.google.firebase:firebase-analytics'   // Firebase Analytics
-        implementation 'com.google.firebase:firebase-firestore'   // Cloud Firestore
-        implementation 'com.google.firebase:firebase-storage'     // Firebase Storage
-        implementation 'com.google.firebase:firebase-messaging'   // Firebase Cloud Messaging
-        implementation 'com.google.firebase:firebase-dynamic-links' // Firebase Dynamic Links
-        coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'  // Add this line
-        implementation 'androidx.appcompat:appcompat:1.4.0'
-        implementation 'com.android.support:multidex:1.0.3'
-        // Other dependencies
-        // Add any other dependencies like Google Play services, HTTP, etc.
-    }
+dependencies {
+    implementation platform('com.google.firebase:firebase-bom:33.3.0')  // Firebase BoM
+
+    // Firebase dependencies
+    implementation 'com.google.firebase:firebase-auth'         // Firebase Authentication
+    implementation 'com.google.firebase:firebase-database'     // Firebase Realtime Database
+    implementation 'com.google.firebase:firebase-analytics'    // Firebase Analytics
+    implementation 'com.google.firebase:firebase-firestore'    // Firebase Firestore
+    implementation 'com.google.firebase:firebase-storage'      // Firebase Storage
+    implementation 'com.google.firebase:firebase-messaging'    // Firebase Cloud Messaging
+    implementation 'com.google.firebase:firebase-dynamic-links' // Firebase Dynamic Links
+
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'  // Desugaring support for Java 17
+
+    implementation 'androidx.appcompat:appcompat:1.4.0'              // AndroidX AppCompat
+    implementation 'androidx.multidex:multidex:2.0.1'                // Multidex support
+    implementation "androidx.window:window:1.0.0"                    // Jetpack Window API
+
+    // Add any other required dependencies here (e.g., Google Play services, HTTP libraries, etc.)
 }
