@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
+import 'package:fitbattles/screens/workout_tracking_page.dart';
 import 'package:fitbattles/workouts/strength_workout_page.dart';
 import 'package:fitbattles/screens/friends_list_page.dart';
 import 'package:fitbattles/screens/home_page.dart';
@@ -52,8 +53,9 @@ class MyApp extends StatelessWidget {
           initialRoute: '/login',
           routes: {
             '/login': (context) => LoginPage(title: '', setLocale: (locale) {}),
-            '/userProfile': (context) => UserProfilePage(heading: 'Profile',),
+            '/': (context) => UserProfilePage(heading: 'Create Profile'),
             '/home': (context) => HomePage(id: '', email: '', uid: ''),
+            '/workoutTracking': (context) => const WorkoutTrackingPage(),
             '/friendsSearch': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
             '/pointsInfo': (context) => const EarnedPointsPage(

@@ -1,13 +1,13 @@
+import 'package:fitbattles/screens/user_profile_page.dart'; // Importing UserProfilePage
 import 'package:flutter/material.dart'; // Importing Flutter material package
 import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
 import 'package:logger/logger.dart'; // Importing Logger for error logging
 import 'package:fitbattles/screens/home_page.dart'; // Importing the home page to navigate after login
 import 'package:fitbattles/auth/session_manager.dart'; // Import your SessionManager
-import 'package:fitbattles/auth/signup_page.dart'; // Adjust the import path based on your project structure
 
 // Login page widget
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.title, required Null Function(dynamic locale) setLocale}); // Constructor with title parameter
+  const LoginPage({super.key, required this.title, required Null Function(dynamic locale) setLocale});
   final String title; // Title of the login page
 
   @override
@@ -66,7 +66,7 @@ class _LoginPageState extends State<LoginPage> {
     if (!mounted) return; // Ensure widget is still mounted
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, uid: '',)), // Navigate to home page with user data
+      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, uid: '')), // Navigate to home page with user data
     );
   }
 
@@ -185,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                       // Call authenticateUser without using context
                       authenticateUser(_emailController.text, _passwordController.text);
                     },
-                    child: const Text('Fitbattles'), // Button text
+                    child: const Text('Login'), // Button text
                   ),
                   const SizedBox(height: 20),
                   // Display error message if any
@@ -210,10 +210,12 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () {
-                      // Navigate to the Signup page
+                      // Navigate to the UserProfilePage
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const SignupPage()), // Ensure to use SignupPage
+                        MaterialPageRoute(
+                          builder: (context) => const UserProfilePage(heading: 'User Profile'), // Pass the necessary heading or data here
+                        ),
                       );
                     },
                     child: const Text(
