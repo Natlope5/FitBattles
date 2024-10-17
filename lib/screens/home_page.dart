@@ -113,7 +113,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildTopChallengedFriends(exampleFriends, themeProvider),
               const SizedBox(height: 32),
-              _buildWorkoutTrackingButton(context),
+              _buildFriendsListButton(context),
             ],
           ),
         ),
@@ -458,17 +458,17 @@ class _HomePageState extends State<HomePage> {
   ];
 
   // Widget to build the workout tracking navigation button
-  Widget _buildWorkoutTrackingButton(BuildContext context) {
+  Widget _buildFriendsListButton(BuildContext context) {
     return ElevatedButton(
       onPressed: () {
-        Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
+        Navigator.pushNamed(context, '/friends'); // Navigate to the workout tracking page
       },
       style: ElevatedButton.styleFrom(
         foregroundColor: Colors.black,
         backgroundColor: const Color(0xFF85C83E),
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
       ),
-      child: const Text('Start Workout Tracking'),
+      child: const Text('Explore friends'),
     );
   }
 }

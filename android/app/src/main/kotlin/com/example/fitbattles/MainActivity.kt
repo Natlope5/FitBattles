@@ -15,6 +15,14 @@ class MainActivity : FlutterActivity() {
     // Variable to keep track of the app exit state
     private var shouldExit = false
 
+    // Request code for permissions
+    private val REQUEST_CODE_PERMISSIONS = 100
+
+    // List of permissions the app needs
+    private val requiredPermissions = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION // Add other permissions as necessary
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Check for necessary permissions on creation
@@ -36,7 +44,7 @@ class MainActivity : FlutterActivity() {
     // Function to show a confirmation dialog for exiting the app
     private fun showExitConfirmationDialog() {
         // Create an AlertDialog to ask for confirmation
-        val builder = AlertDialog.Builder(this)
+        val builder = AlertDialog.Builder(this@MainActivity)
         builder.setTitle("Exit")
         builder.setMessage("Are you sure you want to exit the app?")
 
@@ -58,30 +66,29 @@ class MainActivity : FlutterActivity() {
 
     // Function to check and request necessary permissions
     private fun checkPermissions() {
-        // Example permission request (update as needed)
-        val permissionsNeeded = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-
-        // Check if permissions are granted
-        val permissionsDenied = permissionsNeeded.filter {
+        // Check if any of the required permissions are not granted
+        val deniedPermissions = requiredPermissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
 
-        // Request permissions if any are denied
-        if (permissionsDenied.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, permissionsDenied.toTypedArray(), 100)
+        // Request the denied permissions
+        if (deniedPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, deniedPermissions.toTypedArray(), REQUEST_CODE_PERMISSIONS)
+        } else {
+            Log.d("MainActivity", "All permissions are already granted.")
         }
     }
 
     // Handle the result of the permission request
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            100 -> {
-                // Check if the permissions were granted
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("MainActivity", "Permissions granted")
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            // Iterate over the results and check which permissions were granted or denied
+            for (i in permissions.indices) {
+                if (grantResults[i] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d("MainActivity", "Permission granted: ${permissions[i]}")
                 } else {
-                    Log.d("MainActivity", "Permissions denied")
+                    Log.d("MainActivity", "Permission denied: ${permissions[i]}")
                 }
             }
         }

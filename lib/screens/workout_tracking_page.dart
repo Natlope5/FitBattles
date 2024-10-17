@@ -15,15 +15,14 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
   Duration workoutDuration = Duration.zero;
   final TextEditingController _calorieController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-
   final List<int> _calorieLogs = [];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(AppStrings.workoutTrackerTitle), // Use a string from app_strings.dart
-        backgroundColor: AppColors.appBarColor, // Use a color from app_colors.dart
+        title: const Text(AppStrings.workoutTrackerTitle), // Title from app_strings.dart
+        backgroundColor: AppColors.appBarColor, // Color from app_colors.dart
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -32,7 +31,7 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
               const Text(
-                AppStrings.workoutTypeStrength, // Use a string from app_strings.dart
+                AppStrings.workoutTypeStrength, // Title from app_strings.dart
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
@@ -47,25 +46,33 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        isWorkingOut = !isWorkingOut;
+                        if (isWorkingOut) {
+                          isWorkingOut = false;
+                          // Stop the timer
+                          workoutDuration = Duration.zero; // Reset duration
+                        } else {
+                          isWorkingOut = true;
+                          // Start timer
+                          _startTimer();
+                        }
                       });
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                     ),
-                    child: Text(isWorkingOut ? AppStrings.pause : AppStrings.start), // Use strings from app_strings.dart
+                    child: Text(isWorkingOut ? AppStrings.pause : AppStrings.start), // Button text from app_strings.dart
                   ),
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        workoutDuration = Duration.zero;
-                        isWorkingOut = false;
+                        workoutDuration = Duration.zero; // Reset duration
+                        isWorkingOut = false; // Stop the workout
                       });
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                     ),
-                    child: const Text(AppStrings.stop), // Use a string from app_strings.dart
+                    child: const Text(AppStrings.stop), // Button text from app_strings.dart
                   ),
                 ],
               ),
@@ -76,7 +83,7 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     const Text(
-                      AppStrings.enterCaloriesBurned, // Use a string from app_strings.dart
+                      AppStrings.enterCaloriesBurned, // Text from app_strings.dart
                       style: TextStyle(fontSize: 20),
                     ),
                     const SizedBox(height: 10),
@@ -84,7 +91,7 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                       controller: _calorieController,
                       decoration: const InputDecoration(
                         border: OutlineInputBorder(),
-                        hintText: AppStrings.caloriesHint, // Use a string from app_strings.dart
+                        hintText: AppStrings.caloriesHint, // Hint from app_strings.dart
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
@@ -92,10 +99,10 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                       ],
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return AppStrings.calorieValueError; // Use a string from app_strings.dart
+                          return AppStrings.calorieValueError; // Error message from app_strings.dart
                         }
                         if (int.tryParse(value) == null) {
-                          return AppStrings.validNumberError; // Use a string from app_strings.dart
+                          return AppStrings.validNumberError; // Error message from app_strings.dart
                         }
                         return null;
                       },
@@ -109,7 +116,7 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                             _calorieLogs.add(calories);
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('${AppStrings.caloriesLogged}: $calories')), // Use a string from app_strings.dart
+                            SnackBar(content: Text('${AppStrings.caloriesLogged}: $calories')), // SnackBar message from app_strings.dart
                           );
                           _calorieController.clear();
                         }
@@ -117,19 +124,19 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue,
                       ),
-                      child: const Text(AppStrings.logCalories), // Use a string from app_strings.dart
+                      child: const Text(AppStrings.logCalories), // Button text from app_strings.dart
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
               Text(
-                '${AppStrings.totalCaloriesBurned}: ${_calculateTotalCalories()}', // Use a string from app_strings.dart
+                '${AppStrings.totalCaloriesBurned}: ${_calculateTotalCalories()}', // Text from app_strings.dart
                 style: const TextStyle(fontSize: 20),
               ),
               const SizedBox(height: 20),
               const Text(
-                AppStrings.caloriesLog, // Use a string from app_strings.dart
+                AppStrings.caloriesLog, // Text from app_strings.dart
                 style: TextStyle(fontSize: 20),
               ),
               const SizedBox(height: 10),
@@ -139,7 +146,7 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                 itemCount: _calorieLogs.length,
                 itemBuilder: (context, index) {
                   return ListTile(
-                    title: Text('${_calorieLogs[index]} ${AppStrings.calories}'), // Use a string from app_strings.dart
+                    title: Text('${_calorieLogs[index]} ${AppStrings.calories}'), // Log entry from app_strings.dart
                   );
                 },
               ),
@@ -150,17 +157,17 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                     _calorieLogs.clear();
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text(AppStrings.calorieLogCleared)), // Use a string from app_strings.dart
+                    const SnackBar(content: Text(AppStrings.calorieLogCleared)), // SnackBar message from app_strings.dart
                   );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange,
                 ),
-                child: const Text(AppStrings.clearLog), // Use a string from app_strings.dart
+                child: const Text(AppStrings.clearLog), // Button text from app_strings.dart
               ),
               const SizedBox(height: 20),
               const Text(
-                AppStrings.workoutIntensityModerate, // Use a string from app_strings.dart
+                AppStrings.workoutIntensityModerate, // Text from app_strings.dart
                 style: TextStyle(fontSize: 20),
               ),
             ],
@@ -168,6 +175,18 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
         ),
       ),
     );
+  }
+
+  void _startTimer() {
+    // Start a timer to increment workoutDuration
+    Future.delayed(const Duration(seconds: 1), () {
+      if (isWorkingOut) {
+        setState(() {
+          workoutDuration += const Duration(seconds: 1);
+        });
+        _startTimer(); // Recursively call to continue the timer
+      }
+    });
   }
 
   String _formatDuration(Duration duration) {

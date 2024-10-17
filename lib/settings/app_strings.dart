@@ -395,6 +395,17 @@ class AppStrings {
   // New constant for not authenticated message
   static const String notAuthenticated = 'You need to be logged in to view this profile.';
 
-// Example of existing variables
+
+  static const String notificationChannelName = 'FitBattles Notifications';
+  static const String notificationChannelDescription = 'Channel for FitBattles notifications';
+  static const String welcomeMessage = 'Welcome to FitBattles!';
+  static const String startChallenge = 'Start Challenge';
+  static const String earnPoints = 'Earn Points';
+
+  static const String friendsList = 'Friends List';
+
+  static const String appTitle = 'FitBattles';
+
 }
+
 

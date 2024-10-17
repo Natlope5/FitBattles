@@ -19,7 +19,7 @@ import 'package:provider/provider.dart';
 import 'package:fitbattles/challenges/create_challenge_page.dart';
 import 'package:fitbattles/challenges/leaderboard_page.dart';
 import 'package:fitbattles/auth/login_page.dart'; // Correct the import for auth-related files
-
+import 'package:fitbattles/screens/workout_tracking_page.dart';
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
 final Logger logger = Logger();
@@ -56,7 +56,7 @@ class MyApp extends StatelessWidget {
             '/': (context) => UserProfilePage(heading: 'Create Profile'),
             '/home': (context) => HomePage(id: '', email: '', uid: ''),
             '/workoutTracking': (context) => const WorkoutTrackingPage(),
-            '/friendsSearch': (context) => const FriendsListPage(),
+            '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
             '/pointsInfo': (context) => const EarnedPointsPage(
               points: 1000,
