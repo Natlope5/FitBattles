@@ -49,36 +49,38 @@ class UserProfilePageState extends State<UserProfilePage> {
 
     try {
       // Create the user in Firebase Auth
-      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
         email: _emailController.text,
-        password: 'defaultPassword', // Replace with a real password or create a UI for password entry
+        password:
+        'defaultPassword', // Replace with a real password entry flow
       );
 
       String userId = userCredential.user?.uid ?? '';
 
       String imageUrl = await _uploadImageToFirebase(); // Upload image first
 
-      await _createUserProfile(userId, imageUrl); // Pass image URL to the profile creation function
-      _showSnackBar('Account created successfully! Now navigating to your home page...');
+      await _createUserProfile(userId, imageUrl); // Create profile
+      _showSnackBar('Account created successfully! Now navigating to login.');
 
       // Add a delay to show the message before navigating
-      await Future.delayed(Duration(seconds: 2)); // Adjust delay as needed
+      await Future.delayed(const Duration(seconds: 2));
 
-      // Navigate to home on success
-      _navigateToHome();
+      // Navigate to login page
+      _navigateToLogin();
     } catch (e) {
       _showSnackBar('Error creating account: ${e.toString()}');
     }
   }
 
-  // Function to handle navigation to the home page
-  void _navigateToHome() {
+  // Function to handle navigation to the login page after creating the profile
+  void _navigateToLogin() {
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/login');
     }
   }
 
-  // Example of a function to create the user profile
+  // Function to create the user profile in Firestore
   Future<void> _createUserProfile(String userId, String imageUrl) async {
     Map<String, dynamic> userProfile = {
       'username': _usernameController.text,
@@ -86,31 +88,38 @@ class UserProfilePageState extends State<UserProfilePage> {
       'age': int.tryParse(_ageController.text),
       'weight': double.tryParse(_weightController.text),
       'height': double.tryParse(_heightController.text),
-      'image_url': imageUrl, // Use the uploaded image URL
+      'image_url': imageUrl,
       'share_location': _shareLocation,
       'receive_notifications': _receiveNotifications,
     };
 
     // Save user profile data to Firestore
-    await FirebaseFirestore.instance.collection('users').doc(userId).set(userProfile);
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .set(userProfile);
   }
 
+  // Upload the image to Firebase Storage and return the download URL
   Future<String> _uploadImageToFirebase() async {
     if (_image == null) {
       return ''; // Return an empty string if no image is selected
     }
 
     String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-    Reference storageRef = FirebaseStorage.instance.ref().child('user_profiles/$fileName');
+    Reference storageRef =
+    FirebaseStorage.instance.ref().child('user_profiles/$fileName');
 
     await storageRef.putFile(_image!);
     String downloadUrl = await storageRef.getDownloadURL();
     return downloadUrl;
   }
 
+  // Function to show a snackbar for messages
   void _showSnackBar(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -122,8 +131,7 @@ class UserProfilePageState extends State<UserProfilePage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: ListView(
           children: [
             const SizedBox(height: 20),
             TextField(
