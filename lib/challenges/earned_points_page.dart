@@ -1,154 +1,155 @@
+import 'package:fitbattles/settings/app_colors.dart';
+import 'package:fitbattles/settings/app_dimens.dart';
+import 'package:fitbattles/settings/app_strings.dart';
 import 'package:flutter/material.dart';
+import 'package:fitbattles/points/earned_points_awards_section.dart';
+import 'package:fitbattles/points/earned_points_stats_section.dart';
+import 'package:fitbattles/settings/points_service.dart';
 
-// This widget represents a page that displays the user's earned points and related statistics.
 class EarnedPointsPage extends StatelessWidget {
-  // Points earned by the user
-  final int points;
+  final String userId; // Pass the userId from the previous page
 
-  // Number of days in the user's streak
-  final int streakDays;
-
-  // Constructor for the EarnedPointsPage, requiring points and streakDays as parameters.
-  const EarnedPointsPage({super.key, required this.points, required this.streakDays});
+  const EarnedPointsPage({super.key, required this.userId, required int points, required int streakDays, required int totalChallengesCompleted, required int pointsEarnedToday, required int bestDayPoints});
 
   @override
   Widget build(BuildContext context) {
-    // Calculate the progress as a fraction of the goal (1000 points)
-    double progress = points / 1000;
+    PointsService pointsService = PointsService();
 
     return Scaffold(
-      // AppBar containing the title of the page
       appBar: AppBar(
-        title: const Text('Earned Points'),
-        backgroundColor: const Color(0xFF5D6C8A), // Custom color for the AppBar
+        title: const Text(AppStrings.earnedPointsTitle),
+        backgroundColor: AppColors.appBarColor,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0), // Padding around the main content
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center, // Center-align the column contents
-          children: [
-            const SizedBox(height: 20), // Space between elements
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: pointsService.getUserStats(userId), // Fetch user stats
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
 
-            // Title displaying the user's earned points
-            const Text(
-              'Your Earned Points',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          final userStats = snapshot.data!;
+          final points = userStats['points'] ?? 0;
+          final streakDays = userStats['streakDays'] ?? 0;
+          final totalChallengesCompleted = userStats['totalChallengesCompleted'] ?? 0;
+          final pointsEarnedToday = userStats['pointsEarnedToday'] ?? 0;
+          final bestDayPoints = userStats['bestDayPoints'] ?? 0;
+
+          double progress = points / 1000;
+          List<String> awards = _determineAwards(totalChallengesCompleted);
+          String rank = _determineRank(points);
+
+          return Padding(
+            padding: const EdgeInsets.all(AppDimens.padding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 20),
+                const Text(
+                  AppStrings.earnedPointsTitle,
+                  style: TextStyle(
+                      fontSize: AppDimens.titleSize, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  '$points ${AppStrings.pointsLabel}',
+                  style: TextStyle(
+                      fontSize: AppDimens.pointsSize,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.totalPointsColor),
+                ),
+                const SizedBox(height: 20),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 10,
+                    backgroundColor: Colors.grey[300],
+                    color: AppColors.progressColor,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  '${(progress * 100).toStringAsFixed(1)}${AppStrings.goalPercentageLabel}',
+                  style: const TextStyle(fontSize: AppDimens.statsTextSize),
+                ),
+                const SizedBox(height: 20),
+
+                if (progress < 1) ...[
+                  const Text(
+                    AppStrings.keepGoingMessage,
+                    style: TextStyle(
+                        fontSize: AppDimens.statsTextSize, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 20),
+                ] else ...[
+                  const Text(
+                    AppStrings.congratulationsMessage,
+                    style: TextStyle(
+                        fontSize: AppDimens.statsTextSize, color: Colors.green),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                Text(
+                  '${AppStrings.yourRankLabel}$rank',
+                  style: const TextStyle(
+                      fontSize: AppDimens.statsTitleSize,
+                      fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+
+                // Awards Section
+                EarnedPointsAwardsSection(awards: awards),
+
+                // Stats Section
+                EarnedPointsStatsSection(
+                  totalChallengesCompleted: totalChallengesCompleted,
+                  pointsEarnedToday: pointsEarnedToday,
+                  bestDayPoints: bestDayPoints,
+                  streakDays: streakDays,
+                ),
+
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.appBarColor,
+                    minimumSize: Size(double.infinity, AppDimens.buttonHeight),
+                  ),
+                  child: const Text(AppStrings.backToHomeButton),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 20), // Space between elements
-
-            // Display the total points earned
-            Text(
-              '$points Points',
-              style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.green),
-            ),
-
-            const SizedBox(height: 20), // Space between elements
-
-            // Progress bar to visualize the points earned towards the goal
-            LinearProgressIndicator(
-              value: progress, // Progress based on points earned / 1000
-              minHeight: 10, // Minimum height of the progress bar
-              backgroundColor: Colors.grey[300], // Background color of the progress bar
-              color: const Color(0xFF85C83E), // Progress color
-            ),
-
-            const SizedBox(height: 10), // Space between elements
-
-            // Text displaying the percentage of the goal reached
-            Text(
-              '${(progress * 100).toStringAsFixed(1)}% of your goal reached',
-              style: const TextStyle(fontSize: 18),
-            ),
-
-            const SizedBox(height: 20), // Space between elements
-
-            // Motivational message or encouragement based on progress
-            if (progress < 1) ...[ // If the goal is not yet reached
-              const Text(
-                'Keep going! You are almost there!',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-            ] else ...[ // If the goal has been reached
-              const Text(
-                'Congratulations! You reached your goal!',
-                style: TextStyle(fontSize: 18, color: Colors.green),
-              ),
-              const SizedBox(height: 20),
-            ],
-
-            // Call to build the statistics section with streak information
-            _buildStatsSection(streakDays),
-
-            const SizedBox(height: 30), // Space between elements
-
-            // Button to navigate back to the home screen
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Navigate back to the previous screen
-              },
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white, // Text color of the button
-                backgroundColor: const Color(0xFF5D6C8A), // Background color of the button
-              ),
-              child: const Text('Back to Home'), // Button text
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  // Function to build the statistics section including streaks
-  Widget _buildStatsSection(int streakDays) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Align children to the start
-      children: [
-        const Text(
-          'Statistics',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 10), // Space between elements
+  // Determines the awards based on completed challenges
+  List<String> _determineAwards(int challengesCompleted) {
+    List<String> awards = [];
+    if (challengesCompleted >= 5) awards.add(AppStrings.bronzeTrophy);
+    if (challengesCompleted >= 10) awards.add(AppStrings.silverTrophy);
+    if (challengesCompleted >= 20) awards.add(AppStrings.goldTrophy);
+    if (challengesCompleted >= 50) awards.add(AppStrings.platinumTrophy);
+    return awards;
+  }
 
-        // Displaying total challenges completed
-        const Text(
-          'Total Challenges Completed: 5',
-          style: TextStyle(fontSize: 18),
-        ),
-        const SizedBox(height: 5), // Space between elements
-
-        // Displaying points earned today
-        const Text(
-          'Points Earned Today: 150',
-          style: TextStyle(fontSize: 18),
-        ),
-        const SizedBox(height: 5), // Space between elements
-
-        // Displaying the best day for points earned
-        const Text(
-          'Best Day: 200 points',
-          style: TextStyle(fontSize: 18),
-        ),
-        const SizedBox(height: 20), // Space between elements
-
-        // Display current streak information with dynamic color based on streakDays
-        Text(
-          'Current Streak: $streakDays days',
-          style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: streakDays > 0 ? Colors.orange : Colors.grey // Color changes based on the streak
-          ),
-        ),
-        const SizedBox(height: 5), // Space between elements
-
-        // Message to encourage maintaining the streak
-        const Text(
-          'Maintain your streak to earn bonus points each day!',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
-        ),
-      ],
-    );
+  // Determines the rank based on earned points
+  String _determineRank(int points) {
+    if (points < 100) {
+      return 'Novice';
+    } else if (points < 500) {
+      return 'Intermediate';
+    } else if (points < 1000) {
+      return 'Advanced';
+    } else {
+      return 'Master';
+    }
   }
 }

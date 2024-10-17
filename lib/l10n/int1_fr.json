@@ -1,0 +1,118 @@
+{
+  "title": "FitBattles",
+  "login": "Connexion",
+  "home": "Accueil",
+  "leaderboard": "Classement",
+  "loginTitle": "Bienvenue à FitBattles",
+  "loginButton": "Connexion",
+  "logoutButton": "Déconnexion",
+  "totalDistance": "Distance totale :",
+  "hydrationReminder": "Il est temps de s'hydrater !",
+  "trackingStarted": "Suivi démarré.",
+  "trackingStopped": "Suivi arrêté.",
+  "errorDialogTitle": "Erreur",
+  "errorDialogOkButton": "OK",
+  "theme": {
+    "themeTitle": "Thème",
+    "lightTheme": "Thème clair",
+    "darkTheme": "Thème sombre"
+  },
+  "challenges": {
+    "selectChallenge": "Choisir un défi",
+    "sendChallenge": "Envoyer un défi",
+    "challengeSent": "Défi envoyé.",
+    "strengthWorkoutTitle": "Entraînement de force",
+    "strengthWorkoutChallengesTitle": "Défis d'entraînement de force",
+    "strengthWorkoutDescription": "Faites un entraînement de force pour gagner des points.",
+    "startWorkoutButton": "Commencer l'entraînement",
+    "workoutStartedMessage": "Entraînement démarré !",
+    "successMessage": "Succès !",
+    "errorMessage": "Erreur",
+    "pushUps": "Pompes",
+    "squats": "Squats",
+    "sitUps": "Abdominaux",
+    "benchPress": "Développé couché",
+    "lunges": "Fentes",
+    "setsOfReps": "{sets} séries de {reps} répétitions."
+  },
+  "leaderboardDetails": {
+    "leaderboardTitle": "Classement",
+    "leaderboardRefreshed": "Classement actualisé.",
+    "errorLoadingLeaderboard": "Erreur lors du chargement du classement.",
+    "noLeaderboardData": "Aucune donnée de classement.",
+    "streak": "Série",
+    "days": "Jours"
+  },
+  "profile": {
+    "profileTitle": "Profil",
+    "editProfileButton": "Modifier le profil",
+    "saveButton": "Enregistrer",
+    "cancelButton": "Annuler"
+  },
+  "friends": {
+    "friendsListTitle": "Liste d'amis",
+    "addFriendButton": "Ajouter un ami",
+    "removeFriendButton": "Supprimer un ami",
+    "challengeFriendButton": "Défier un ami"
+  },
+  "settings": {
+    "settingsTitle": "Paramètres",
+    "language": "Langue",
+    "notifications": "Notifications",
+    "privacy": "Confidentialité",
+    "languageOption": {
+      "en": "Anglais",
+      "es": "Espagnol",
+      "fr": "Français",
+      "de": "Allemand",
+      "zh": "Chinois"
+    },
+    "notificationSettings": {
+      "workoutReminders": "Rappels d'entraînement",
+      "leaderboardUpdates": "Mises à jour du classement",
+      "friendRequests": "Demandes d'amis"
+    },
+    "privacySettings": {
+      "publicProfile": "Profil public",
+      "activityVisibility": "Visibilité de l'activité",
+      "locationTracking": "Suivi de localisation"
+    }
+  },
+  "placeholders": {
+    "replacePlaceholder": "Remplacer le placeholder"
+  },
+  "errorMessages": {
+    "loginFailed": "Échec de la connexion. Veuillez vérifier vos identifiants.",
+    "networkError": "Erreur de réseau. Vérifiez votre connexion Internet.",
+    "friendRequestFailed": "Impossible d'envoyer la demande d'ami."
+  },
+  "feedbackMessages": {
+    "friendAdded": "Ami ajouté avec succès.",
+    "friendRemoved": "Ami supprimé avec succès.",
+    "profileSaved": "Profil enregistré avec succès."
+  },
+  "help": {
+    "faqTitle": "Questions Fréquemment Posées",
+    "faq": [
+      {
+        "question": "Comment ajouter un ami ?",
+        "answer": "Allez dans votre liste d'amis et cliquez sur 'Ajouter un ami'."
+      },
+      {
+        "question": "Comment fonctionne le système de points ?",
+        "answer": "Vous gagnez des points en fonction de vos séances d'entraînement et de vos défis."
+      }
+    ]
+  },
+  "onboarding": {
+    "welcomeMessage": "Bienvenue dans FitBattles ! Commençons.",
+    "setupInstructions": "Configurez votre profil pour commencer."
+  },
+  "accessibilityOptions": {
+    "title": "Accessibilité",
+    "options": {
+      "screenReaderSupport": "Activer le support des lecteurs d'écran",
+      "highContrastMode": "Activer le mode de contraste élevé"
+    }
+  }
+}
