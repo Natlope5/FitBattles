@@ -10,7 +10,6 @@ import 'package:logger/logger.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
 import 'package:provider/provider.dart';
 
-import '../settings/app_colors.dart';
 import '../settings/app_strings.dart';
 
 class HomePage extends StatefulWidget {
@@ -71,16 +70,18 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      backgroundColor: themeProvider.isDarkMode ? AppColors.backgroundColorDark : AppColors.backgroundColorLight,
+      backgroundColor: const Color(0xFF5D6C8A), // Blue background
       appBar: AppBar(
-        title: const Text(AppStrings.appName),
+        backgroundColor: Colors.grey[600], // Gray AppBar
+        title: const Text(
+          AppStrings.appName,
+          style: TextStyle(color: Colors.black), // Black text
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -121,8 +122,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader(ThemeProvider themeProvider) {
+    // Set container and text color based on theme (dark or light)
+    final containerColor = themeProvider.isDarkMode ? Colors.black : Colors.white;
+    final textColor = themeProvider.isDarkMode ? Colors.white : Colors.black;
+
     return Container(
-      color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.grey[600],
+      color: containerColor, // Dynamically set container color
       width: double.infinity,
       height: 200,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -130,12 +135,12 @@ class _HomePageState extends State<HomePage> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'FitBattles',
             style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: textColor, // Dynamically set text color
             ),
             textAlign: TextAlign.center,
           ),
@@ -144,10 +149,12 @@ class _HomePageState extends State<HomePage> {
             onTap: _pickAndUploadImage,
             child: CircleAvatar(
               radius: 40,
-              backgroundColor: Colors.grey[300],
+              backgroundColor: themeProvider.isDarkMode
+                  ? Colors.grey[700]
+                  : Colors.grey[300], // Adjust based on theme
               backgroundImage: _image != null ? FileImage(_image!) : null,
               child: _image == null
-                  ? const Icon(Icons.add_a_photo, color: Colors.black, size: 30)
+                  ? Icon(Icons.add_a_photo, color: textColor, size: 30) // Adjust icon color
                   : null,
             ),
           ),
