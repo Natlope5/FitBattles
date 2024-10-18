@@ -22,7 +22,7 @@ FitBattles is a social fitness app that allows users to create, join, and compet
 To install and run FitBattles on your local machine:
 
 1. **Clone the repository**:  
-   `git clone [https://github.com/Natlope5/FitBattles.git]`  
+   `git clone https://github.com/Natlope5/FitBattles.git`
    `cd FitBattles`
 
 2. **Install Flutter dependencies**:  
