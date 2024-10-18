@@ -1,0 +1,118 @@
+{
+  "title": "FitBattles",
+  "login": "Login",
+  "home": "Home",
+  "leaderboard": "Leaderboard",
+  "loginTitle": "Welcome to FitBattles",
+  "loginButton": "Login",
+  "logoutButton": "Logout",
+  "totalDistance": "Total Distance:",
+  "hydrationReminder": "Time to Hydrate!",
+  "trackingStarted": "Tracking started.",
+  "trackingStopped": "Tracking stopped.",
+  "errorDialogTitle": "Error",
+  "errorDialogOkButton": "OK",
+  "theme": {
+    "themeTitle": "Theme",
+    "lightTheme": "Light Theme",
+    "darkTheme": "Dark Theme"
+  },
+  "challenges": {
+    "selectChallenge": "Select Challenge",
+    "sendChallenge": "Send Challenge",
+    "challengeSent": "Challenge Sent",
+    "strengthWorkoutTitle": "Strength Workout",
+    "strengthWorkoutChallengesTitle": "Strength Workout Challenges",
+    "strengthWorkoutDescription": "Do a strength workout routine to earn points.",
+    "startWorkoutButton": "Start Workout",
+    "workoutStartedMessage": "Workout started!",
+    "successMessage": "Success!",
+    "errorMessage": "Error",
+    "pushUps": "Push Ups",
+    "squats": "Squats",
+    "sitUps": "Sit Ups",
+    "benchPress": "Bench Press",
+    "lunges": "Lunges",
+    "setsOfReps": "{sets} sets of {reps} reps"
+  },
+  "leaderboardDetails": {
+    "leaderboardTitle": "Leaderboard",
+    "leaderboardRefreshed": "Leaderboard refreshed.",
+    "errorLoadingLeaderboard": "Error loading leaderboard.",
+    "noLeaderboardData": "No leaderboard data available.",
+    "streak": "Streak",
+    "days": "Days"
+  },
+  "profile": {
+    "profileTitle": "Profile",
+    "editProfileButton": "Edit Profile",
+    "saveButton": "Save",
+    "cancelButton": "Cancel"
+  },
+  "friends": {
+    "friendsListTitle": "Friends List",
+    "addFriendButton": "Add Friend",
+    "removeFriendButton": "Remove Friend",
+    "challengeFriendButton": "Challenge a Friend"
+  },
+  "settings": {
+    "settingsTitle": "Settings",
+    "language": "Language",
+    "notifications": "Notifications",
+    "privacy": "Privacy",
+    "languageOption": {
+      "en": "English",
+      "es": "Spanish",
+      "fr": "French",
+      "de": "German",
+      "zh": "Chinese"
+    },
+    "notificationSettings": {
+      "workoutReminders": "Workout Reminders",
+      "leaderboardUpdates": "Leaderboard Updates",
+      "friendRequests": "Friend Requests"
+    },
+    "privacySettings": {
+      "publicProfile": "Public Profile",
+      "activityVisibility": "Activity Visibility",
+      "locationTracking": "Location Tracking"
+    }
+  },
+  "placeholders": {
+    "replacePlaceholder": "Replace Placeholder"
+  },
+  "errorMessages": {
+    "loginFailed": "Login failed. Please check your credentials.",
+    "networkError": "Network error. Please check your internet connection.",
+    "friendRequestFailed": "Friend request could not be sent."
+  },
+  "feedbackMessages": {
+    "friendAdded": "Friend added successfully.",
+    "friendRemoved": "Friend removed successfully.",
+    "profileSaved": "Profile saved successfully."
+  },
+  "help": {
+    "faqTitle": "Frequently Asked Questions",
+    "faq": [
+      {
+        "question": "How do I add a friend?",
+        "answer": "Go to your friends list and click 'Add Friend'."
+      },
+      {
+        "question": "How does the points system work?",
+        "answer": "You earn points based on your workout sessions and challenges."
+      }
+    ]
+  },
+  "onboarding": {
+    "welcomeMessage": "Welcome to FitBattles! Let's get started!",
+    "setupInstructions": "Set up your profile to begin."
+  },
+  "accessibilityOptions": {
+    "title": "Accessibility",
+    "options": {
+      "screenReaderSupport": "Enable screen reader support",
+      "highContrastMode": "Enable high contrast mode"
+    }
+  }
+}

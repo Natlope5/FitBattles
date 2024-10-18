@@ -1,116 +1,150 @@
-import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // Assuming Firebase initialization
-import 'package:fitbattles/screens/login_page.dart';
+import 'package:camera/camera.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
-import 'package:fitbattles/challenges/strength_workout_page.dart';
-import 'package:fitbattles/challenges/leaderboard_page.dart';
-import 'package:fitbattles/settings/visibility_settings_page.dart';
-import 'package:fitbattles/challenges/create_challenge_page.dart';
-import 'package:fitbattles/notifications/notifications_handler.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
-import 'package:fitbattles/screens/friends_list_page.dart'; // Correctly importing the friends list page
-import 'package:fitbattles/settings/my_history.dart'; // Correctly importing the My History page
 import 'package:fitbattles/screens/workout_tracking_page.dart';
+import 'package:fitbattles/workouts/strength_workout_page.dart';
+import 'package:fitbattles/screens/friends_list_page.dart';
+import 'package:fitbattles/screens/home_page.dart';
+import 'package:fitbattles/screens/my_history.dart';
+import 'package:fitbattles/screens/settings_page.dart';
+import 'package:fitbattles/screens/user_profile_page.dart';
+import 'package:fitbattles/settings/theme_provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:logger/logger.dart';
+import 'package:provider/provider.dart';
+import 'package:fitbattles/challenges/create_challenge_page.dart';
+import 'package:fitbattles/challenges/leaderboard_page.dart';
+import 'package:fitbattles/auth/login_page.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure all widgets are initialized
-  await Firebase.initializeApp(); // Initialize Firebase
+final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
+final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+final Logger logger = Logger();
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-  final notificationsHandler = NotificationsHandler(); // Create an instance of NotificationsHandler
-  await notificationsHandler.init(); // Initialize notifications handler
-
-  runApp(const MyApp()); // Run the main app
-}
-
-// Main application widget
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final List<CameraDescription> cameras;
+  const MyApp({super.key, required this.cameras});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FitBattles', // App title
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF5D6C8A)), // Theme color scheme
-        textTheme: Theme.of(context).textTheme.apply(
-          bodyColor: Colors.black, // Body text color
-          displayColor: Colors.black, // Display text color
-        ),
-      ),
-      initialRoute: '/login', // Set the initial route to login page
-      routes: {
-        '/login': (context) => const MyLoginPage(title: ''), // Route to login page
-        '/home': (context) => const HomePage(uid: '', email: ''), // Route to home page
-        '/friendsSearch': (context) => const FriendsListPage(), // Route for Friends Search Page
-        '/my_history': (context) => const MyHistoryPage(), // Route to my history page
-        '/pointsInfo': (context) => const EarnedPointsPage(points: 1000, streakDays: 360), // Route to earned points page
-        '/distanceWorkout': (context) => const DistanceWorkoutPage(), // Route to distance workout page
-        '/strengthWorkout': (context) => const StrengthWorkoutPage(), // Route to strength workout page
-        '/leaderboard': (context) => const LeaderboardPage(), // Route to leaderboard page
-        '/settings': (context) => const VisibilitySettingsPage(), // Route to visibility settings page
-        '/create_challenge': (context) => const CreateChallengePage(), // Route to create challenge page
-        '/earnedPoints': (context) => const EarnedPointsPage(points: 1000, streakDays: 360), // Route to earned points page (duplicate)
-        '/friendsList': (context) => const FriendsListPage(), // Route to friends list page
-        '/workoutTracking': (context) => const WorkoutTrackingPage(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          navigatorKey: navigatorKey,
+          title: 'FitBattles',
+          theme: themeProvider.currentTheme,
+          localizationsDelegates: [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en', ''),
+            Locale('es', ''),
+            Locale('fr', ''),
+            Locale('de', ''),
+            Locale('zh', ''),
+          ],
+          initialRoute: '/login',
+          routes: {
+            '/login': (context) => LoginPage(title: '', setLocale: (locale) {}),
+            '/': (context) => UserProfilePage(heading: 'Create Profile'),
+            '/home': (context) => HomePage(id: '', email: '', uid: ''),
+            '/workoutTracking': (context) => const WorkoutTrackingPage(),
+
+            '/friends': (context) => const FriendsListPage(),
+            '/history': (context) => const MyHistoryPage(),
+            '/pointsInfo': (context) => const EarnedPointsPage(
+              points: 1000,
+              streakDays: 360,
+              totalChallengesCompleted: 0,
+              pointsEarnedToday: 0,
+              bestDayPoints: 0, userId: '',
+            ),
+            '/distanceWorkout': (context) => const DistanceWorkoutPage(),
+            '/strengthWorkout': (context) => const StrengthWorkoutPage(),
+            '/leaderboard': (context) => const LeaderboardPage(),
+            '/settings': (context) => const SettingsPage(),
+            '/create_challenge': (context) => CreateChallengePage(cameras: cameras, friends: [], friend: ''),
+          },
+        );
       },
     );
   }
 }
 
-// Home page widget
-class HomePage extends StatelessWidget {
-  final String uid; // User ID
-  final String email; // User email
+class NotificationsHandler {
+  final FlutterLocalNotificationsPlugin localNotificationsPlugin;
 
-  const HomePage({super.key, required this.uid, required this.email});
+  NotificationsHandler({required this.localNotificationsPlugin});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF5D6C8A), // App bar color
-        title: const Text('Home'), // Title of the app bar
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout), // Logout icon
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/login'); // Navigate to login page
-            },
-          ),
-        ],
-      ),
-      body: Container(
-        color: const Color(0xFF5D6C8A), // Background color for the body
-        child: Center(
-          child: SingleChildScrollView( // Enable scrolling for the content
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                const SizedBox(height: 20), // Space above the logo
-                Image.asset(
-                  'assets/logo.png', // Logo image
-                  height: 150, // Height of the logo
-                ),
-                const SizedBox(height: 20), // Space below the logo
-                const Text(
-                  'Welcome to FitBattles!', // Welcome message
-                  style: TextStyle(fontSize: 24, color: Color(0xFF85C83E)), // Style for welcome message
-                ),
-                const SizedBox(height: 20), // Space before user info
-                Text('User ID: $uid', style: const TextStyle(fontSize: 16, color: Colors.white)), // Display user ID
-                Text('Email: $email', style: const TextStyle(fontSize: 16, color: Colors.white)), // Display user email
-                const SizedBox(height: 40), // Space before the button
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/friendsSearch'); // Navigate to friends search page
-                  },
-                  child: const Text('Search Friends'), // Button text
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+  Future<void> initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('your_image'); // Ensure app_icon exists in drawable
+
+    final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+
+    await localNotificationsPlugin.initialize(initializationSettings);
+
+    // Handle foreground messages
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      _showNotification(message);
+    });
+
+    // Handle background messages
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  }
+
+  Future<void> _showNotification(RemoteMessage message) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'your_channel_id', // Your channel ID
+      'your_channel_name', // Your channel name
+      channelDescription: 'your_channel_description',
+      importance: Importance.max,
+      priority: Priority.high,
+      showWhen: false,
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+    );
+
+    await localNotificationsPlugin.show(
+      0,
+      message.notification?.title ?? 'Default Title', // Default Title if null
+      message.notification?.body ?? 'Default Body',   // Default Body if null
+      platformChannelSpecifics,
+      payload: message.data['payload'] ?? '', // Handle payload safely
     );
   }
+
+  static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+    await Firebase.initializeApp();
+    // Handle background notification data here if needed
+  }
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Initialize NotificationsHandler with proper values
+  final notificationsHandler = NotificationsHandler(localNotificationsPlugin: localNotificationsPlugin);
+  await notificationsHandler.initializeNotifications();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(), // Provide ThemeProvider for the whole app
+      child: MyApp(cameras: await availableCameras()),
+    ),
+  );
 }
