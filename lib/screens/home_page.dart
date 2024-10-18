@@ -146,6 +146,8 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildChallengesContainer(context, themeProvider),
               const SizedBox(height: 32),
+              _buildWorkoutContainer(context),
+              const SizedBox(height: 32),
               _buildHistoryContainer(context, themeProvider),
               const SizedBox(height: 32),
               const SizedBox(height: 32),
@@ -402,6 +404,29 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildWorkoutContainer(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      width: MediaQuery.of(context).size.width * 0.9, // Responsive width
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Workout', // Section title
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          // Workout tracking button
+          _buildWorkoutTrackingButton(context),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHistoryContainer(BuildContext context,
       ThemeProvider themeProvider) {
     return Container(
@@ -573,6 +598,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+// Widget to build the workout tracking navigation button
+Widget _buildWorkoutTrackingButton(BuildContext context) {
+  return ElevatedButton(
+    onPressed: () {
+      Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
+    },
+    style: ElevatedButton.styleFrom(
+      foregroundColor: Colors.white,
+      backgroundColor: const Color(0xFF85C83E), // Use the theme color
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
+    ),
+    child: const Text('Workout Tracking'), // Button text
+  );
+}
+
 class DetailsScreen extends StatelessWidget {
   const DetailsScreen({super.key});
 
