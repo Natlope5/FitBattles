@@ -1,8 +1,8 @@
+import 'package:fitbattles/screens/workout_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'hydration_page.dart'; // Import the HydrationPage
-import 'package:fitbattles/screens/goals_completion.dart'; // Import the GoalsPage
-import 'workout_tracking_page.dart'; // Import the WorkoutTrackingPage
+import 'hydration_page.dart';
+import 'package:fitbattles/screens/goals_completion.dart';
 
 class MyHistoryPage extends StatefulWidget {
   const MyHistoryPage({super.key});
@@ -198,7 +198,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const WorkoutTrackingPage(),
+                  builder: (context) => const WorkoutHistoryPage(),
                 ),
               );
             } else {

@@ -20,6 +20,7 @@ import 'package:fitbattles/challenges/create_challenge_page.dart';
 import 'package:fitbattles/challenges/leaderboard_page.dart';
 import 'package:fitbattles/auth/login_page.dart';
 import 'package:fitbattles/challenges/user_challenges_page.dart';
+import 'package:fitbattles/screens/workout_history_page.dart';
 
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -60,6 +61,7 @@ class MyApp extends StatelessWidget {
 
             '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
+            '/workoutHistory': (context) => const WorkoutHistoryPage(),
             '/pointsInfo': (context) => const EarnedPointsPage(
               points: 1000,
               streakDays: 360,
