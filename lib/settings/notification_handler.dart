@@ -67,7 +67,7 @@ class MyApp extends StatelessWidget {
             '/strengthWorkout': (context) => const StrengthWorkoutPage(),
             '/leaderboard': (context) => const LeaderboardPage(),
             '/settings': (context) => const SettingsPage(),
-            '/create_challenge': (context) => CreateChallengePage(cameras: cameras, friends: [], friend: ''),
+            '/create_challenge': (context) => CreateChallengePage(),
           },
         );
       },

@@ -307,6 +307,30 @@ class _HomePageState extends State<HomePage> {
             ),
             child: const Text('Create Challenge'),
           ),
+          // Button to navigate to the user's challenges page
+          ElevatedButton(
+            onPressed: () {
+            Navigator.pushNamed(context, '/user_challenges');
+            },
+            style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.black,
+            backgroundColor: const Color(0xFF85C83E),
+            ),
+            child: const Text('Challenges'), // Button text
+          ),
+          const SizedBox(height: 16),
+          // Button to create a new challenge
+          ElevatedButton(
+          onPressed: () {
+          // Navigate to the create new challenge page
+          Navigator.pushNamed(context, '/create_challenge');
+          },
+          style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.black,
+          backgroundColor: const Color(0xFF85C83E),
+          ),
+          child: const Text('New Challenge'), // Button text
+          ),
         ],
       ),
     );

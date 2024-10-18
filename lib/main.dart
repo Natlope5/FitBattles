@@ -19,6 +19,7 @@ import 'package:provider/provider.dart';
 import 'package:fitbattles/challenges/create_challenge_page.dart';
 import 'package:fitbattles/challenges/leaderboard_page.dart';
 import 'package:fitbattles/auth/login_page.dart';
+import 'package:fitbattles/challenges/user_challenges_page.dart';
 
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -70,7 +71,8 @@ class MyApp extends StatelessWidget {
             '/strengthWorkout': (context) => const StrengthWorkoutPage(),
             '/leaderboard': (context) => const LeaderboardPage(),
             '/settings': (context) => const SettingsPage(),
-            '/create_challenge': (context) => CreateChallengePage(cameras: cameras, friends: [], friend: ''),
+            '/create_challenge': (context) => CreateChallengePage(),
+            '/user_challenges': (context) => const UserChallengesPage(),
           },
         );
       },
