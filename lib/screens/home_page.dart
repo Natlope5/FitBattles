@@ -148,8 +148,9 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildWorkoutContainer(context),
               const SizedBox(height: 32),
-              _buildHistoryContainer(context, themeProvider),
+              _buildGoalsContainer(context),
               const SizedBox(height: 32),
+              _buildHistoryContainer(context, themeProvider),
               const SizedBox(height: 32),
               _buildTopChallengedFriends(exampleFriends, themeProvider),
               _buildFriendsListButton(context),
@@ -422,6 +423,46 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
           // Workout tracking button
           _buildWorkoutTrackingButton(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoalsContainer(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      width: MediaQuery.of(context).size.width * 0.9,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Goals',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/addGoal');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            child: const Text('Add Goal'),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/currentGoals');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+            ),
+            child: const Text('Current Goals'),
+          ),
         ],
       ),
     );
