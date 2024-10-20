@@ -32,34 +32,50 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
 
   void _navigateToLogin() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacementNamed(context, '/addGoal'); // Change '/login' to your login route
+      Navigator.pushReplacementNamed(context, '/addGoal'); // Change '/addGoal' to your login route
     });
   }
 
   Future<void> _loadCurrentGoals() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final List<String>? savedGoals = prefs.getStringList('currentGoals');
+    try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final List<String>? savedGoals = prefs.getStringList('currentGoals');
 
-    if (savedGoals != null) {
-      setState(() {
-        _currentGoals = savedGoals
-            .map((goal) => jsonDecode(goal) as Map<String, dynamic>)
-            .toList();
-      });
+      if (savedGoals != null) {
+        // Check if the widget is still mounted before calling setState
+        if (mounted) {
+          setState(() {
+            _currentGoals = savedGoals
+                .map((goal) => jsonDecode(goal) as Map<String, dynamic>)
+                .toList();
+          });
+        }
+      }
+    } catch (e) {
+      // Handle error while loading goals
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading goals: $e')),
+        );
+      }
     }
   }
 
-  Future<void> _updateProgress(int index, double progress) async {
-    setState(() {
-      _currentGoals[index]['currentProgress'] = progress;
-      if (progress >= _currentGoals[index]['amount']) {
-        _currentGoals[index]['isCompleted'] = true;
-      }
-    });
 
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> updatedGoals = _currentGoals.map((goal) => jsonEncode(goal)).toList();
-    await prefs.setStringList('currentGoals', updatedGoals);
+
+
+  Future<void> _updateProgress(int index, double progress) async {
+    // Update progress only if the new progress is different
+    if (progress != _currentGoals[index]['currentProgress']) {
+      setState(() {
+        _currentGoals[index]['currentProgress'] = progress;
+        _currentGoals[index]['isCompleted'] = progress >= _currentGoals[index]['amount'];
+      });
+
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      List<String> updatedGoals = _currentGoals.map((goal) => jsonEncode(goal)).toList();
+      await prefs.setStringList('currentGoals', updatedGoals);
+    }
   }
 
   @override

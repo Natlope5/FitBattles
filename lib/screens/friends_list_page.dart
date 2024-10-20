@@ -3,7 +3,6 @@ import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
 import 'package:fitbattles/settings/app_strings.dart';
-
 import '../firebase/firebase_messaging.dart';
 
 class FriendsListPage extends StatefulWidget {
@@ -22,6 +21,7 @@ class _FriendsListPage extends State<FriendsListPage> {
 
   List<Map<String, dynamic>> addedFriends = [];
   String searchQuery = '';
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -30,34 +30,72 @@ class _FriendsListPage extends State<FriendsListPage> {
   }
 
   Future<void> _loadAddedFriends() async {
+    // Capture the current BuildContext
+    final BuildContext currentContext = context;
+
     try {
       // Replace 'userID' with the actual user ID or token
+      final userId = 'userID'; // Fetch the user's ID dynamically
       final DocumentSnapshot doc = await FirebaseFirestore.instance
           .collection('users')
-          .doc('userID') // Fetch the user's document
+          .doc(userId)
           .get();
 
       if (doc.exists) {
-        setState(() {
-          addedFriends = List<Map<String, dynamic>>.from(doc['friends'] ?? []);
-        });
+        // Update the state if the widget is still mounted
+        if (mounted) {
+          setState(() {
+            addedFriends = List<Map<String, dynamic>>.from(doc['friends'] ?? []);
+          });
+        }
       }
     } catch (e) {
       logger.i('Error loading friends: $e');
+      // Use the captured context to show the SnackBar
+      if (mounted) {
+        // Delay the SnackBar display to ensure the context is still valid
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            SnackBar(content: Text('Error loading friends: $e')),
+          );
+        });
+      }
+    } finally {
+      // Use setState only if the widget is still mounted
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
   Future<void> _saveFriends() async {
+    // Capture the current BuildContext
+    final BuildContext currentContext = context;
+
     try {
       // Replace 'userID' with the actual user ID or token
+      final userId = 'userID'; // Fetch the user's ID dynamically
       await FirebaseFirestore.instance
           .collection('users')
-          .doc('userID') // Save to the user's document
+          .doc(userId)
           .set({'friends': addedFriends});
     } catch (e) {
       logger.i('Error saving friends: $e');
+      // Use the captured context to show the SnackBar
+      if (mounted) {
+        // Delay the SnackBar display to ensure the context is still valid
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(currentContext).showSnackBar(
+            SnackBar(content: Text('Error saving friends: $e')),
+          );
+        });
+      }
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +114,9 @@ class _FriendsListPage extends State<FriendsListPage> {
           style: TextStyle(color: textColor),
         ),
       ),
-      body: Column(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(AppDimens.padding),
@@ -115,18 +155,20 @@ class _FriendsListPage extends State<FriendsListPage> {
                   trailing: IconButton(
                     icon: Icon(Icons.add, color: textColor),
                     onPressed: () {
-                      setState(() {
-                        addedFriends.add(filteredFriends[index]);
-                      });
-                      _saveFriends(); // Save friends to Firestore
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${filteredFriends[index]['name']} ${AppStrings.addedFriendMessage}',
-                            style: TextStyle(color: textColor),
+                      if (!addedFriends.contains(filteredFriends[index])) {
+                        setState(() {
+                          addedFriends.add(filteredFriends[index]);
+                        });
+                        _saveFriends(); // Save friends to Firestore
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${filteredFriends[index]['name']} ${AppStrings.addedFriendMessage}',
+                              style: TextStyle(color: textColor),
+                            ),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
                   ),
                   onTap: () => showFriendInfoDialog(filteredFriends[index]),

@@ -20,13 +20,13 @@ class AddGoalPageState extends State<AddGoalPage> {
   // Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> _saveGoal(GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey) async {
-    final String goalName = _goalNameController.text;
-    final double? goalAmount = double.tryParse(_goalAmountController.text);
+  Future<void> _saveGoal() async {
+    final String goalName = _goalNameController.text.trim();
+    final double? goalAmount = double.tryParse(_goalAmountController.text.trim());
 
     if (goalName.isNotEmpty && goalAmount != null) {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      List<String>? goalHistory = prefs.getStringList('currentGoals') ?? [];
+      List<String> goalHistory = prefs.getStringList('currentGoals') ?? [];
 
       // Add new goal to the list
       final newGoal = {
@@ -36,21 +36,22 @@ class AddGoalPageState extends State<AddGoalPage> {
         'isCompleted': false,
       };
 
-      // Save goal to Firestore
-      await _firestore.collection('goals').add(newGoal).then((docRef) {
+      try {
+        // Save goal to Firestore
+        DocumentReference docRef = await _firestore.collection('goals').add(newGoal);
         newGoal['id'] = docRef.id; // Save the document ID
         goalHistory.add(jsonEncode(newGoal));
 
         // Save back to SharedPreferences
-        prefs.setStringList('currentGoals', goalHistory);
+        await prefs.setStringList('currentGoals', goalHistory);
         scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(content: Text('Goal added successfully!')),
         );
-      }).catchError((error) {
+      } catch (error) {
         scaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(content: Text('Error adding goal: $error')),
         );
-      });
+      }
 
       // Clear inputs
       _goalNameController.clear();
@@ -119,7 +120,7 @@ class AddGoalPageState extends State<AddGoalPage> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () => _saveGoal(scaffoldMessengerKey), // Pass the key
+                onPressed: _saveGoal, // No need to pass the key
                 child: const Text('Save Goal'),
               ),
             ],

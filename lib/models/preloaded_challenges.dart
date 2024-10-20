@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:fitbattles/challenges/challenge.dart';
+import 'package:fitbattles/challenges/challenge.dart' as challenges; // Alias for challenges
 import 'package:fitbattles/challenges/challenge_data.dart';
 import 'package:fitbattles/settings/app_colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:fitbattles/settings/app_strings.dart';
 
@@ -14,11 +15,12 @@ class PreloadedChallengesPage extends StatefulWidget {
 
 class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
   String? selectedChallengeId; // State to track the selected challenge
+  final List<challenges.Challenge> preloadedChallenges = ChallengeData
+      .challenges.cast<challenges.Challenge>(); // Use the predefined challenges
+  bool _isStartingChallenge = false; // State to track if a challenge is starting
 
   @override
   Widget build(BuildContext context) {
-    final List<Challenge> preloadedChallenges = ChallengeData.challenges.cast<Challenge>(); // Use ChallengeData for challenges
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(AppStrings.preloadedChallengesTitle),
@@ -41,11 +43,13 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: isSelected
-                    ? Border.all(color: AppColors.selectedChallengeColor, width: 2) // Use selected color
+                    ? Border.all(color: AppColors.selectedChallengeColor,
+                    width: 2) // Use selected color
                     : null,
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.shadowColor.withAlpha(128), // Use shadow color
+                    color: AppColors.shadowColor.withAlpha(128),
+                    // Use shadow color
                     spreadRadius: 2,
                     blurRadius: 5,
                     offset: const Offset(0, 3),
@@ -60,18 +64,25 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
                     style: TextStyle(
                       fontSize: AppDimens.textSizeTitle,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? AppColors.selectedChallengeColor : AppColors.defaultTextColor, // Use selected color
+                      color: isSelected
+                          ? AppColors.selectedChallengeColor
+                          : AppColors.defaultTextColor, // Use selected color
                     ),
                   ),
                   const SizedBox(height: 5),
                   Text(
                     '${AppStrings.challengeTypeLabel} ${challenge.type}',
-                    style: const TextStyle(fontSize: AppDimens.textSizeSubtitle),
+                    style: const TextStyle(
+                        fontSize: AppDimens.textSizeSubtitle),
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    '${AppStrings.challengeDurationLabel} ${challenge.startDate} - ${challenge.endDate}',
-                    style: const TextStyle(fontSize: AppDimens.textSizeSubtitle),
+                    '${AppStrings.challengeDurationLabel} ${challenge.startDate
+                        .toLocal().toString().split(' ')[0]} - ${challenge
+                        .endDate.toLocal().toString().split(' ')[0]}',
+                    // Format dates
+                    style: const TextStyle(
+                        fontSize: AppDimens.textSizeSubtitle),
                   ),
                 ],
               ),
@@ -82,7 +93,7 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
     );
   }
 
-  void _showChallengeInfo(Challenge challenge) {
+  void _showChallengeInfo(challenges.Challenge challenge) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -94,9 +105,12 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
             children: [
               Text('${AppStrings.challengeTypeLabel} ${challenge.type}'),
               const SizedBox(height: 5),
-              Text('${AppStrings.challengeDurationLabel} ${challenge.startDate} - ${challenge.endDate}'),
+              Text('${AppStrings.challengeDurationLabel} ${challenge.startDate
+                  .toLocal().toString().split(' ')[0]} - ${challenge.endDate
+                  .toLocal().toString().split(' ')[0]}'),
               const SizedBox(height: 10),
-              Text(challenge.description ?? ''), // Display challenge description if available
+              Text(challenge.description ?? ''),
+              // Display challenge description if available
             ],
           ),
           actions: [
@@ -104,14 +118,27 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text(AppStrings.backButtonLabel), // Use the localized back button text
+              child: const Text(AppStrings
+                  .backButtonLabel), // Use the localized back button text
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
-                _startChallenge(challenge); // Call start challenge logic
+                _startChallenge(challenge, (errorMessage) {
+                  if (errorMessage != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                            errorMessage), // Display the error message if it exists
+                      ),
+                    );
+                  }
+                }); // Call start challenge logic
               },
-              child: const Text(AppStrings.startChallengeButtonLabel), // Use the localized start challenge button text
+              child: _isStartingChallenge
+                  ? const CircularProgressIndicator()
+                  : const Text(AppStrings
+                  .startChallengeButtonLabel), // Use the localized start challenge button text
             ),
           ],
         );
@@ -119,14 +146,50 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
     );
   }
 
-  void _startChallenge(Challenge challenge) {
-    // Your logic to start the challenge goes here
+  Future<String?> _saveStartedChallengeToFirestore(
+      challenges.Challenge challenge) async {
+    try {
+      final docRef = await FirebaseFirestore.instance.collection(
+          'startedChallenges').add({
+        'challengeId': challenge.id,
+        'userId': 'exampleUserId', // Replace with actual user ID
+        'startDate': DateTime.now(),
+      });
+      return docRef.id; // Return the document ID if successful
+    } catch (e) {
+      return 'Error starting challenge: $e'; // Return the error message
+    }
+  }
 
-    // For demonstration, show a success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('${AppStrings.challengeStartedMessage} ${challenge.name}'), // Localized success message
-      ),
-    );
+  void _startChallenge(challenges.Challenge challenge,
+      Function(String?) onError) async {
+    setState(() {
+      _isStartingChallenge =
+      true; // Set the state to indicate a challenge is starting
+    });
+
+    // Call the method to save the started challenge to Firestore
+    String? result = await _saveStartedChallengeToFirestore(challenge);
+
+    // Check if the widget is still mounted before using BuildContext
+    if (!mounted) return;
+
+    // Check if the result is a document ID or an error message
+    if (result != null && result.isNotEmpty && !result.startsWith('Error')) {
+      // Successfully started the challenge
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Challenge started successfully!'), // Success message
+        ),
+      );
+    } else {
+      // An error occurred
+      onError(result); // Handle error
+    }
+
+    setState(() {
+      _isStartingChallenge =
+      false; // Reset the state after the challenge starts
+    });
   }
 }

@@ -419,6 +419,10 @@ class AppStrings {
   static const String challengeStartedMessage = 'Challenge started:';
   static const String startChallengeButtonLabel = 'Start Challenge';
 
+  static String noGoalsCompletedYet = 'No goals are completed yet';
+
+  static String saveGoalHistory = 'History is saved';
+
 }
 
 

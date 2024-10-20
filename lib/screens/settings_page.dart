@@ -1,9 +1,10 @@
 import 'package:fitbattles/firebase/firebase_auth.dart';
+import 'package:fitbattles/main.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
 import 'package:shared_preferences/shared_preferences.dart'; // For shared preferences
 import '../settings/app_colors.dart'; // Custom app colors
-
+import 'package:fitbattles/models/privacy_model.dart'; // Import PrivacyModel
 
 extension StringCapitalization on String {
   String capitalize() {
@@ -36,7 +37,8 @@ class SettingsPageState extends State<SettingsPage> {
   bool _receiveChallengeNotifications = true;
   bool _dailyReminder = false;
   String _selectedLanguage = 'English';
-  VisibilityOption _selectedVisibility = VisibilityOption.friendsOnly;
+  VisibilityOption _selectedVisibility = VisibilityOption.friendsOnly; // Default visibility setting
+  VisibilityOption _selectedPrivacyVisibility = VisibilityOption.friendsOnly; // Default privacy setting
 
   final List<String> _languages = [
     'English',
@@ -63,36 +65,45 @@ class SettingsPageState extends State<SettingsPage> {
       _selectedLanguage = prefs.getString('selectedLanguage') ?? 'English';
     });
 
-    // Load user visibility setting from Firestore
+    // Load user visibility and privacy settings from Firestore
     final userId = _firebaseAuthService.getCurrentUser()?.uid;
     if (userId != null) {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
-      if (userDoc.exists) {
-        String visibilitySetting = userDoc.data()?['visibilitySetting'] ?? 'friendsOnly';
-        setState(() {
-          _selectedVisibility = VisibilityOption.values.firstWhere(
-                (e) => e.toString().split('.').last == visibilitySetting,
-            orElse: () => VisibilityOption.friendsOnly,
-          );
-        });
-      }
+      final privacyModel = PrivacyModel(id: userId); // Initialize PrivacyModel
+      String visibilitySetting = await privacyModel.getPrivacySetting();
+      setState(() {
+        _selectedVisibility = VisibilityOption.values.firstWhere(
+              (e) => e.toString().split('.').last == visibilitySetting,
+          orElse: () => VisibilityOption.friendsOnly,
+        );
+        _selectedPrivacyVisibility = _selectedVisibility; // Initialize privacy setting with visibility setting
+      });
     }
   }
 
-  Future<void> _updateVisibility(VisibilityOption option) async {
+  Future<void> _updateSetting(VisibilityOption option, String settingType) async {
     setState(() {
-      _selectedVisibility = option;
+      if (settingType == 'visibility') {
+        _selectedVisibility = option;
+      } else {
+        _selectedPrivacyVisibility = option;
+      }
     });
 
     final userId = _firebaseAuthService.getCurrentUser()?.uid;
     if (userId != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(userId).update({
-          'visibilitySetting': option.toString().split('.').last,
-        });
-        _showMessage('Visibility setting updated to ${option.toString().split('.').last}');
+        if (settingType == 'visibility') {
+          await FirebaseFirestore.instance.collection('users').doc(userId).update({
+            'visibilitySetting': option.toString().split('.').last,
+          });
+          _showMessage('Visibility setting updated to ${option.toString().split('.').last}');
+        } else {
+          final privacyModel = PrivacyModel(id: userId); // Initialize PrivacyModel
+          await privacyModel.updatePrivacySetting(option.toString().split('.').last);
+          _showMessage('Privacy setting updated to ${option.toString().split('.').last}');
+        }
       } catch (error) {
-        _showMessage('Error updating visibility: $error');
+        _showMessage('Error updating $settingType: $error');
       }
     } else {
       _showMessage('User is not logged in');
@@ -113,80 +124,82 @@ class SettingsPageState extends State<SettingsPage> {
             ),
           ],
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            children: [
-              _buildSwitchTile(
-                title: 'Share Data',
-                subtitle: 'Share data with friends',
-                value: _shareData,
-                onChanged: (value) {
-                  setState(() {
-                    _shareData = value;
-                  });
-                  _saveSettingToFirestore('shareData', value);
-                },
-              ),
-              _buildSwitchTile(
-                title: 'Receive Notifications',
-                subtitle: 'Get notified about challenges',
-                value: _receiveNotifications,
-                onChanged: (value) {
-                  setState(() {
-                    _receiveNotifications = value;
-                  });
-                  _saveSettingToFirestore('receiveNotifications', value);
-                },
-              ),
-              _buildSwitchTile(
-                title: 'Receive Challenge Notifications',
-                subtitle: 'Get notified about new challenges',
-                value: _receiveChallengeNotifications,
-                onChanged: (value) {
-                  setState(() {
-                    _receiveChallengeNotifications = value;
-                  });
-                  _saveSettingToFirestore('receiveChallengeNotifications', value);
-                },
-              ),
-              _buildSwitchTile(
-                title: 'Daily Reminder',
-                subtitle: 'Get a daily reminder',
-                value: _dailyReminder,
-                onChanged: (value) {
-                  setState(() {
-                    _dailyReminder = value;
-                  });
-                  _saveSettingToFirestore('dailyReminder', value);
-                },
-              ),
-              DropdownButton<String>(
-                value: _selectedLanguage,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedLanguage = newValue ?? 'English';
-                  });
-                  _saveSettingToFirestore('selectedLanguage', _selectedLanguage);
-                },
-                items: _languages.map<DropdownMenuItem<String>>((String language) {
-                  return DropdownMenuItem<String>(
-                    value: language,
-                    child: Text(language),
-                  );
-                }).toList(),
-              ),
-              const Divider(),
-              Text('Visibility Settings:'),
-              _buildVisibilityOption(VisibilityOption.public, 'Public'),
-              _buildVisibilityOption(VisibilityOption.friendsOnly, 'Friends Only'),
-              _buildVisibilityOption(VisibilityOption.private, 'Private'),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _logout,
-                child: const Text('Logout'),
-              ),
-            ],
+        body: SingleChildScrollView( // Wrap Column with SingleChildScrollView
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                _buildSwitchTile(
+                  title: 'Share Data',
+                  subtitle: 'Share data with friends',
+                  value: _shareData,
+                  onChanged: (value) {
+                    setState(() {
+                      _shareData = value;
+                    });
+                    _saveSettingToFirestore('shareData', value);
+                  },
+                ),
+                _buildSwitchTile(
+                  title: 'Receive Notifications',
+                  subtitle: 'Get notified about challenges',
+                  value: _receiveNotifications,
+                  onChanged: (value) {
+                    setState(() {
+                      _receiveNotifications = value;
+                    });
+                    _saveSettingToFirestore('receiveNotifications', value);
+                  },
+                ),
+                _buildSwitchTile(
+                  title: 'Receive Challenge Notifications',
+                  subtitle: 'Get notified about new challenges',
+                  value: _receiveChallengeNotifications,
+                  onChanged: (value) {
+                    setState(() {
+                      _receiveChallengeNotifications = value;
+                    });
+                    _saveSettingToFirestore('receiveChallengeNotifications', value);
+                  },
+                ),
+                _buildSwitchTile(
+                  title: 'Daily Reminder',
+                  subtitle: 'Get a daily reminder',
+                  value: _dailyReminder,
+                  onChanged: (value) {
+                    setState(() {
+                      _dailyReminder = value;
+                    });
+                    _saveSettingToFirestore('dailyReminder', value);
+                  },
+                ),
+                DropdownButton<String>(
+                  value: _selectedLanguage,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedLanguage = newValue ?? 'English';
+                    });
+                    _saveSettingToFirestore('selectedLanguage', _selectedLanguage);
+                  },
+                  items: _languages.map<DropdownMenuItem<String>>((String language) {
+                    return DropdownMenuItem<String>(
+                      value: language,
+                      child: Text(language),
+                    );
+                  }).toList(),
+                ),
+                const Divider(),
+                Text('Privacy Settings:'),
+                _buildPrivacyVisibilityOption(VisibilityOption.public, 'Public'),
+                _buildPrivacyVisibilityOption(VisibilityOption.friendsOnly, 'Friends Only'),
+                _buildPrivacyVisibilityOption(VisibilityOption.private, 'Private'),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: _logout,
+                  child: const Text('Logout'),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -212,15 +225,16 @@ class SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // Build visibility option widget
-  Widget _buildVisibilityOption(VisibilityOption option, String label) {
+
+  // Build privacy visibility option widget
+  Widget _buildPrivacyVisibilityOption(VisibilityOption option, String label) {
     return RadioListTile<VisibilityOption>(
       title: Text(label),
       value: option,
-      groupValue: _selectedVisibility,
+      groupValue: _selectedPrivacyVisibility,
       onChanged: (VisibilityOption? value) {
         if (value != null) {
-          _updateVisibility(value);
+          _updateSetting(value, 'privacy'); // Update privacy setting
         }
       },
     );
@@ -234,7 +248,12 @@ class SettingsPageState extends State<SettingsPage> {
   // Logout method
   Future<void> _logout() async {
     await _firebaseAuthService.signOut();
-    // Your navigation method
+
+    // After signing out, navigate to the login page
+    navigatorKey.currentState?.pushNamedAndRemoveUntil(
+      '/login',
+          (Route<dynamic> route) => false, // This removes all routes except the login
+    );
   }
 
   // Save all settings method
@@ -246,19 +265,16 @@ class SettingsPageState extends State<SettingsPage> {
     await prefs.setBool('dailyReminder', _dailyReminder);
     await prefs.setString('selectedLanguage', _selectedLanguage);
 
-    _showMessage('Settings saved locally.');
+    _showMessage('Settings saved!');
   }
 
-  // Save setting to Firestore
-  Future<void> _saveSettingToFirestore(String key, dynamic value) async {
+  // Save individual setting to Firestore
+  Future<void> _saveSettingToFirestore(String settingType, dynamic value) async {
     final userId = _firebaseAuthService.getCurrentUser()?.uid;
     if (userId != null) {
-      try {
-        await FirebaseFirestore.instance.collection('users').doc(userId).set({key: value}, SetOptions(merge: true));
-        _showMessage('$key updated in Firestore.');
-      } catch (error) {
-        _showMessage('Error saving $key to Firestore: $error');
-      }
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        settingType: value,
+      });
     }
   }
 }
