@@ -406,6 +406,19 @@ class AppStrings {
 
   static const String appTitle = 'FitBattles';
 
+  static const String logout = 'Logout'; // Add this line
+
+
+  static const String stepsChallenge = '10,000 Steps Challenge';
+  static const String runningChallenge = 'Running Challenge';
+  static const String healthyEatingChallenge = 'Healthy Eating Challenge';
+  static const String sitUpChallenge = 'Sit Up Challenge';
+  static const String squatChallenge = '100 Squat Challenge';
+  static const String fitnessChallenge = 'Fitness';
+  static const String backButtonLabel = 'Back';
+  static const String challengeStartedMessage = 'Challenge started:';
+  static const String startChallengeButtonLabel = 'Start Challenge';
+
 }
 
 

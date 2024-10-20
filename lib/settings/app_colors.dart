@@ -128,7 +128,9 @@ class AppColors {
 
 
 
-  static const Color background = Color(0xFFF0F4F8); // Light background color
+  static const Color background = Color(0xFFF0F4F8);
+
+  static const Color switchInactiveColor = Color(0xFFD1D1D1); // Light gray for inactive state
 
 
 

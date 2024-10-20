@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class HydrationPage extends StatefulWidget {
   const HydrationPage({super.key});
@@ -12,14 +13,16 @@ class HydrationPage extends StatefulWidget {
 class HydrationPageState extends State<HydrationPage> {
   double _currentWaterIntake = 0.0;
   final double _dailyGoal = 3.0; // Daily water intake goal in liters
-  List<Map<String, dynamic>> _waterLog = [
-  ]; // List to store the log of water submissions
+  List<Map<String, dynamic>> _waterLog = [];
+
+  late FlutterLocalNotificationsPlugin _localNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
     _loadWaterIntakeFromFirestore();
     _loadWaterLogFromFirestore();
+    _initializeNotifications();
   }
 
   @override
@@ -46,14 +49,14 @@ class HydrationPageState extends State<HydrationPage> {
             _buildAddIntakeButton(),
             const SizedBox(height: 20),
             _buildLogSection(),
-            // Log section to display water intake submissions
+            const SizedBox(height: 20),
+            _buildReminderButton(),
           ],
         ),
       ),
     );
   }
 
-  // Build the progress bar to visualize water intake
   Widget _buildProgressBar() {
     return Column(
       children: [
@@ -72,7 +75,6 @@ class HydrationPageState extends State<HydrationPage> {
     );
   }
 
-  // Display the current water intake
   Widget _buildWaterIntakeText() {
     return Text(
       '${_currentWaterIntake.toStringAsFixed(1)} liters',
@@ -80,7 +82,6 @@ class HydrationPageState extends State<HydrationPage> {
     );
   }
 
-  // Add water intake button
   Widget _buildAddIntakeButton() {
     return ElevatedButton(
       onPressed: _addWaterIntake,
@@ -92,7 +93,17 @@ class HydrationPageState extends State<HydrationPage> {
     );
   }
 
-  // Build the log section to display water intake submissions
+  Widget _buildReminderButton() {
+    return ElevatedButton(
+      onPressed: _scheduleWaterReminder,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.blueAccent,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+      ),
+      child: const Text('Set Water Intake Reminder'),
+    );
+  }
+
   Widget _buildLogSection() {
     return Expanded(
       child: Column(
@@ -133,7 +144,6 @@ class HydrationPageState extends State<HydrationPage> {
     );
   }
 
-  // Show a dialog to enter the water intake value
   Future<void> _addWaterIntake() async {
     double? addedIntake = await _showAddWaterDialog();
 
@@ -147,134 +157,177 @@ class HydrationPageState extends State<HydrationPage> {
     }
   }
 
-  // Dialog to input water intake
-  Future<double?> _showAddWaterDialog() async {
-    double intakeAmount = 0.0;
+  // Initialize notifications
+  void _initializeNotifications() {
+    _localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    const AndroidInitializationSettings androidSettings =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+    final InitializationSettings initSettings =
+    InitializationSettings(android: androidSettings);
+    _localNotificationsPlugin.initialize(initSettings);
+  }
 
-    return showDialog<double>(
-      context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Add Water Intake'),
-            content: TextField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Enter amount in liters',
-                hintText: 'e.g. 0.5',
-              ),
-              onChanged: (value) {
-                intakeAmount = double.tryParse(value) ?? 0.0;
-              },
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(intakeAmount),
-                child: const Text('Add'),
-              ),
-            ],
-          ),
+  // Schedule a periodic water reminder
+  Future<void> _scheduleWaterReminder() async {
+    const AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails(
+      'water_reminder_channel',
+      'Water Intake Reminder',
+      channelDescription: 'Reminds you to drink water regularly',
+      importance: Importance.max,
+      priority: Priority.high,
     );
+
+    const NotificationDetails notificationDetails =
+    NotificationDetails(android: androidDetails);
+
+    await _localNotificationsPlugin.periodicallyShow(
+      0,
+      'Time to Hydrate!',
+      'Don\'t forget to drink some water!',
+      RepeatInterval.hourly,
+      notificationDetails,
+    );
+
+    _showToast('Water reminder set!');
+  }
+
+  // Show a toast message
+  void _showToast(String message) {
+    Fluttertoast.showToast(
+      msg: message,
+      toastLength: Toast.LENGTH_SHORT,
+      gravity: ToastGravity.BOTTOM,
+    );
+  }
+
+  // Load water intake data from Firestore
+  Future<void> _loadWaterIntakeFromFirestore() async {
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc('user_id') // Replace with actual user ID
+          .get();
+
+      if (snapshot.exists) {
+        setState(() {
+          _currentWaterIntake = snapshot['waterIntake'] ?? 0.0;
+        });
+      }
+    } catch (e) {
+      _showToast('Failed to load water intake data.');
+    }
+  }
+
+  // Load water log from Firestore
+  Future<void> _loadWaterLogFromFirestore() async {
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc('user_id') // Replace with actual user ID
+          .collection('waterLog')
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      setState(() {
+        _waterLog = snapshot.docs
+            .map((doc) => {
+          'amount': doc['amount'],
+          'timestamp': doc['timestamp'],
+        })
+            .toList();
+      });
+    } catch (e) {
+      _showToast('Failed to load water log.');
+    }
+  }
+
+  // Clear the water log
+  Future<void> _clearWaterLog() async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc('user_id') // Replace with actual user ID
+          .collection('waterLog')
+          .get()
+          .then((snapshot) {
+        for (DocumentSnapshot doc in snapshot.docs) {
+          doc.reference.delete();
+        }
+      });
+
+      setState(() {
+        _waterLog.clear();
+      });
+
+      _showToast('Water log cleared!');
+    } catch (e) {
+      _showToast('Failed to clear water log.');
+    }
   }
 
   // Save water intake to Firestore
   Future<void> _saveWaterIntakeToFirestore() async {
     try {
       await FirebaseFirestore.instance
-          .collection('history')
-          .doc('water_intake')
-          .set({'intake': _currentWaterIntake}, SetOptions(merge: true));
+          .collection('users')
+          .doc('user_id') // Replace with actual user ID
+          .set({'waterIntake': _currentWaterIntake}, SetOptions(merge: true));
     } catch (e) {
-      _showToast('Error saving data: $e');
+      _showToast('Failed to save water intake.');
     }
   }
 
-  // Add a water intake entry to the log in Firestore
-  Future<void> _addToWaterLog(double intake) async {
+  // Add water intake to the log
+  Future<void> _addToWaterLog(double addedIntake) async {
     try {
-      await FirebaseFirestore.instance.collection('water_log').add({
-        'amount': intake,
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc('user_id') // Replace with actual user ID
+          .collection('waterLog')
+          .add({
+        'amount': addedIntake,
         'timestamp': Timestamp.now(),
       });
-      _loadWaterLogFromFirestore();
+
+      _loadWaterLogFromFirestore(); // Refresh the log after adding entry
     } catch (e) {
-      _showToast('Error adding to log: $e');
+      _showToast('Failed to add to water log.');
     }
   }
 
-  // Load the water intake log from Firestore
-  Future<void> _loadWaterLogFromFirestore() async {
-    try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('water_log')
-          .orderBy('timestamp', descending: true)
-          .get();
+  // Dialog to input water intake
+  Future<double?> _showAddWaterDialog() async {
+    double addedIntake = 0.0;
 
-      setState(() {
-        _waterLog = snapshot.docs
-            .map((doc) => doc.data() as Map<String, dynamic>)
-            .toList();
-      });
-    } catch (e) {
-      _showToast('Error loading log: $e');
-    }
-  }
-
-  // Clear the water intake log
-  Future<void> _clearWaterLog() async {
-    try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('water_log')
-          .get();
-
-      for (DocumentSnapshot doc in snapshot.docs) {
-        await doc.reference.delete();
-      }
-      setState(() {
-        _waterLog.clear();
-      });
-      _showToast('Log cleared!');
-    } catch (e) {
-      _showToast('Error clearing log: $e');
-    }
-  }
-
-  // Load the current water intake from Firestore
-  Future<void> _loadWaterIntakeFromFirestore() async {
-    try {
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance
-          .collection('history')
-          .doc('water_intake')
-          .get();
-
-      if (snapshot.exists) {
-        setState(() {
-          _currentWaterIntake =
-              (snapshot.data() as Map<String, dynamic>)['intake']?.toDouble() ??
-                  0.0;
-        });
-      } else {
-        setState(() {
-          _currentWaterIntake = 0.0;
-        });
-      }
-    } catch (e) {
-      _showToast('Error fetching data: $e');
-    }
-  }
-
-  // Show toast messages for feedback
-  // Show toast messages for feedback
-  void _showToast(String message) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.black54,
-      textColor: Colors.white,
+    return showDialog<double>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Water Intake'),
+          content: TextField(
+            keyboardType: TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(labelText: 'Liters'),
+            onChanged: (value) {
+              addedIntake = double.tryParse(value) ?? 0.0;
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(addedIntake);
+              },
+              child: const Text('Add'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

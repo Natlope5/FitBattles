@@ -157,6 +157,12 @@ class UserProfilePageState extends State<UserProfilePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.heading),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back to the previous page
+          },
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

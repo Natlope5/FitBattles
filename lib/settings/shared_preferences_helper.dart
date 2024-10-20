@@ -4,36 +4,41 @@ class SharedPreferencesHelper {
   static final SharedPreferencesHelper _instance = SharedPreferencesHelper._internal();
   static SharedPreferences? _prefs;
 
+  // Private constructor for Singleton pattern
   SharedPreferencesHelper._internal();
 
+  // Factory constructor returns the singleton instance
   factory SharedPreferencesHelper() {
     return _instance;
   }
 
-  // Initialize SharedPreferences
+  // Initialize SharedPreferences (ensure it's initialized before use)
   Future<void> init() async {
-    _prefs = await SharedPreferences.getInstance();
+    _prefs ??= await SharedPreferences.getInstance();
   }
 
   // Get boolean value
-  Future<bool> getBool(String key, {bool defaultValue = false}) async {
-    return _prefs?.getBool(key) ?? defaultValue;
+  bool getBool(String key, {bool defaultValue = false}) {
+    if (_prefs == null) throw Exception("SharedPreferences not initialized");
+    return _prefs!.getBool(key) ?? defaultValue;
   }
 
   // Set boolean value
   Future<void> setBool(String key, bool value) async {
-    await _prefs?.setBool(key, value);
+    if (_prefs == null) throw Exception("SharedPreferences not initialized");
+    await _prefs!.setBool(key, value);
   }
 
   // Get string value
-  Future<String> getString(String key, {String defaultValue = ''}) async {
-    return _prefs?.getString(key) ?? defaultValue;
+  String getString(String key, {String defaultValue = ''}) {
+    if (_prefs == null) throw Exception("SharedPreferences not initialized");
+    return _prefs!.getString(key) ?? defaultValue;
   }
 
   // Set string value
   Future<void> setString(String key, String value) async {
-    await _prefs?.setString(key, value);
+    if (_prefs == null) throw Exception("SharedPreferences not initialized");
+    await _prefs!.setString(key, value);
   }
 
-// Add more getters and setters for different types as needed
 }

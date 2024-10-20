@@ -1,11 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
+import 'package:fitbattles/screens/add_goal_page.dart';
+import 'package:fitbattles/screens/current_goals_page.dart';
+import 'package:fitbattles/screens/goals_completion_page.dart';
+import 'package:fitbattles/screens/my_history.dart';
 import 'package:fitbattles/screens/workout_tracking_page.dart';
 import 'package:fitbattles/workouts/strength_workout_page.dart';
 import 'package:fitbattles/screens/friends_list_page.dart';
 import 'package:fitbattles/screens/home_page.dart';
-import 'package:fitbattles/screens/my_history.dart';
 import 'package:fitbattles/screens/settings_page.dart';
 import 'package:fitbattles/screens/user_profile_page.dart';
 import 'package:fitbattles/settings/theme_provider.dart';
@@ -74,6 +77,9 @@ class MyApp extends StatelessWidget {
             '/settings': (context) => const SettingsPage(),
             '/create_challenge': (context) => CreateChallengePage(),
             '/user_challenges': (context) => const UserChallengesPage(),
+            '/addGoal': (context) => AddGoalPage(),
+            '/currentGoals': (context) => CurrentGoalsPage(),
+            '/goalHistory': (context) => GoalCompletionPage(),
           },
         );
       },

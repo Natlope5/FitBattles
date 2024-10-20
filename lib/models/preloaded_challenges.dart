@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fitbattles/challenges/challenge.dart';
-import 'package:fitbattles/challenges/challenge_data.dart'; // Ensure you import the ChallengeData
+import 'package:fitbattles/challenges/challenge_data.dart';
 import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:fitbattles/settings/app_strings.dart';
@@ -17,7 +17,7 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Challenge> preloadedChallenges = ChallengeData.challenges; // Use ChallengeData for challenges
+    final List<Challenge> preloadedChallenges = ChallengeData.challenges.cast<Challenge>(); // Use ChallengeData for challenges
 
     return Scaffold(
       appBar: AppBar(
@@ -32,9 +32,7 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
 
           return GestureDetector(
             onTap: () {
-              setState(() {
-                selectedChallengeId = challenge.id; // Update the selected challenge
-              });
+              _showChallengeInfo(challenge); // Show challenge info when tapped
             },
             child: Container(
               margin: EdgeInsets.symmetric(vertical: AppDimens.marginVertical),
@@ -80,6 +78,54 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showChallengeInfo(Challenge challenge) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(challenge.name),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${AppStrings.challengeTypeLabel} ${challenge.type}'),
+              const SizedBox(height: 5),
+              Text('${AppStrings.challengeDurationLabel} ${challenge.startDate} - ${challenge.endDate}'),
+              const SizedBox(height: 10),
+              Text(challenge.description ?? ''), // Display challenge description if available
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text(AppStrings.backButtonLabel), // Use the localized back button text
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                _startChallenge(challenge); // Call start challenge logic
+              },
+              child: const Text(AppStrings.startChallengeButtonLabel), // Use the localized start challenge button text
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _startChallenge(Challenge challenge) {
+    // Your logic to start the challenge goes here
+
+    // For demonstration, show a success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('${AppStrings.challengeStartedMessage} ${challenge.name}'), // Localized success message
       ),
     );
   }

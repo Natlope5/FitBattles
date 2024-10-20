@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart'; // Import Provider to use ThemeProvider
+import 'package:fitbattles/settings/theme_provider.dart'; // Assuming ThemeProvider is defined in this file
 
 class WorkoutTrackingPage extends StatefulWidget {
   const WorkoutTrackingPage({super.key});
 
   @override
-  _WorkoutTrackingPageState createState() => _WorkoutTrackingPageState();
+  WorkoutTrackingPageState createState() => WorkoutTrackingPageState();
 }
 
-class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
+class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
   bool isWorkingOut = false;
   Duration workoutDuration = Duration.zero;
   final TextEditingController _durationController = TextEditingController(); // Controller for manually inputting workout duration
@@ -122,6 +124,12 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context); // Access the ThemeProvider
+
+    // Determine text color based on theme
+    Color textColor = themeProvider.isDarkMode ? Colors.white : Colors.black;
+    Color subtitleColor = themeProvider.isDarkMode ? Colors.white70 : Colors.black54;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workout Tracker'),
@@ -133,9 +141,13 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
-              const Text(
+              Text(
                 'Track Your Workout',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: textColor, // Title text color based on theme
+                ),
               ),
               const SizedBox(height: 20),
 
@@ -147,16 +159,16 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                     selectedWorkoutType = newValue!;
                   });
                 },
-                items: workoutTypes.map<DropdownMenuItem<String>>((
-                    String value) {
+                items: workoutTypes.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value),
+                    child: Text(value, style: TextStyle(color: textColor)), // Adjust dropdown item color
                   );
                 }).toList(),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Select Workout Type',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  labelStyle: TextStyle(color: textColor), // Label color based on theme
                 ),
               ),
               const SizedBox(height: 20),
@@ -169,16 +181,16 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                     selectedIntensity = newValue!;
                   });
                 },
-                items: workoutIntensities.map<DropdownMenuItem<String>>((
-                    String value) {
+                items: workoutIntensities.map<DropdownMenuItem<String>>((String value) {
                   return DropdownMenuItem<String>(
                     value: value,
-                    child: Text(value),
+                    child: Text(value, style: TextStyle(color: textColor)), // Adjust dropdown item color
                   );
                 }).toList(),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Select Workout Intensity',
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
+                  labelStyle: TextStyle(color: textColor), // Label color based on theme
                 ),
               ),
               const SizedBox(height: 20),
@@ -189,16 +201,17 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    const Text(
+                    Text(
                       'Enter Duration (Minutes):',
-                      style: TextStyle(fontSize: 20),
+                      style: TextStyle(fontSize: 20, color: textColor), // Text color based on theme
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: _durationController,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
                         hintText: 'Duration in minutes',
+                        hintStyle: TextStyle(color: subtitleColor), // Hint color based on theme
                       ),
                       keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
@@ -222,8 +235,7 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
                           // Get manually entered duration in hours
-                          double durationInHours = int.parse(
-                              _durationController.text) / 60.0;
+                          double durationInHours = int.parse(_durationController.text) / 60.0;
 
                           // Estimate calories burned based on workout type, intensity, duration, and weight
                           double estimatedCalories = estimateCaloriesBurned(
@@ -235,14 +247,11 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
 
                           // Show estimated calories to the user
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(
-                                'Estimated calories burned: ${estimatedCalories
-                                    .toStringAsFixed(2)}')),
+                            SnackBar(content: Text('Estimated calories burned: ${estimatedCalories.toStringAsFixed(2)}')),
                           );
 
                           // Auto-fill the calorie input field with the estimated value
-                          _calorieController.text =
-                              estimatedCalories.toStringAsFixed(2);
+                          _calorieController.text = estimatedCalories.toStringAsFixed(2);
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -253,51 +262,32 @@ class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                     const SizedBox(height: 20),
 
                     // Manual Calorie Input (Optional)
-                    const Text(
+                    Text(
                       'Or enter calories manually (optional):',
-                      style: TextStyle(fontSize: 20),
+                      style: TextStyle(fontSize: 20, color: textColor), // Text color based on theme
                     ),
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: _calorieController,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Calories',
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        hintText: 'Calories burned',
+                        hintStyle: TextStyle(color: subtitleColor), // Hint color based on theme
                       ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true),
+                      keyboardType: TextInputType.number,
                       inputFormatters: <TextInputFormatter>[
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*')), // Allow decimals
+                        FilteringTextInputFormatter.digitsOnly,
                       ],
-                      // Removed the validator since it's now optional
                     ),
                     const SizedBox(height: 20),
 
-                    // Save Workout Button
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            // Ensure that the calorie field is not empty
-                            if (_calorieController.text.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text(
-                                    'Please enter calories burned')),
-                              );
-                            } else {
-                              _saveWorkoutData();
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(horizontal: 50,
-                              vertical: 15),
-                        ),
-                        child: const Text('Save Workout', style: TextStyle(
-                            fontSize: 18)),
+                    // Save Workout Data Button
+                    ElevatedButton(
+                      onPressed: _saveWorkoutData,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5D6C8A),
                       ),
+                      child: const Text('Save Workout Data'),
                     ),
                   ],
                 ),

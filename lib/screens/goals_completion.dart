@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart'; // Import Provider to use ThemeProvider
+import 'package:fitbattles/settings/theme_provider.dart'; // Assuming ThemeProvider is defined in this file
 
 class GoalCompletionPage extends StatefulWidget {
   const GoalCompletionPage({super.key, required this.userToken});
@@ -61,6 +63,7 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
       );
     }
   }
+
   void _clearGoalHistory() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -77,6 +80,8 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
   }
 
   Widget _buildGoalList() {
+    final themeProvider = Provider.of<ThemeProvider>(context); // Access the ThemeProvider
+
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -86,16 +91,29 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8.0),
           child: ListTile(
-            title: Text(goal['name']),
+            title: Text(
+              goal['name'],
+              style: TextStyle(
+                color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust title color based on theme
+              ),
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Progress: ${goal['currentProgress']} / ${goal['amount']}'),
+                Text(
+                  'Progress: ${goal['currentProgress']} / ${goal['amount']}',
+                  style: TextStyle(
+                    color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54, // Adjust subtitle color based on theme
+                  ),
+                ),
                 TextField(
                   controller: _progressController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
                     labelText: 'Update Progress',
+                    labelStyle: TextStyle(
+                      color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust label color based on theme
+                    ),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.check),
                       onPressed: () {
@@ -174,6 +192,8 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context); // Access the ThemeProvider
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Goal Completion'),
@@ -191,6 +211,9 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
                 decoration: const InputDecoration(
                   hintText: 'E.g., Run 5 kilometers',
                 ),
+                style: TextStyle(
+                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust input text color based on theme
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -201,6 +224,9 @@ class GoalCompletionPageState extends State<GoalCompletionPage> {
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(
                   hintText: 'E.g., 5.0',
+                ),
+                style: TextStyle(
+                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust input text color based on theme
                 ),
               ),
               const SizedBox(height: 16),

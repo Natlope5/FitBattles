@@ -146,10 +146,11 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildChallengesContainer(context, themeProvider),
               const SizedBox(height: 32),
-              _buildWorkoutContainer(context),
+              _buildWorkoutContainer(context,themeProvider),
+              const SizedBox(height: 32),
+              _buildGoalsContainer(context,themeProvider),
               const SizedBox(height: 32),
               _buildHistoryContainer(context, themeProvider),
-              const SizedBox(height: 32),
               const SizedBox(height: 32),
               _buildTopChallengedFriends(exampleFriends, themeProvider),
               _buildFriendsListButton(context),
@@ -189,7 +190,7 @@ class _HomePageState extends State<HomePage> {
             child: CircleAvatar(
               radius: 40,
               backgroundColor: themeProvider.isDarkMode
-                  ? Colors.grey[700]
+                  ? Colors.black
                   : Colors.grey[300],
               backgroundImage: _image != null
                   ? FileImage(_image!)
@@ -222,7 +223,7 @@ class _HomePageState extends State<HomePage> {
               value: pointsEarned / pointsGoal,
               minHeight: 20,
               backgroundColor: themeProvider.isDarkMode
-                  ? Colors.grey[800]
+                  ? Colors.black
                   : Colors.grey[300],
               color: const Color(0xFF85C83E),
             ),
@@ -265,7 +266,7 @@ class _HomePageState extends State<HomePage> {
       ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
+        color: themeProvider.isDarkMode ? Colors.black : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
       width: MediaQuery
@@ -312,26 +313,26 @@ class _HomePageState extends State<HomePage> {
           // Button to navigate to the user's challenges page
           ElevatedButton(
             onPressed: () {
-            Navigator.pushNamed(context, '/user_challenges');
+              Navigator.pushNamed(context, '/user_challenges');
             },
             style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.black,
-            backgroundColor: const Color(0xFF85C83E),
+              foregroundColor: Colors.black,
+              backgroundColor: const Color(0xFF85C83E),
             ),
             child: const Text('Challenges'), // Button text
           ),
           const SizedBox(height: 16),
           // Button to create a new challenge
           ElevatedButton(
-          onPressed: () {
-          // Navigate to the create new challenge page
-          Navigator.pushNamed(context, '/create_challenge');
-          },
-          style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.black,
-          backgroundColor: const Color(0xFF85C83E),
-          ),
-          child: const Text('New Challenge'), // Button text
+            onPressed: () {
+              // Navigate to the create new challenge page
+              Navigator.pushNamed(context, '/create_challenge');
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.black,
+              backgroundColor: const Color(0xFF85C83E),
+            ),
+            child: const Text('New Challenge'), // Button text
           ),
         ],
       ),
@@ -353,7 +354,7 @@ class _HomePageState extends State<HomePage> {
               margin: const EdgeInsets.only(right: 16.0),
               padding: const EdgeInsets.all(10.0),
               decoration: BoxDecoration(
-                color: themeProvider.isDarkMode ? Colors.grey[700] : Colors
+                color: themeProvider.isDarkMode ? Colors.black : Colors
                     .grey[200],
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFF85C83E), width: 2),
@@ -386,8 +387,7 @@ class _HomePageState extends State<HomePage> {
           content: Container(
             padding: const EdgeInsets.all(16.0),
             child: Text(
-              'Type: ${challenge.type}\nStart Date: ${challenge
-                  .startDate}\nEnd Date: ${challenge.endDate}',
+              'Type: ${challenge.type}\nStart Date: ${challenge.startDate}\nEnd Date: ${challenge.endDate}',
               style: const TextStyle(color: Colors.black),
             ),
           ),
@@ -398,16 +398,38 @@ class _HomePageState extends State<HomePage> {
               },
               child: const Text('Close', style: TextStyle(color: Colors.black)),
             ),
+            ElevatedButton(
+              onPressed: () {
+                _startChallenge(challenge);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black, // Button background color
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              ),
+              child: const Text('Start Challenge', style: TextStyle(color: Colors.white)),
+            ),
           ],
         );
       },
     );
   }
 
-  Widget _buildWorkoutContainer(BuildContext context) {
+  void _startChallenge(Challenge challenge) {
+    // Logic to start the challenge
+    // For example, save the challenge in the database, mark it as "ongoing", or navigate to the challenge details page
+    logger.e('Starting challenge: ${challenge.name}');
+
+    // You can close the dialog if you want
+    Navigator.of(context).pop();
+
+    // Navigate to another page if needed, like the Challenge Details page
+    // Navigator.push(context, MaterialPageRoute(builder: (context) => ChallengeDetailsPage(challenge: challenge)));
+  }
+
+  Widget _buildWorkoutContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeProvider.isDarkMode ? Colors.black : Colors.white, // Background color based on the theme
         borderRadius: BorderRadius.circular(10),
       ),
       width: MediaQuery.of(context).size.width * 0.9, // Responsive width
@@ -415,23 +437,70 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Workout', // Section title
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Text color based on the theme
+            ),
           ),
           const SizedBox(height: 10),
           // Workout tracking button
-          _buildWorkoutTrackingButton(context),
+          _buildWorkoutTrackingButton(context, themeProvider),
         ],
       ),
     );
   }
 
-  Widget _buildHistoryContainer(BuildContext context,
-      ThemeProvider themeProvider) {
+
+  Widget _buildGoalsContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
+        color: themeProvider.isDarkMode ? Colors.black : Colors.white, // Container color based on the theme
+        borderRadius: BorderRadius.circular(10),
+      ),
+      width: MediaQuery.of(context).size.width * 0.9,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Goals',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/addGoal');
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black, // Text color based on the theme
+              backgroundColor: Colors.green,
+            ),
+            child: const Text('Add Goal'),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/currentGoals');
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black, // Text color based on the theme
+              backgroundColor: Colors.blue,
+            ),
+            child: const Text('Current Goals'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+  Widget _buildHistoryContainer(BuildContext context, ThemeProvider themeProvider) {
+    return Container(
+      decoration: BoxDecoration(
+        color: themeProvider.isDarkMode ? Colors.black : Colors.white,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -442,10 +511,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      width: MediaQuery
-          .of(context)
-          .size
-          .width * 0.9,
+      width: MediaQuery.of(context).size.width * 0.9,
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,19 +529,24 @@ class _HomePageState extends State<HomePage> {
                 return null;
               });
             },
-            child: const Text(
-                'View History', style: TextStyle(color: Colors.black)),
+            child: Text(
+              'View History',
+              style: TextStyle(
+                color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Dynamic text color
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
+
   Widget _buildTopChallengedFriends(List<String> friends,
       ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
+        color: themeProvider.isDarkMode ? Colors.black : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
       width: MediaQuery
@@ -599,15 +670,14 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// Widget to build the workout tracking navigation button
-Widget _buildWorkoutTrackingButton(BuildContext context) {
+Widget _buildWorkoutTrackingButton(BuildContext context, ThemeProvider themeProvider) {
   return ElevatedButton(
     onPressed: () {
       Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
     },
     style: ElevatedButton.styleFrom(
-      foregroundColor: Colors.white,
-      backgroundColor: const Color(0xFF85C83E), // Use the theme color
+      foregroundColor: themeProvider.isDarkMode ? Colors.black : Colors.white, // Text color based on the theme
+      backgroundColor: const Color(0xFF85C83E), // Button background color
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
     ),
     child: const Text('Workout Tracking'), // Button text
@@ -620,21 +690,39 @@ class DetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Challenge challenge = ModalRoute.of(context)!.settings.arguments as Challenge;
+    final themeProvider = Provider.of<ThemeProvider>(context); // Get the theme provider
 
     return Scaffold(
       appBar: AppBar(
         title: Text(challenge.name), // Display challenge name in the app bar
       ),
-      body: Padding(
+      body: Container(
+        color: themeProvider.isDarkMode ? Colors.black : Colors.white, // Dynamic background color
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Type: ${challenge.type}', style: const TextStyle(fontSize: 20)),
+            Text(
+              'Type: ${challenge.type}',
+              style: TextStyle(
+                fontSize: 20,
+                color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Dynamic text color
+              ),
+            ),
             const SizedBox(height: 10),
-            Text('Start Date: ${challenge.startDate.toLocal()}'),
+            Text(
+              'Start Date: ${challenge.startDate.toLocal()}',
+              style: TextStyle(
+                color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Dynamic text color
+              ),
+            ),
             const SizedBox(height: 5),
-            Text('End Date: ${challenge.endDate.toLocal()}'),
+            Text(
+              'End Date: ${challenge.endDate.toLocal()}',
+              style: TextStyle(
+                color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Dynamic text color
+              ),
+            ),
             const SizedBox(height: 20),
             // Add any additional information you want to show
           ],

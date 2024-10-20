@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fitbattles/challenges/challenge.dart';
+import 'package:fitbattles/models/challenge.dart'; // Ensure you're using only this Challenge class
 import 'package:fitbattles/challenges/challenge_data.dart';
 import 'package:fitbattles/l10n/app_localizations.dart'; // Import localization
 import 'package:fitbattles/settings/app_colors.dart';
@@ -22,24 +22,22 @@ class ChallengeSelectionWidgetState extends State<ChallengeSelectionWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(
-        context); // Localizations for text
+    final localizations = AppLocalizations.of(context); // Get localizations
 
     return Column(
       children: [
         DropdownButton<Challenge>(
-          hint: Text(localizations.selectChallenge), // Use localized string
+          hint: Text(localizations.selectChallenge), // Localized string
           value: selectedChallenge,
           onChanged: (Challenge? newValue) {
             setState(() {
               selectedChallenge = newValue;
             });
           },
-          items: ChallengeData.challenges.map<DropdownMenuItem<Challenge>>((
-              Challenge challenge) {
+          items: ChallengeData.challenges.map<DropdownMenuItem<Challenge>>((Challenge challenge) {
             return DropdownMenuItem<Challenge>(
               value: challenge,
-              child: Text(challenge.name),
+              child: Text(challenge.name), // Display the challenge name
             );
           }).toList(),
         ),
@@ -47,61 +45,57 @@ class ChallengeSelectionWidgetState extends State<ChallengeSelectionWidget> {
         ElevatedButton(
           onPressed: () {
             if (selectedChallenge != null) {
-              String opponentToken = "example_opponent_token"; // Replace with the actual FCM token of the opponent
-              sendChallengeNotification(opponentToken, selectedChallenge!,
-                  localizations); // Pass localizations
+              String opponentToken = "example_opponent_token"; // Replace with actual opponent token
+              sendChallengeNotification(opponentToken, selectedChallenge!, localizations);
             } else {
               // Show a message if no challenge is selected
               scaffoldMessengerKey.currentState?.showSnackBar(
-                SnackBar(content: Text(localizations
-                    .selectChallenge)), // Inform user to select a challenge
+                SnackBar(
+                  content: Text(localizations.selectChallenge), // Localized message
+                ),
               );
             }
           },
           style: ElevatedButton.styleFrom(
             minimumSize: Size(double.infinity, AppDimens.buttonHeightMedium),
-            backgroundColor: AppColors
-                .primaryColor, // Use primary color from app colors
+            backgroundColor: AppColors.primaryColor, // Use primary color
           ),
-          child: Text(localizations.sendChallenge), // Use localized string
+          child: Text(localizations.sendChallenge), // Localized string
         ),
       ],
     );
   }
 
-  Future<void> sendChallengeNotification(String opponentToken,
-      Challenge selectedChallenge, AppLocalizations localizations) async {
+  Future<void> sendChallengeNotification(String opponentToken, Challenge selectedChallenge, AppLocalizations localizations) async {
     try {
-      final challengeMessage = localizations
-          .challengeSent; // Get the localized string for "Challenge Sent"
-      final messageBody = '${localizations
-          .replacePlaceholder} ${selectedChallenge
-          .name}'; // You can customize the message body
+      // Construct the challenge message using localization
+      final challengeMessage = localizations.challengeSent; // Localized "Challenge Sent"
+      final messageBody = '${localizations.replacePlaceholder} ${selectedChallenge.name}'; // Custom message body
 
+      // Add the notification data to Firestore
       await FirebaseFirestore.instance.collection('notifications').add({
         'to': opponentToken,
         'notification': {
-          'title': localizations.sendChallenge, // Use localized title
-          'body': messageBody, // Use customized message body
+          'title': localizations.sendChallenge, // Localized title
+          'body': messageBody, // Custom message body
         },
         'data': {
-          'challengeId': selectedChallenge.id ?? '',
+          'challengeId': selectedChallenge.id,
         },
       });
 
-      // Use the GlobalKey to show the SnackBar
+      // Show success message using the GlobalKey
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text(
-            challengeMessage)), // Display "Challenge Sent" localized message
+        SnackBar(content: Text(challengeMessage)), // Display localized "Challenge Sent"
       );
 
-      logger.i('Challenge sent: ${selectedChallenge
-          .name}'); // Log the success message
+      logger.i('Challenge sent: ${selectedChallenge.name}'); // Log success message
     } catch (e) {
-      logger.e('Error sending notification: $e'); // Log the error message
+      logger.e('Error sending notification: $e'); // Log error
+
+      // Show error message using the GlobalKey
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text(
-            localizations.errorLoadingLeaderboard)), // Show error message
+        SnackBar(content: Text(localizations.errorSendingNotification)), // Display localized error message
       );
     }
   }

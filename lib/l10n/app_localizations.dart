@@ -72,6 +72,89 @@ class AppLocalizations {
     }
   }
 
+  String get errorSendingNotification {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Error al enviar la notificación'; // Spanish
+      case 'fr':
+        return 'Erreur lors de l\'envoi de la notification'; // French
+      case 'de':
+        return 'Fehler beim Senden der Benachrichtigung'; // German
+      case 'zh':
+        return '发送通知时出错'; // Chinese
+      case 'en':
+      default:
+        return 'Error sending notification'; // English
+    }
+  }
+
+  String get challengeStartedMessage {
+    switch (locale.languageCode) {
+      case 'es':
+        return '¡Desafío iniciado: ';
+      case 'fr':
+        return 'Défi commencé : ';
+      case 'de':
+        return 'Herausforderung gestartet: ';
+      case 'zh':
+        return '挑战已开始：';
+      case 'en':
+      default:
+        return 'Challenge started: ';
+    }
+  }
+
+  // Challenge Already Active Message
+  String get challengeAlreadyActiveMessage {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Este desafío ya está activo.';
+      case 'fr':
+        return 'Ce défi est déjà actif.';
+      case 'de':
+        return 'Diese Herausforderung ist bereits aktiv.';
+      case 'zh':
+        return '此挑战已处于活动状态。';
+      case 'en':
+      default:
+        return 'This challenge is already active.';
+    }
+  }
+
+  // Start Challenge Button Label
+  String get startChallengeButtonLabel {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Iniciar Desafío';
+      case 'fr':
+        return 'Démarrer le Défi';
+      case 'de':
+        return 'Herausforderung Starten';
+      case 'zh':
+        return '开始挑战';
+      case 'en':
+      default:
+        return 'Start Challenge';
+    }
+  }
+
+  // Back Button Label
+  String get backButtonLabel {
+    switch (locale.languageCode) {
+      case 'es':
+        return 'Volver';
+      case 'fr':
+        return 'Retour';
+      case 'de':
+        return 'Zurück';
+      case 'zh':
+        return '返回';
+      case 'en':
+      default:
+        return 'Back';
+    }
+  }
+
   // ========================
   // Streak and Leaderboard Related Strings
   // ========================

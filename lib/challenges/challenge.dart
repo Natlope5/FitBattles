@@ -25,6 +25,7 @@ class Challenge {
       'startDate': Timestamp.fromDate(startDate),
       'endDate': Timestamp.fromDate(endDate),
       'participants': participants,
+      description: 'Complete 10,000 steps each day for a week.',
     };
   }
 
@@ -40,4 +41,6 @@ class Challenge {
       participants: List<String>.from(data['participants'] ?? []),
     );
   }
+
+  get description => null;
 }

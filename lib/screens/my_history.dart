@@ -2,7 +2,7 @@ import 'package:fitbattles/screens/workout_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'hydration_page.dart';
-import 'package:fitbattles/screens/goals_completion.dart';
+import 'package:fitbattles/screens/goals_completion_page.dart';
 
 class MyHistoryPage extends StatefulWidget {
   const MyHistoryPage({super.key});
@@ -54,8 +54,9 @@ class MyHistoryPageState extends State<MyHistoryPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(title),
-          content: Text(content),
+          backgroundColor: Theme.of(context).dialogBackgroundColor, // Dynamic dialog background
+          title: Text(title, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color)),
+          content: Text(content, style: TextStyle(color: Theme.of(context).textTheme.bodyLarge!.color)),
           actions: [
             TextButton(
               child: const Text('Close'),
@@ -88,19 +89,19 @@ class MyHistoryPageState extends State<MyHistoryPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My History'),
-        backgroundColor: const Color(0xFF5D6C8A),
+        backgroundColor: Theme.of(context).primaryColor, // Dynamic app bar color
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Summary',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF5D6C8A),
+                color: Theme.of(context).textTheme.bodyLarge!.color, // Dynamic text color
               ),
             ),
             const SizedBox(height: 20),
@@ -140,11 +141,12 @@ class MyHistoryPageState extends State<MyHistoryPage> {
       'Challenges Lost': 2,
       'Challenges Tied': 1,
       'Friends Involved': [], // This will be fetched on tap
-      'Goals': 'View your goals', // Add the Goals entry
+      'Goals & Achievements': 'View your achievements',
     };
 
     return historyData.entries.map((entry) {
       return Card(
+        color: Theme.of(context).cardColor, // Dynamic card background color
         elevation: 3,
         margin: const EdgeInsets.symmetric(vertical: 8.0),
         shape: RoundedRectangleBorder(
@@ -154,19 +156,19 @@ class MyHistoryPageState extends State<MyHistoryPage> {
           leading: _getIconForCategory(entry.key),
           title: Text(
             entry.key,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: Theme.of(context).textTheme.bodyLarge!.color, // Dynamic text color
             ),
           ),
           subtitle: Text(
-            entry.key == 'Friends Involved' || entry.key == 'Goals'
+            entry.key == 'Friends Involved' || entry.key == 'Goals & Achievements'
                 ? 'Tap to view'
                 : '${entry.value}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: Colors.black,
+              color: Theme.of(context).textTheme.bodyMedium!.color, // Dynamic subtitle text color
             ),
           ),
           trailing: const Icon(
@@ -185,12 +187,12 @@ class MyHistoryPageState extends State<MyHistoryPage> {
             } else if (entry.key == 'Friends Involved') {
               final friendsList = await _fetchFriendsData();
               _showDialog('Friends Involved', friendsList.join(', '));
-            } else if (entry.key == 'Goals') {
+            } else if (entry.key == 'Goals & Achievements') {
               // Navigate to the GoalCompletionPage
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const GoalCompletionPage(userToken: 'abcd1234efgh5678'),
+                  builder: (context) => GoalCompletionPage(),
                 ),
               );
             } else if (entry.key == 'Workout Sessions') {
@@ -228,7 +230,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
         return const Icon(Icons.sentiment_dissatisfied, color: Colors.grey);
       case 'Challenges Tied':
         return const Icon(Icons.thumbs_up_down, color: Colors.blueGrey);
-      case 'Goals':
+      case 'Goals & Achievements':
         return const Icon(Icons.flag, color: Colors.blueAccent); // Icon for Goals
       default:
         return const Icon(Icons.help_outline, color: Colors.teal);
