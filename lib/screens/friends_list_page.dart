@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
 import 'package:fitbattles/settings/app_strings.dart';
+
+import '../firebase/firebase_messaging.dart';
 
 class FriendsListPage extends StatefulWidget {
   const FriendsListPage({super.key});
@@ -19,6 +22,42 @@ class _FriendsListPage extends State<FriendsListPage> {
 
   List<Map<String, dynamic>> addedFriends = [];
   String searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAddedFriends();
+  }
+
+  Future<void> _loadAddedFriends() async {
+    try {
+      // Replace 'userID' with the actual user ID or token
+      final DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc('userID') // Fetch the user's document
+          .get();
+
+      if (doc.exists) {
+        setState(() {
+          addedFriends = List<Map<String, dynamic>>.from(doc['friends'] ?? []);
+        });
+      }
+    } catch (e) {
+      logger.i('Error loading friends: $e');
+    }
+  }
+
+  Future<void> _saveFriends() async {
+    try {
+      // Replace 'userID' with the actual user ID or token
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc('userID') // Save to the user's document
+          .set({'friends': addedFriends});
+    } catch (e) {
+      logger.i('Error saving friends: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +118,7 @@ class _FriendsListPage extends State<FriendsListPage> {
                       setState(() {
                         addedFriends.add(filteredFriends[index]);
                       });
+                      _saveFriends(); // Save friends to Firestore
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
@@ -139,6 +179,7 @@ class _FriendsListPage extends State<FriendsListPage> {
                       setState(() {
                         addedFriends.removeAt(index);
                       });
+                      _saveFriends(); // Save friends to Firestore
                     },
                   ),
                 );

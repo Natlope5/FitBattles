@@ -79,7 +79,7 @@ class MyApp extends StatelessWidget {
             '/user_challenges': (context) => const UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),
             '/currentGoals': (context) => CurrentGoalsPage(),
-            '/goalHistory': (context) => GoalCompletionPage(),
+            '/goalHistory': (context) => GoalCompletionPage(userToken: '',),
           },
         );
       },

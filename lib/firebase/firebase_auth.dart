@@ -149,6 +149,12 @@ class FirebaseAuthService {
     return _auth.currentUser;
   }
 
+  /// Get the currently signed-in user's ID
+  String? getCurrentUserId() {
+    User? user = _auth.currentUser;
+    return user?.uid; // Return the user's ID or null if no user is signed in
+  }
+
   /// Check if the current user's email is verified
   Future<bool> isEmailVerified() async {
     try {

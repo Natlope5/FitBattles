@@ -192,7 +192,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => GoalCompletionPage(),
+                  builder: (context) => GoalCompletionPage(userToken: '',),
                 ),
               );
             } else if (entry.key == 'Workout Sessions') {

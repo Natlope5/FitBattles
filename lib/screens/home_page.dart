@@ -475,8 +475,8 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/addGoal');
             },
             style: ElevatedButton.styleFrom(
-              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black, // Text color based on the theme
-              backgroundColor: Colors.green,
+              foregroundColor: Colors.black, // Always set text color to black
+              backgroundColor: const Color(0xFF85C83E),
             ),
             child: const Text('Add Goal'),
           ),
@@ -486,7 +486,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/currentGoals');
             },
             style: ElevatedButton.styleFrom(
-              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black, // Text color based on the theme
+              foregroundColor: Colors.black, // Always set text color to black
               backgroundColor: Colors.blue,
             ),
             child: const Text('Current Goals'),
@@ -495,6 +495,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
 
 
   Widget _buildHistoryContainer(BuildContext context, ThemeProvider themeProvider) {
@@ -676,13 +677,14 @@ Widget _buildWorkoutTrackingButton(BuildContext context, ThemeProvider themeProv
       Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
     },
     style: ElevatedButton.styleFrom(
-      foregroundColor: themeProvider.isDarkMode ? Colors.black : Colors.white, // Text color based on the theme
+      foregroundColor: Colors.black, // Always set text color to black
       backgroundColor: const Color(0xFF85C83E), // Button background color
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
     ),
     child: const Text('Workout Tracking'), // Button text
   );
 }
+
 
 class DetailsScreen extends StatelessWidget {
   const DetailsScreen({super.key});

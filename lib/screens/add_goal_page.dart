@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:provider/provider.dart'; // Import Provider to use ThemeProvider
-import 'package:fitbattles/settings/theme_provider.dart'; // Assuming ThemeProvider is defined in this file
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:provider/provider.dart';
+import 'package:fitbattles/settings/theme_provider.dart'; // Import your ThemeProvider
 
 class AddGoalPage extends StatefulWidget {
   const AddGoalPage({super.key});
@@ -14,10 +15,12 @@ class AddGoalPage extends StatefulWidget {
 class AddGoalPageState extends State<AddGoalPage> {
   final TextEditingController _goalNameController = TextEditingController();
   final TextEditingController _goalAmountController = TextEditingController();
-
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-  Future<void> _saveGoal() async {
+  // Firestore instance
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> _saveGoal(GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey) async {
     final String goalName = _goalNameController.text;
     final double? goalAmount = double.tryParse(_goalAmountController.text);
 
@@ -33,14 +36,21 @@ class AddGoalPageState extends State<AddGoalPage> {
         'isCompleted': false,
       };
 
-      goalHistory.add(jsonEncode(newGoal));
+      // Save goal to Firestore
+      await _firestore.collection('goals').add(newGoal).then((docRef) {
+        newGoal['id'] = docRef.id; // Save the document ID
+        goalHistory.add(jsonEncode(newGoal));
 
-      // Save back to SharedPreferences
-      await prefs.setStringList('currentGoals', goalHistory);
-
-      scaffoldMessengerKey.currentState?.showSnackBar(
-        const SnackBar(content: Text('Goal added successfully!')),
-      );
+        // Save back to SharedPreferences
+        prefs.setStringList('currentGoals', goalHistory);
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(content: Text('Goal added successfully!')),
+        );
+      }).catchError((error) {
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(content: Text('Error adding goal: $error')),
+        );
+      });
 
       // Clear inputs
       _goalNameController.clear();
@@ -54,12 +64,14 @@ class AddGoalPageState extends State<AddGoalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access the ThemeProvider
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return ScaffoldMessenger(
       key: scaffoldMessengerKey,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Add New Goal')),
+        appBar: AppBar(
+          title: const Text('Add New Goal'),
+        ),
         body: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -69,18 +81,18 @@ class AddGoalPageState extends State<AddGoalPage> {
                 'Goal Name:',
                 style: TextStyle(
                   fontSize: 16,
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust text color based on theme
+                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
                 ),
               ),
               TextField(
                 controller: _goalNameController,
                 style: TextStyle(
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust input text color based on theme
+                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Enter goal name',
                   hintStyle: TextStyle(
-                    color: themeProvider.isDarkMode ? Colors.white60 : Colors.black54, // Adjust hint text color based on theme
+                    color: themeProvider.isDarkMode ? Colors.white60 : Colors.black54,
                   ),
                 ),
               ),
@@ -89,30 +101,31 @@ class AddGoalPageState extends State<AddGoalPage> {
                 'Goal Amount:',
                 style: TextStyle(
                   fontSize: 16,
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust text color based on theme
+                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
                 ),
               ),
               TextField(
                 controller: _goalAmountController,
                 keyboardType: TextInputType.number,
                 style: TextStyle(
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust input text color based on theme
+                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
                 ),
                 decoration: InputDecoration(
                   hintText: 'e.g., 10 (km, reps, etc.)',
                   hintStyle: TextStyle(
-                    color: themeProvider.isDarkMode ? Colors.white60 : Colors.black54, // Adjust hint text color based on theme
+                    color: themeProvider.isDarkMode ? Colors.white60 : Colors.black54,
                   ),
                 ),
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _saveGoal,
+                onPressed: () => _saveGoal(scaffoldMessengerKey), // Pass the key
                 child: const Text('Save Goal'),
               ),
             ],
           ),
         ),
+        backgroundColor: themeProvider.isDarkMode ? Colors.black : Colors.white,
       ),
     );
   }

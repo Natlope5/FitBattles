@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:provider/provider.dart'; // Import Provider to use ThemeProvider
-import 'package:fitbattles/settings/theme_provider.dart'; // Assuming ThemeProvider is defined in this file
+import 'package:provider/provider.dart';
+import 'package:fitbattles/settings/theme_provider.dart';
+import '../firebase/firebase_auth.dart';
 
 class CurrentGoalsPage extends StatefulWidget {
   const CurrentGoalsPage({super.key});
@@ -13,11 +14,26 @@ class CurrentGoalsPage extends StatefulWidget {
 
 class CurrentGoalsPageState extends State<CurrentGoalsPage> {
   List<Map<String, dynamic>> _currentGoals = [];
+  final FirebaseAuthService _authService = FirebaseAuthService(); // Initialize the service
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentGoals();
+    _checkUserAuthentication();
+  }
+
+  Future<void> _checkUserAuthentication() async {
+    if (!await _authService.isUserLoggedIn()) {
+      _navigateToLogin();
+    } else {
+      _loadCurrentGoals();
+    }
+  }
+
+  void _navigateToLogin() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pushReplacementNamed(context, '/addGoal'); // Change '/login' to your login route
+    });
   }
 
   Future<void> _loadCurrentGoals() async {
@@ -27,7 +43,7 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
     if (savedGoals != null) {
       setState(() {
         _currentGoals = savedGoals
-            .map((goal) => jsonDecode(goal) as Map<String, dynamic>) // Ensure the correct type
+            .map((goal) => jsonDecode(goal) as Map<String, dynamic>)
             .toList();
       });
     }
@@ -42,14 +58,13 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
     });
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> updatedGoals =
-    _currentGoals.map((goal) => jsonEncode(goal)).toList();
+    List<String> updatedGoals = _currentGoals.map((goal) => jsonEncode(goal)).toList();
     await prefs.setStringList('currentGoals', updatedGoals);
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context); // Access the ThemeProvider
+    final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Current Goals')),
@@ -65,7 +80,7 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
               title: Text(
                 goal['name'],
                 style: TextStyle(
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust text color based on theme
+                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
                 ),
               ),
               subtitle: Column(
@@ -74,15 +89,15 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
                   Text(
                     'Progress: ${goal['currentProgress']} / ${goal['amount']}',
                     style: TextStyle(
-                      color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54, // Adjust subtitle text color based on theme
+                      color: themeProvider.isDarkMode ? Colors.white70 : Colors.black54,
                     ),
                   ),
                   Slider(
                     value: goal['currentProgress'],
                     min: 0,
                     max: goal['amount'],
-                    activeColor: themeProvider.isDarkMode ? Colors.green : Colors.blue, // Adjust slider color based on theme
-                    inactiveColor: themeProvider.isDarkMode ? Colors.grey : Colors.grey[300], // Adjust inactive color based on theme
+                    activeColor: themeProvider.isDarkMode ? Colors.green : Colors.blue,
+                    inactiveColor: themeProvider.isDarkMode ? Colors.grey : Colors.grey[300],
                     onChanged: (value) {
                       _updateProgress(index, value);
                     },
