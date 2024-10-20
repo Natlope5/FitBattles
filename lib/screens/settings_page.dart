@@ -22,7 +22,7 @@ enum VisibilityOption {
 }
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, required String heading});
 
   @override
   SettingsPageState createState() => SettingsPageState();
@@ -196,6 +196,10 @@ class SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _logout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red, // Set the button color
+                    foregroundColor: Colors.black, // Set the text color
+                  ),
                   child: const Text('Logout'),
                 ),
               ],

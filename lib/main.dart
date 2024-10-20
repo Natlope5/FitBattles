@@ -10,7 +10,6 @@ import 'package:fitbattles/workouts/strength_workout_page.dart';
 import 'package:fitbattles/screens/friends_list_page.dart';
 import 'package:fitbattles/screens/home_page.dart';
 import 'package:fitbattles/screens/settings_page.dart';
-import 'package:fitbattles/screens/user_profile_page.dart';
 import 'package:fitbattles/settings/theme_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +22,8 @@ import 'package:fitbattles/challenges/leaderboard_page.dart';
 import 'package:fitbattles/auth/login_page.dart';
 import 'package:fitbattles/challenges/user_challenges_page.dart';
 import 'package:fitbattles/screens/workout_history_page.dart';
+
+import 'auth/signup_profile_page.dart';
 
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -57,7 +58,7 @@ class MyApp extends StatelessWidget {
           initialRoute: '/login',
           routes: {
             '/login': (context) => LoginPage(title: '', setLocale: (locale) {}),
-            '/': (context) => UserProfilePage(heading: 'Create Profile'),
+            '/''/signup': (context) => const SignupProfilePage(heading: 'Sign up Profile'),
             '/home': (context) => HomePage(id: '', email: '', uid: ''),
             '/workoutTracking': (context) => const WorkoutTrackingPage(),
 
@@ -74,7 +75,7 @@ class MyApp extends StatelessWidget {
             '/distanceWorkout': (context) => const DistanceWorkoutPage(),
             '/strengthWorkout': (context) => const StrengthWorkoutPage(),
             '/leaderboard': (context) => const LeaderboardPage(),
-            '/settings': (context) => const SettingsPage(),
+            '/settings': (context) => const SettingsPage(heading: 'Settings Page',),
             '/create_challenge': (context) => CreateChallengePage(),
             '/user_challenges': (context) => const UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),

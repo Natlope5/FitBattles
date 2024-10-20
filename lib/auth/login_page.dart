@@ -1,4 +1,5 @@
-import 'package:fitbattles/screens/user_profile_page.dart'; // Importing UserProfilePage
+
+import 'package:fitbattles/auth/signup_profile_page.dart';
 import 'package:flutter/material.dart'; // Importing Flutter material package
 import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
 import 'package:logger/logger.dart'; // Importing Logger for error logging
@@ -214,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const UserProfilePage(heading: 'User Profile'), // Pass the necessary heading or data here
+                          builder: (context) => const SignupProfilePage(heading: 'Sign Up Page',), // Pass the necessary heading or data here
                         ),
                       );
                     },
