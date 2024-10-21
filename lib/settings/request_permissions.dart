@@ -7,13 +7,13 @@ Future<void> requestPermissions(BuildContext context) async {
   PermissionStatus status = await Permission.notification.request();
   if (!context.mounted) return; // Ensure context is still valid
   if (status.isDenied || status.isPermanentlyDenied) {
-    showGuideToSettingsDialog(context);
+    showGuideToSettingsDialog(context as Function,context);
   }
 
   // Request other permissions as needed
   PermissionStatus locationStatus = await Permission.location.request();
   if (!context.mounted) return; // Ensure context is still valid
   if (locationStatus.isDenied || locationStatus.isPermanentlyDenied) {
-    showGuideToSettingsDialog(context);
+    showGuideToSettingsDialog(context as Function,context);
   }
 }

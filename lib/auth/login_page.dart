@@ -6,6 +6,7 @@ import 'package:logger/logger.dart'; // Importing Logger for error logging
 import 'package:fitbattles/screens/home_page.dart'; // Importing the home page to navigate after login
 import 'package:fitbattles/auth/session_manager.dart'; // Import your SessionManager
 
+
 // Login page widget
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.title, required Null Function(dynamic locale) setLocale});
@@ -67,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
     if (!mounted) return; // Ensure widget is still mounted
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, uid: '')), // Navigate to home page with user data
+      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, name: '', bio: '', uid: '',)), // Navigate to home page with user data
     );
   }
 

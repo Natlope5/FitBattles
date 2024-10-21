@@ -131,6 +131,7 @@ Future<void> _updateLeaderboard() async {
   }
 }
 
+// Functions to retrieve app-specific data for user history
 Future<int> getPointsWon() async {
   try {
     final snapshot = await FirebaseFirestore.instance.collection('users').doc('user_id').get(); // Replace 'user_id' with the actual user ID
@@ -180,18 +181,101 @@ Future<double> getWaterIntake() async {
   }
 }
 
+// Fetch the total workout sessions for the user from Firestore
 Future<int> getWorkoutSessions() async {
-  return 20; // Replace with actual logic to fetch workout sessions
+  try {
+    // Get the currently authenticated user
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Fetch workout sessions from the user's history document
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (snapshot.exists) {
+        // Cast the snapshot data to a Map<String, dynamic>
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+        return data['history']['workoutSessions'] ?? 0;
+      }
+    }
+  } catch (e) {
+    logger.e("Error fetching workout sessions: $e");
+  }
+  return 0; // Default if fetching fails
 }
 
+
+// Fetch the total challenges won by the user from Firestore
 Future<int> getChallengesWon() async {
-  return 5; // Replace with actual logic to fetch challenges won
+  try {
+    // Get the currently authenticated user
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Fetch challenges won from the user's history document
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (snapshot.exists) {
+        // Cast the snapshot data to a Map<String, dynamic>
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+        return data['history']['challengesWon'] ?? 0;
+      }
+    }
+  } catch (e) {
+    logger.e("Error fetching challenges won: $e");
+  }
+  return 0; // Default if fetching fails
 }
 
+
+
+// Fetch the total challenges lost by the user from Firestore
 Future<int> getChallengesLost() async {
-  return 2; // Replace with actual logic to fetch challenges lost
+  try {
+    // Get the currently authenticated user
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Fetch challenges lost from the user's history document
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (snapshot.exists) {
+        // Cast the snapshot data to a Map<String, dynamic>
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+        return data['history']['challengesLost'] ?? 0;
+      }
+    }
+  } catch (e) {
+    logger.e("Error fetching challenges lost: $e");
+  }
+  return 0; // Default if fetching fails
 }
 
+// Fetch the total challenges tied by the user from Firestore
 Future<int> getChallengesTied() async {
-  return 1; // Replace with actual logic to fetch challenges tied
+  try {
+    // Get the currently authenticated user
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Fetch challenges tied from the user's history document
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (snapshot.exists) {
+        // Cast the snapshot data to a Map<String, dynamic>
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+        return data['history']['challengesTied'] ?? 0;
+      }
+    }
+  } catch (e) {
+    logger.e("Error fetching challenges tied: $e");
+  }
+  return 0; // Default if fetching fails
 }

@@ -23,7 +23,7 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
   }
 
   Future<void> _checkUserAuthentication() async {
-    if (!await _authService.isUserLoggedIn()) {
+    if (!_authService.isUserLoggedIn()) {
       _navigateToLogin();
     } else {
       _loadCurrentGoals();
@@ -60,8 +60,6 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
       }
     }
   }
-
-
 
 
   Future<void> _updateProgress(int index, double progress) async {

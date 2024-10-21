@@ -1,17 +1,21 @@
-import 'package:fitbattles/models/challenge.dart'; // Assuming the Challenge model is in this path
-import 'package:fitbattles/settings/app_strings.dart'; // Assuming this has the localized strings
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fitbattles/challenges/challenge.dart';
+import 'package:fitbattles/settings/app_strings.dart';
+
+
+import '../main.dart'; // Assuming this has the localized strings
 
 class ChallengeData {
   // A static list of predefined challenges
   static final List<Challenge> challenges = [
     Challenge(
-      id: '1', // Unique ID for each challenge
+      id: '1',
       name: AppStrings.stepsChallenge, // Localized string
       type: AppStrings.fitnessChallenge, // Localized string
       startDate: DateTime.now(),
       endDate: DateTime.now().add(const Duration(days: 7)),
-      participants: [], // Empty participants initially
-      description: 'Complete 10,000 steps each day for a week.', // Optional description
+      participants: [],
+      description: AppStrings.stepsChallengeDescription, opponentId: '', // Localized description
     ),
     Challenge(
       id: '2',
@@ -20,7 +24,7 @@ class ChallengeData {
       startDate: DateTime.now(),
       endDate: DateTime.now().add(const Duration(days: 7)),
       participants: [],
-      description: 'Run at least 5 kilometers each day for a week.',
+      description: AppStrings.runningChallengeDescription, opponentId: '', // Localized description
     ),
     Challenge(
       id: '3',
@@ -29,7 +33,7 @@ class ChallengeData {
       startDate: DateTime.now(),
       endDate: DateTime.now().add(const Duration(days: 30)),
       participants: [],
-      description: 'Follow a healthy meal plan for 30 days.',
+      description: AppStrings.healthyEatingChallengeDescription, opponentId: '', // Localized description
     ),
     Challenge(
       id: '4',
@@ -38,7 +42,7 @@ class ChallengeData {
       startDate: DateTime.now(),
       endDate: DateTime.now().add(const Duration(days: 7)),
       participants: [],
-      description: 'Perform 100 sit-ups daily for a week.',
+      description: AppStrings.sitUpChallengeDescription, opponentId: '', // Localized description
     ),
     Challenge(
       id: '5',
@@ -47,7 +51,41 @@ class ChallengeData {
       startDate: DateTime.now(),
       endDate: DateTime.now().add(const Duration(days: 30)),
       participants: [],
-      description: 'Perform 100 squats daily for 30 days.',
+      description: AppStrings.squatChallengeDescription, opponentId: '', // Localized description
     ),
   ];
+
+  // Constructor to initialize a ChallengeData instance
+  ChallengeData();
+
+  // Static method to get all challenges
+  static List<Challenge> getAllChallenges() {
+    return challenges;
+  }
+
+  static Future<List<Challenge>> fetchChallenges() async {
+    List<Challenge> challengesList = [];
+
+    try {
+      // Fetch challenges from Firestore
+      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('challenges').get();
+
+      for (var doc in snapshot.docs) {
+        challengesList.add(Challenge(
+          id: doc.id, // Use the document ID
+          name: doc['name'],
+          description: doc['description'],
+          type: doc['type'],
+          startDate: (doc['startDate'] as Timestamp).toDate(),
+          endDate: (doc['endDate'] as Timestamp).toDate(),
+          participants: List<String>.from(doc['participants'] ?? []), opponentId: '',
+        ));
+      }
+    } catch (e) {
+      // Handle errors and possibly inform the user
+      logger.i('Error fetching challenges: $e');
+    }
+
+    return challengesList;
+  }
 }

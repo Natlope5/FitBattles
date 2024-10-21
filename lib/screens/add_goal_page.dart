@@ -1,9 +1,10 @@
+import 'package:fitbattles/firebase/firebase_notifications_handler.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
-import 'package:fitbattles/settings/theme_provider.dart'; // Import your ThemeProvider
+import 'package:fitbattles/settings/theme_provider.dart';
 
 class AddGoalPage extends StatefulWidget {
   const AddGoalPage({super.key});
@@ -17,8 +18,19 @@ class AddGoalPageState extends State<AddGoalPage> {
   final TextEditingController _goalAmountController = TextEditingController();
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-  // Firestore instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Define the NotificationsHandler but don't initialize it here.
+  late NotificationsHandler notificationsHandler;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use post-frame callback to initialize the notificationsHandler.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notificationsHandler = Provider.of<NotificationsHandler>(context, listen: false);
+    });
+  }
 
   Future<void> _saveGoal() async {
     final String goalName = _goalNameController.text.trim();
@@ -28,7 +40,6 @@ class AddGoalPageState extends State<AddGoalPage> {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       List<String> goalHistory = prefs.getStringList('currentGoals') ?? [];
 
-      // Add new goal to the list
       final newGoal = {
         'name': goalName,
         'amount': goalAmount,
@@ -39,11 +50,14 @@ class AddGoalPageState extends State<AddGoalPage> {
       try {
         // Save goal to Firestore
         DocumentReference docRef = await _firestore.collection('goals').add(newGoal);
-        newGoal['id'] = docRef.id; // Save the document ID
+        newGoal['id'] = docRef.id;
         goalHistory.add(jsonEncode(newGoal));
 
-        // Save back to SharedPreferences
         await prefs.setStringList('currentGoals', goalHistory);
+
+        // Schedule a notification
+        notificationsHandler.scheduleGoalNotification(goalName);
+
         scaffoldMessengerKey.currentState?.showSnackBar(
           const SnackBar(content: Text('Goal added successfully!')),
         );
@@ -53,7 +67,6 @@ class AddGoalPageState extends State<AddGoalPage> {
         );
       }
 
-      // Clear inputs
       _goalNameController.clear();
       _goalAmountController.clear();
     } else {
@@ -78,49 +91,18 @@ class AddGoalPageState extends State<AddGoalPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Goal Name:',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
-                ),
-              ),
               TextField(
                 controller: _goalNameController,
-                style: TextStyle(
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Enter goal name',
-                  hintStyle: TextStyle(
-                    color: themeProvider.isDarkMode ? Colors.white60 : Colors.black54,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Goal Amount:',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
-                ),
+                decoration: const InputDecoration(labelText: 'Goal Name'),
               ),
               TextField(
                 controller: _goalAmountController,
+                decoration: const InputDecoration(labelText: 'Goal Amount'),
                 keyboardType: TextInputType.number,
-                style: TextStyle(
-                  color: themeProvider.isDarkMode ? Colors.white : Colors.black,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'e.g., 10 (km, reps, etc.)',
-                  hintStyle: TextStyle(
-                    color: themeProvider.isDarkMode ? Colors.white60 : Colors.black54,
-                  ),
-                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: _saveGoal, // No need to pass the key
+                onPressed: _saveGoal,
                 child: const Text('Save Goal'),
               ),
             ],
@@ -129,5 +111,11 @@ class AddGoalPageState extends State<AddGoalPage> {
         backgroundColor: themeProvider.isDarkMode ? Colors.black : Colors.white,
       ),
     );
+  }
+}
+
+extension on NotificationsHandler {
+  void scheduleGoalNotification(String goalName) {
+    // Add the actual notification scheduling logic here.
   }
 }

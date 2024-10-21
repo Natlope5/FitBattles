@@ -422,6 +422,23 @@ class AppStrings {
   static String noGoalsCompletedYet = 'No goals are completed yet';
 
   static String saveGoalHistory = 'History is saved';
+  static const String defaultName = "User Name";
+  static const String defaultEmail = "user@example.com";
+  static const String defaultBio = "No bio provided.";
+
+  static const String startedChallengesTitle = 'Started Challenges';
+
+  static const String stepsChallengeDescription= "Complete 10,000 steps each day for a week.";
+
+  static const String runningChallengeDescription ="Run at least 5 kilometers each day for a week.";
+
+  static const String healthyEatingChallengeDescription = "Follow a healthy meal plan for 30 days.";
+
+  static const String sitUpChallengeDescription = "Perform 100 sit-ups daily for a week.";
+
+  static const String squatChallengeDescription = "Perform 100 squats daily for 30 days.";
+
+ // Assuming you have ThemeProvider
 
 }
 

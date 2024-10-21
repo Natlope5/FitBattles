@@ -56,13 +56,63 @@ class FirebaseAuthService {
       if (user != null) {
         await user.updateProfile(displayName: displayName, photoURL: photoUrl);
         await user.reload();
-        _logger.i(
-            'User profile updated: displayName: $displayName, photoURL: $photoUrl');
+        _logger.i('User profile updated: displayName: $displayName, photoURL: $photoUrl');
       } else {
         _logger.e('No user is currently signed in.');
       }
     } catch (e) {
       _logger.e('Error updating profile: $e');
+    }
+  }
+
+  /// Start a challenge (save it to Firestore)
+  Future<void> startChallenge(String challengeId) async {
+    try {
+      String userId = _auth.currentUser?.uid ?? '';
+      if (userId.isEmpty) {
+        _logger.e('User not signed in.');
+        return;
+      }
+
+      await _firestore.collection('startedChallenges').add({
+        'challengeId': challengeId,
+        'userId': userId,
+        'startDate': Timestamp.now(),
+      });
+
+      _logger.i('Challenge started: $challengeId for user: $userId');
+    } catch (e) {
+      _logger.e('Error starting challenge: $e');
+    }
+  }
+
+  /// Fetch all challenges started by the user
+  Future<List<Map<String, dynamic>>> getStartedChallenges() async {
+    try {
+      String userId = _auth.currentUser?.uid ?? '';
+      if (userId.isEmpty) {
+        _logger.e('User not signed in.');
+        return [];
+      }
+
+      QuerySnapshot querySnapshot = await _firestore
+          .collection('startedChallenges')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      List<Map<String, dynamic>> challenges = querySnapshot.docs.map((doc) {
+        return {
+          'startedChallengeId': doc.id,
+          'challengeId': doc['challengeId'],
+          'startDate': doc['startDate'],
+        };
+      }).toList();
+
+      _logger.i('Fetched ${challenges.length} started challenges for user: $userId');
+      return challenges;
+    } catch (e) {
+      _logger.e('Error fetching started challenges: $e');
+      return [];
     }
   }
 
@@ -77,169 +127,55 @@ class FirebaseAuthService {
       _logger.i('User signed in: ${userCredential.user?.email}');
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      _logger.e('Firebase sign-in error: ${e.message}');
-      return null;
-    } catch (e) {
-      _logger.e('General sign-in error: $e');
+      _logger.e('Error signing in: $e');
       return null;
     }
   }
 
-  /// Load user profile from Firestore
-  Future<void> loadUserProfile(String userId) async {
+  /// Register a new user
+  Future<User?> register(String email, String password) async {
     try {
-      DocumentSnapshot userSnapshot = await _firestore.collection('users').doc(
-          userId).get();
-
-      if (userSnapshot.exists) {
-        Map<String, dynamic>? data = userSnapshot.data() as Map<String,
-            dynamic>?;
-
-        // Check if 'photoURL' exists
-        String? photoURL = data?['photoURL'];
-        String displayName = data?['displayName'] ?? 'No display name';
-
-        _logger.i('User Profile: $displayName, Photo URL: $photoURL');
-      } else {
-        _logger.e('User profile not found.');
-      }
-    } catch (e) {
-      _logger.e('Error loading user profile: $e');
-    }
-  }
-
-  /// Register a new user with email, password, and optional profile image
-  Future<User?> register(String email, String password,
-      {File? profileImage}) async {
-    try {
-      UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      User? user = userCredential.user;
-
-      if (user != null) {
-        String? photoUrl;
-        if (profileImage != null) {
-          photoUrl = await uploadProfileImage(profileImage);
-        }
-
-        await updateProfile(email.split('@')[0], photoUrl);
-        await _saveUserSession(user);
-
-        _logger.i('User registered: ${user.email}');
-        if (!user.emailVerified) {
-          await user.sendEmailVerification();
-          _logger.i('Verification email sent to ${user.email}');
-        }
-      }
-      return user;
+      await _saveUserSession(userCredential.user);
+      _logger.i('User registered: ${userCredential.user?.email}');
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      _logger.e('Firebase registration error: ${e.message}');
-      return null;
-    } catch (e) {
-      _logger.e('General registration error: $e');
+      _logger.e('Error registering user: $e');
       return null;
     }
   }
 
-  /// Send password reset email
-  Future<void> resetPassword(String email) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-      _logger.i('Password reset email sent to $email');
-    } catch (e) {
-      _logger.e('Error sending password reset email: $e');
-    }
-  }
-
-  /// Sign out the current user and clear session
+  /// Sign out the user
   Future<void> signOut() async {
-    try {
-      await _clearUserSession();
-      await _auth.signOut();
-      _logger.i('User signed out.');
-    } catch (e) {
-      _logger.e('Error during sign-out: $e');
-    }
+    await _auth.signOut();
+    _logger.i('User signed out.');
   }
 
-  /// Save the user session in shared preferences
+  /// Save user session details in shared preferences
   Future<void> _saveUserSession(User? user) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     if (user != null) {
-      try {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('user_email', user.email ?? '');
-        await prefs.setString('user_id', user.uid);
-
-        await prefs.setInt('session_expiration', DateTime
-            .now()
-            .add(Duration(hours: 1))
-            .millisecondsSinceEpoch);
-        _logger.i('User session saved.');
-      } catch (e) {
-        _logger.e('Error saving user session: $e');
-      }
+      await prefs.setString('userId', user.uid);
+      await prefs.setString('userEmail', user.email ?? '');
     }
   }
 
-  /// Clear the saved user session
-  Future<void> _clearUserSession() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.remove('user_email');
-      await prefs.remove('user_id');
-      await prefs.remove('session_expiration');
-      _logger.i('User session cleared.');
-    } catch (e) {
-      _logger.e('Error clearing user session: $e');
-    }
-  }
+  /// Get current user
+  User? get currentUser => _auth.currentUser;
 
-  /// Check if the user is logged in by checking the saved session
-  Future<bool> isUserLoggedIn() async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? userId = prefs.getString('user_id');
+  /// Check if user is signed in
+  bool get isSignedIn => _auth.currentUser != null;
 
-      int? sessionExpiration = prefs.getInt('session_expiration');
-      if (sessionExpiration != null && DateTime
-          .now()
-          .millisecondsSinceEpoch > sessionExpiration) {
-        await signOut();
-        return false;
-      }
-
-      return userId != null;
-    } catch (e) {
-      _logger.e('Error checking login status: $e');
-      return false;
-    }
-  }
-
-  /// Get the currently signed-in user
+  /// Get the current user (additional method)
   User? getCurrentUser() {
     return _auth.currentUser;
   }
 
-  /// Get the currently signed-in user's ID
-  String? getCurrentUserId() {
-    return _auth.currentUser?.uid;
-  }
-
-  /// Check if the current user's email is verified
-  Future<bool> isEmailVerified() async {
-    try {
-      User? user = _auth.currentUser;
-      if (user != null) {
-        await user.reload();
-        return user.emailVerified;
-      }
-      return false;
-    } catch (e) {
-      _logger.e('Error checking email verification: $e');
-      return false;
-    }
+  /// Check if the user is logged in (additional method)
+  bool isUserLoggedIn() {
+    return _auth.currentUser != null;
   }
 }
