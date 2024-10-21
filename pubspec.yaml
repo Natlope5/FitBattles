@@ -67,7 +67,6 @@ dependencies:
   file_picker: ^8.1.2
   theme_tailor: ^3.0.1
   packme: ^2.0.2
-  android_intent_plus: ^5.1.0
   flutter_local_notifications: ^17.2.3
 
 dev_dependencies:

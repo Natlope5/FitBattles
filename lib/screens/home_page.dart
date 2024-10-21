@@ -146,8 +146,11 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildChallengesContainer(context, themeProvider),
               const SizedBox(height: 32),
-              _buildHistoryContainer(context, themeProvider),
+              _buildWorkoutContainer(context),
               const SizedBox(height: 32),
+              _buildGoalsContainer(context),
+              const SizedBox(height: 32),
+              _buildHistoryContainer(context, themeProvider),
               const SizedBox(height: 32),
               _buildTopChallengedFriends(exampleFriends, themeProvider),
               _buildFriendsListButton(context),
@@ -307,6 +310,30 @@ class _HomePageState extends State<HomePage> {
             ),
             child: const Text('Create Challenge'),
           ),
+          // Button to navigate to the user's challenges page
+          ElevatedButton(
+            onPressed: () {
+            Navigator.pushNamed(context, '/user_challenges');
+            },
+            style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.black,
+            backgroundColor: const Color(0xFF85C83E),
+            ),
+            child: const Text('Challenges'), // Button text
+          ),
+          const SizedBox(height: 16),
+          // Button to create a new challenge
+          ElevatedButton(
+          onPressed: () {
+          // Navigate to the create new challenge page
+          Navigator.pushNamed(context, '/create_challenge');
+          },
+          style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.black,
+          backgroundColor: const Color(0xFF85C83E),
+          ),
+          child: const Text('New Challenge'), // Button text
+          ),
         ],
       ),
     );
@@ -375,6 +402,69 @@ class _HomePageState extends State<HomePage> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildWorkoutContainer(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      width: MediaQuery.of(context).size.width * 0.9, // Responsive width
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Workout', // Section title
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          // Workout tracking button
+          _buildWorkoutTrackingButton(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGoalsContainer(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      width: MediaQuery.of(context).size.width * 0.9,
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Goals',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/addGoal');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+            ),
+            child: const Text('Add Goal'),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/currentGoals');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue,
+            ),
+            child: const Text('Current Goals'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -549,6 +639,22 @@ class _HomePageState extends State<HomePage> {
     );
   }
 }
+
+// Widget to build the workout tracking navigation button
+Widget _buildWorkoutTrackingButton(BuildContext context) {
+  return ElevatedButton(
+    onPressed: () {
+      Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
+    },
+    style: ElevatedButton.styleFrom(
+      foregroundColor: Colors.white,
+      backgroundColor: const Color(0xFF85C83E), // Use the theme color
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
+    ),
+    child: const Text('Workout Tracking'), // Button text
+  );
+}
+
 class DetailsScreen extends StatelessWidget {
   const DetailsScreen({super.key});
 

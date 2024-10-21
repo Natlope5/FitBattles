@@ -1,12 +1,14 @@
-import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
+import 'package:fitbattles/screens/add_goal_page.dart';
+import 'package:fitbattles/screens/current_goals_page.dart';
+import 'package:fitbattles/screens/goals_completion_page.dart';
 import 'package:fitbattles/screens/workout_tracking_page.dart';
 import 'package:fitbattles/workouts/strength_workout_page.dart';
 import 'package:fitbattles/screens/friends_list_page.dart';
 import 'package:fitbattles/screens/home_page.dart';
-import 'package:fitbattles/screens/my_history.dart';
+import 'package:fitbattles/screens/my_history_page.dart';
 import 'package:fitbattles/screens/settings_page.dart';
 import 'package:fitbattles/screens/user_profile_page.dart';
 import 'package:fitbattles/settings/theme_provider.dart';
@@ -19,6 +21,8 @@ import 'package:provider/provider.dart';
 import 'package:fitbattles/challenges/create_challenge_page.dart';
 import 'package:fitbattles/challenges/leaderboard_page.dart';
 import 'package:fitbattles/auth/login_page.dart';
+import 'package:fitbattles/challenges/user_challenges_page.dart';
+import 'package:fitbattles/screens/workout_history_page.dart';
 
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -26,8 +30,8 @@ final Logger logger = Logger();
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
-  final List<CameraDescription> cameras;
-  const MyApp({super.key, required this.cameras});
+
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +63,7 @@ class MyApp extends StatelessWidget {
 
             '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
+            '/workoutHistory': (context) => const WorkoutHistoryPage(),
             '/pointsInfo': (context) => const EarnedPointsPage(
               points: 1000,
               streakDays: 360,
@@ -70,64 +75,15 @@ class MyApp extends StatelessWidget {
             '/strengthWorkout': (context) => const StrengthWorkoutPage(),
             '/leaderboard': (context) => const LeaderboardPage(),
             '/settings': (context) => const SettingsPage(),
-            '/create_challenge': (context) => CreateChallengePage(cameras: cameras, friends: [], friend: ''),
+            '/create_challenge': (context) => CreateChallengePage(),
+            '/user_challenges': (context) => const UserChallengesPage(),
+            '/addGoal': (context) => AddGoalPage(),
+            '/currentGoals': (context) => CurrentGoalsPage(),
+            '/goalHistory': (context) => GoalCompletionPage(),
           },
         );
       },
     );
-  }
-}
-
-class NotificationsHandler {
-  final FlutterLocalNotificationsPlugin localNotificationsPlugin;
-
-  NotificationsHandler({required this.localNotificationsPlugin});
-
-  Future<void> initializeNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-    AndroidInitializationSettings('your_image'); // Ensure app_icon exists in drawable
-
-    final InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-    );
-
-    await localNotificationsPlugin.initialize(initializationSettings);
-
-    // Handle foreground messages
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _showNotification(message);
-    });
-
-    // Handle background messages
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  }
-
-  Future<void> _showNotification(RemoteMessage message) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
-      'your_channel_id', // Your channel ID
-      'your_channel_name', // Your channel name
-      channelDescription: 'your_channel_description',
-      importance: Importance.max,
-      priority: Priority.high,
-      showWhen: false,
-    );
-
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
-      android: androidPlatformChannelSpecifics,
-    );
-
-    await localNotificationsPlugin.show(
-      0,
-      message.notification?.title ?? 'Default Title', // Default Title if null
-      message.notification?.body ?? 'Default Body',   // Default Body if null
-      platformChannelSpecifics,
-      payload: message.data['payload'] ?? '', // Handle payload safely
-    );
-  }
-
-  static Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-    await Firebase.initializeApp();
-    // Handle background notification data here if needed
   }
 }
 
@@ -137,14 +93,10 @@ void main() async {
   // Initialize Firebase
   await Firebase.initializeApp();
 
-  // Initialize NotificationsHandler with proper values
-  final notificationsHandler = NotificationsHandler(localNotificationsPlugin: localNotificationsPlugin);
-  await notificationsHandler.initializeNotifications();
-
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(), // Provide ThemeProvider for the whole app
-      child: MyApp(cameras: await availableCameras()),
+      child: const MyApp(),
     ),
   );
 }
