@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:android_intent_plus/android_intent.dart';
 import 'package:flutter/services.dart';
 import 'package:logger/logger.dart';
 
@@ -49,10 +48,12 @@ class ExactAlarmPermissionManager {
   }
 
   /// Opens the settings screen for granting the "Schedule Exact Alarms" permission.
-  void _openSettings() {
-    final AndroidIntent intent = AndroidIntent(
-      action: 'android.settings.REQUEST_SCHEDULE_EXACT_ALARM',
-    );
-    intent.launch(); // Launch the intent to open settings
+  void _openSettings() async {
+    try {
+      // Using the platform channel to open the settings screen
+      await platform.invokeMethod('openExactAlarmSettings');
+    } on PlatformException catch (e) {
+      logger.d("Error opening exact alarm settings: $e");
+    }
   }
 }
