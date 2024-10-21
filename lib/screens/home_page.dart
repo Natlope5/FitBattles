@@ -449,7 +449,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/addGoal');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
+              backgroundColor: const Color(0xFF85C83E),
             ),
             child: const Text('Add Goal'),
           ),
@@ -459,7 +459,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/currentGoals');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
+              backgroundColor: const Color(0xFF85C83E),
             ),
             child: const Text('Current Goals'),
           ),
