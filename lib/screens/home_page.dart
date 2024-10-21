@@ -146,9 +146,9 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildChallengesContainer(context, themeProvider),
               const SizedBox(height: 32),
-              _buildWorkoutContainer(context),
+              _buildWorkoutContainer(context, themeProvider),
               const SizedBox(height: 32),
-              _buildGoalsContainer(context),
+              _buildGoalsContainer(context, themeProvider),
               const SizedBox(height: 32),
               _buildHistoryContainer(context, themeProvider),
               const SizedBox(height: 32),
@@ -405,10 +405,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildWorkoutContainer(BuildContext context) {
+  Widget _buildWorkoutContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
       width: MediaQuery.of(context).size.width * 0.9, // Responsive width
@@ -428,10 +428,10 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildGoalsContainer(BuildContext context) {
+  Widget _buildGoalsContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
       width: MediaQuery.of(context).size.width * 0.9,
@@ -496,16 +496,14 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
-              logger.e("Navigating to history page...");
-              Navigator.of(context).pushNamed('/history').catchError((error) {
-                logger.e("Error navigating to history page: $error");
-                return null;
-              });
+              Navigator.pushNamed(context, '/currentGoals');
             },
-            child: const Text(
-                'View History', style: TextStyle(color: Colors.black)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF85C83E),
+            ),
+            child: const Text('View History'),
           ),
         ],
       ),
