@@ -153,7 +153,7 @@ class _HomePageState extends State<HomePage> {
               _buildHistoryContainer(context, themeProvider),
               const SizedBox(height: 32),
               _buildTopChallengedFriends(exampleFriends, themeProvider),
-              _buildFriendsListButton(context),
+              _buildFriendsListButton(context, themeProvider),
             ],
           ),
         ),
@@ -252,7 +252,7 @@ class _HomePageState extends State<HomePage> {
               );
             },
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
               backgroundColor: const Color(0xFF85C83E),
             ),
             child: const Text('View Earned Points'),
@@ -289,7 +289,7 @@ class _HomePageState extends State<HomePage> {
               });
             },
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
               backgroundColor: const Color(0xFF85C83E),
             ),
             child: Text(showPreloadedChallenges
@@ -305,7 +305,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/create_challenge');
             },
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
               backgroundColor: const Color(0xFF85C83E),
             ),
             child: const Text('Create Challenge'),
@@ -316,7 +316,7 @@ class _HomePageState extends State<HomePage> {
             Navigator.pushNamed(context, '/user_challenges');
             },
             style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.black,
+            foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
             backgroundColor: const Color(0xFF85C83E),
             ),
             child: const Text('Challenges'), // Button text
@@ -329,7 +329,7 @@ class _HomePageState extends State<HomePage> {
           Navigator.pushNamed(context, '/create_challenge');
           },
           style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.black,
+          foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
           backgroundColor: const Color(0xFF85C83E),
           ),
           child: const Text('New Challenge'), // Button text
@@ -622,14 +622,14 @@ class _HomePageState extends State<HomePage> {
   ];
 
   // Widget to build the workout tracking navigation button
-  Widget _buildFriendsListButton(BuildContext context) {
+  Widget _buildFriendsListButton(BuildContext context, ThemeProvider themeProvider) {
     return ElevatedButton(
       onPressed: () {
         Navigator.pushNamed(
             context, '/friends'); // Navigate to the workout tracking page
       },
       style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.black,
+        foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
         backgroundColor: const Color(0xFF85C83E),
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
       ),
