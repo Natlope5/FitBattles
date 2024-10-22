@@ -11,9 +11,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import '../main.dart';
-import '../settings/app_strings.dart';
 import 'package:fitbattles/challenges/challenge.dart' as challenges;
 import 'package:intl/intl.dart';
+import 'package:fitbattles/settings/app_strings.dart' show AppStrings;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid, required String name, required String bio});
@@ -21,18 +21,30 @@ class HomePage extends StatefulWidget {
   final String id; // User ID
   final String email; // User email
 
+
+
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
+
   String? _photoURL;
   File? _image;
   final picker = ImagePicker();
   final Logger logger = Logger();
+  String selectedOpponent = "Opponent 1";
+  List<String> opponentsList = [
+    "Opponent 1",
+    "Opponent 2",
+    "Opponent 3",
+    "Opponent 4",
+  ];
   bool showPreloadedChallenges = false;
   int pointsEarned = 500;
   int pointsGoal = 1000;
+
 
   List<Challenge> preloadedChallenges = [
     Challenge(name: '10,000 Steps Challenge',
@@ -40,31 +52,36 @@ class _HomePageState extends State<HomePage> {
         startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 7)),
         participants: [],
-        description: 'Complete 10,000 steps each day for a week.', opponentId: 'userId2'),
+        description: 'Complete 10,000 steps each day for a week.',
+        opponentId: 'userId2'),
     Challenge(name: 'Running Challenge',
         type: 'Fitness',
         startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 7)),
         participants: [],
-        description: 'Run at least 5 kilometers each day for a week.', opponentId: 'userId2'),
+        description: 'Run at least 5 kilometers each day for a week.',
+        opponentId: 'userId2'),
     Challenge(name: '30 Days Fit Challenge',
         type: 'Fitness',
         startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 30)),
         participants: [],
-        description: 'Follow a healthy meal plan for 30 days.', opponentId: 'userId2'),
+        description: 'Follow a healthy meal plan for 30 days.',
+        opponentId: 'userId2'),
     Challenge(name: 'SitUp Challenge',
         type: 'Fitness',
         startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 7)),
         participants: [],
-        description: 'Perform 100 sit-ups daily for a week.', opponentId: 'userId2'),
+        description: 'Perform 100 sit-ups daily for a week.',
+        opponentId: 'userId2'),
     Challenge(name: '100 Squat Challenge',
         type: 'Fitness',
         startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 30)),
         participants: [],
-        description: 'Perform 100 squats daily for 30 days.', opponentId: 'userId2'),
+        description: 'Perform 100 squats daily for 30 days.',
+        opponentId: 'userId2'),
   ];
 
   @override
@@ -153,7 +170,8 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildPointsSection(context, themeProvider),
               const SizedBox(height: 32),
-              _buildChallengesContainer(context, themeProvider),
+              _buildChallengesContainer(
+                  context, themeProvider, selectedOpponent, opponentsList),
               const SizedBox(height: 32),
               _buildWorkoutContainer(context, themeProvider),
               const SizedBox(height: 32),
@@ -163,7 +181,7 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildTopChallengedFriends(exampleFriends, themeProvider),
               const SizedBox(height: 32),
-              _buildFriendsListButton(context,themeProvider),
+              _buildFriendsListButton(context, themeProvider),
 
 
             ],
@@ -171,7 +189,8 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
-  }
+  } // List of opponents
+
 
   Widget _buildHeader(ThemeProvider themeProvider) {
     final containerColor = themeProvider.isDarkMode ? Colors.black : Colors
@@ -274,13 +293,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildChallengesContainer(BuildContext context, ThemeProvider themeProvider) {
+  Widget _buildChallengesContainer(BuildContext context,
+      ThemeProvider themeProvider, selectedOpponent, opponentsList) {
     return Container(
       decoration: BoxDecoration(
         color: themeProvider.isDarkMode ? Colors.black : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      width: MediaQuery.of(context).size.width * 0.9,
+      width: MediaQuery
+          .of(context)
+          .size
+          .width * 0.9,
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,6 +313,38 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
+
+          // Dropdown for selecting opponents
+          DropdownButton<String>(
+            value: selectedOpponent,
+            onChanged: (String? newValue) {
+              setState(() {
+                selectedOpponent = newValue!;
+              });
+            },
+            dropdownColor: themeProvider.isDarkMode ? Colors.black : Colors
+                .white,
+            // Dropdown background color
+            style: TextStyle(
+              color: themeProvider.isDarkMode ? Colors.white : Colors
+                  .black, // Text color in the dropdown list
+            ),
+            items: opponentsList.map<DropdownMenuItem<String>>((
+                String opponent) {
+              return DropdownMenuItem<String>(
+                value: opponent,
+                child: Text(
+                  opponent,
+                  style: TextStyle(
+                    color: themeProvider.isDarkMode ? Colors.white : Colors
+                        .black, // Ensure the text color adapts to dark mode
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+
+          const SizedBox(height: 16),
 
           // Toggle button for preloaded challenges
           Align(
@@ -312,7 +367,8 @@ class _HomePageState extends State<HomePage> {
 
           const SizedBox(height: 16),
 
-          if (showPreloadedChallenges) _buildPreloadedChallengesList(themeProvider),
+          if (showPreloadedChallenges) _buildPreloadedChallengesList(
+              themeProvider),
 
           const SizedBox(height: 16),
 
@@ -321,34 +377,33 @@ class _HomePageState extends State<HomePage> {
             alignment: Alignment.centerLeft,
             child: ElevatedButton(
               onPressed: () {
-                // Parsing the string dates into DateTime using DateFormat
                 DateFormat dateFormat = DateFormat("MM/dd/yy");
                 DateTime startDate = dateFormat.parse("10/21/22");
                 DateTime endDate = dateFormat.parse("10/28/22");
 
-                // Creating or passing a Challenge object dynamically for navigation
                 challenges.Challenge newChallenge = challenges.Challenge(
                   name: "Running Challenge",
                   type: "Distance",
                   startDate: startDate,
                   endDate: endDate,
                   participants: [],
-                  description: "This is a fun running challenge!", opponentId: 'userId2',
+                  description: "This is a fun running challenge!",
+                  opponentId: 'userId2',
                 );
 
-                // Navigate to StartedChallengesPage with the challenge passed as argument
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => StartedChallengesPage(
-                      startedChallenge: newChallenge,
-                    ),
+                    builder: (context) =>
+                        StartedChallengesPage(
+                          startedChallenge: newChallenge,
+                        ),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 foregroundColor: Colors.black,
-                backgroundColor: const Color(0xFF85C83E), // Text color
+                backgroundColor: const Color(0xFF85C83E),
                 padding: const EdgeInsets.symmetric(
                   vertical: 12.0,
                   horizontal: 24.0,
@@ -419,20 +474,23 @@ class _HomePageState extends State<HomePage> {
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start, // Align text to the start
+                crossAxisAlignment: CrossAxisAlignment.start,
+                // Align text to the start
                 children: [
                   Text(
                     preloadedChallenges[index].name,
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust text color based on theme
+                      color: themeProvider.isDarkMode ? Colors.white : Colors
+                          .black, // Adjust text color based on theme
                     ),
                   ),
                   const SizedBox(height: 5),
                   Text(
                     preloadedChallenges[index].type,
                     style: TextStyle(
-                      color: themeProvider.isDarkMode ? Colors.white : Colors.black, // Adjust text color based on theme
+                      color: themeProvider.isDarkMode ? Colors.white : Colors
+                          .black, // Adjust text color based on theme
                     ),
                   ),
                 ],
@@ -446,95 +504,68 @@ class _HomePageState extends State<HomePage> {
 
 
   void _showChallengeInfo(Challenge challenge, ThemeProvider themeProvider) {
-    String? selectedOpponent;  // Variable to hold the selected opponent
-    List<String> opponents = ['Opponent 1', 'Opponent 2', 'Opponent 3', 'Opponent 4'];  // List of opponents (Replace with actual data)
-
     showDialog(
       context: context,
       builder: (context) {
-        return StatefulBuilder(  // Use StatefulBuilder to update the dropdown inside the dialog
-          builder: (context, setState) {
-            return AlertDialog(
-              backgroundColor: const Color(0xFF85C83E),
-              title: Text(
-                challenge.name,
+        return AlertDialog(
+          backgroundColor: const Color(0xFF85C83E),
+          title: Text(
+            challenge.name,
+            style: TextStyle(
+              color: themeProvider.isDarkMode ? Colors.black : Colors
+                  .black, // Keep text black in both themes for pop-up
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min, // Ensure content fits the dialog
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16.0),
+                child: Text(
+                  'Type: ${challenge.type}\nStart Date: ${DateFormat(
+                      'MM/dd/yyyy').format(
+                      challenge.startDate)}\nEnd Date: ${DateFormat(
+                      'MM/dd/yyyy').format(challenge.endDate)}',
+                  style: TextStyle(
+                    color: themeProvider.isDarkMode ? Colors.black : Colors
+                        .black, // Set text color to black in dark mode as well
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text(
+                'Close',
                 style: TextStyle(
-                  color: themeProvider.isDarkMode ? Colors.black : Colors.black,  // Keep text black in both themes for pop-up
+                  color: themeProvider.isDarkMode ? Colors.white : Colors
+                      .black, // Button text color based on theme
                 ),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,  // Ensure content fits the dialog
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      'Type: ${challenge.type}\nStart Date: ${DateFormat('MM/dd/yyyy').format(challenge.startDate)}\nEnd Date: ${DateFormat('MM/dd/yyyy').format(challenge.endDate)}',
-                      style: TextStyle(
-                        color: themeProvider.isDarkMode ? Colors.black : Colors.black,  // Set text color to black in dark mode as well
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'Select Opponent',
-                      border: OutlineInputBorder(),
-                    ),
-                    dropdownColor: themeProvider.isDarkMode ? Colors.black : Colors.black,  // Dropdown background based on theme
-                    value: selectedOpponent,
-                    items: opponents.map((String opponent) {
-                      return DropdownMenuItem<String>(
-                        value: opponent,
-                        child: Text(
-                          opponent,
-                          style: TextStyle(
-                            color: themeProvider.isDarkMode ? Colors.black : Colors.black,  // Ensure dropdown text is white in dark mode for visibility
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedOpponent = newValue;
-                      });
-                    },
-                  ),
-                ],
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _startChallenge(challenge,
+                    selectedOpponent); // Start the challenge without opponent selection
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 8.0),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Text(
-                    'Close',
-                    style: TextStyle(
-                      color: themeProvider.isDarkMode ? Colors.white : Colors.black,  // Button text color based on theme
-                    ),
-                  ),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    if (selectedOpponent != null) {
-                      _startChallenge(challenge, selectedOpponent!);  // Pass the selected opponent
-                    } else {
-                      _showSnackBar('Please select an opponent');  // Call _showSnackBar method
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  ),
-                  child: const Text('Start Challenge', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            );
-          },
+              child: const Text(
+                  'Start Challenge', style: TextStyle(color: Colors.white)),
+            ),
+          ],
         );
       },
     );
   }
-
 
 
   void _startChallenge(Challenge challenge, String opponent) {
@@ -545,10 +576,10 @@ class _HomePageState extends State<HomePage> {
     _notifyOpponent(opponent, challenge);
   }
 
-// Method to notify the opponent
   Future<void> _notifyOpponent(String opponentId, Challenge challenge) async {
     if (opponentId.isEmpty) {
       logger.e('Opponent ID is empty. Cannot notify opponent.');
+      _showSnackBar('Cannot notify opponent: ID is empty.'); // Show snackbar
       return;
     }
 
@@ -559,8 +590,10 @@ class _HomePageState extends State<HomePage> {
         ]),
       });
       logger.i('Opponent notified about challenge "${challenge.name}".');
+      _showSnackBar('Opponent notified about challenge "${challenge.name}".'); // Show snackbar
     } catch (e) {
       logger.e('Failed to notify opponent: $e');
+      _showSnackBar('Failed to notify opponent: $e'); // Show snackbar with error message
     }
   }
 
@@ -799,6 +832,9 @@ class _HomePageState extends State<HomePage> {
     'assets/images/Diana.png',
     'assets/images/Alice.png',
   ];
+
+
+
 
   // Widget to build the workout tracking navigation button
   Widget _buildFriendsListButton(BuildContext context, ThemeProvider themeProvider) {

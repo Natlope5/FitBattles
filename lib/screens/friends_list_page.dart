@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
@@ -30,19 +31,18 @@ class _FriendsListPage extends State<FriendsListPage> {
   }
 
   Future<void> _loadAddedFriends() async {
-    // Capture the current BuildContext
     final BuildContext currentContext = context;
 
     try {
-      // Replace 'userID' with the actual user ID or token
-      final userId = 'userID'; // Fetch the user's ID dynamically
+      final userId = FirebaseAuth.instance.currentUser?.uid; // Dynamically fetch user ID
+      if (userId == null) throw Exception('User not logged in');
+
       final DocumentSnapshot doc = await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .get();
 
       if (doc.exists) {
-        // Update the state if the widget is still mounted
         if (mounted) {
           setState(() {
             addedFriends = List<Map<String, dynamic>>.from(doc['friends'] ?? []);
@@ -51,9 +51,7 @@ class _FriendsListPage extends State<FriendsListPage> {
       }
     } catch (e) {
       logger.i('Error loading friends: $e');
-      // Use the captured context to show the SnackBar
       if (mounted) {
-        // Delay the SnackBar display to ensure the context is still valid
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ScaffoldMessenger.of(currentContext).showSnackBar(
             SnackBar(content: Text('Error loading friends: $e')),
@@ -61,7 +59,6 @@ class _FriendsListPage extends State<FriendsListPage> {
         });
       }
     } finally {
-      // Use setState only if the widget is still mounted
       if (mounted) {
         setState(() {
           isLoading = false;
@@ -71,21 +68,19 @@ class _FriendsListPage extends State<FriendsListPage> {
   }
 
   Future<void> _saveFriends() async {
-    // Capture the current BuildContext
     final BuildContext currentContext = context;
 
     try {
-      // Replace 'userID' with the actual user ID or token
-      final userId = 'userID'; // Fetch the user's ID dynamically
+      final userId = FirebaseAuth.instance.currentUser?.uid; // Dynamically fetch user ID
+      if (userId == null) throw Exception('User not logged in');
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userId)
           .set({'friends': addedFriends});
     } catch (e) {
       logger.i('Error saving friends: $e');
-      // Use the captured context to show the SnackBar
       if (mounted) {
-        // Delay the SnackBar display to ensure the context is still valid
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ScaffoldMessenger.of(currentContext).showSnackBar(
             SnackBar(content: Text('Error saving friends: $e')),
@@ -95,8 +90,6 @@ class _FriendsListPage extends State<FriendsListPage> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final filteredFriends = exampleFriends.where((friend) {
@@ -104,7 +97,7 @@ class _FriendsListPage extends State<FriendsListPage> {
     }).toList();
 
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDarkTheme ? Colors.white : Colors.black;
+    final textColor = isDarkTheme ? Colors.black : Colors.black; // Ensure text is black in dark mode
 
     return Scaffold(
       appBar: AppBar(
@@ -235,7 +228,7 @@ class _FriendsListPage extends State<FriendsListPage> {
 
   void showFriendInfoDialog(Map<String, dynamic> friend) {
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDarkTheme ? Colors.white : Colors.black;
+    final textColor = isDarkTheme ? Colors.black : Colors.black;
 
     showDialog(
       context: context,

@@ -4,8 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:fitbattles/settings/app_strings.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth to get the current user
 
-import '../main.dart'; // Make sure you have logger configured in your main.dart
+import '../main.dart'; // Ensure logger is configured here
 
 class StartedChallengesPage extends StatefulWidget {
   const StartedChallengesPage({super.key, required this.startedChallenge});
@@ -32,32 +33,46 @@ class StartedChallengesPageState extends State<StartedChallengesPage> {
     });
 
     try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('startedChallenges')
-          .where('userId', isEqualTo: 'exampleUserId') // Replace with actual user ID
-          .get();
+      // Use FirebaseAuth to get the actual user ID
+      final userId = FirebaseAuth.instance.currentUser?.uid;
 
-      List<challenges.Challenge> fetchedChallenges = [];
+      if (userId != null) {
+        final querySnapshot = await FirebaseFirestore.instance
+            .collection('startedChallenges')
+            .where('userId', isEqualTo: userId) // Ensure this is allowed by your Firestore rules
+            .get();
 
-      for (var doc in querySnapshot.docs) {
-        final challengeId = doc['challengeId'];
-        final challenge = await _getChallengeDetails(challengeId);
-        if (challenge != null) {
-          fetchedChallenges.add(challenge); // Collect challenges
+        List<challenges.Challenge> fetchedChallenges = [];
+
+        for (var doc in querySnapshot.docs) {
+          if (doc.data().containsKey('challengeId')) {
+            final challengeId = doc['challengeId'];
+            final challenge = await _getChallengeDetails(challengeId);
+            if (challenge != null) {
+              fetchedChallenges.add(challenge);
+            } else {
+              logger.e('Challenge with ID $challengeId not found.');
+            }
+          } else {
+            logger.e('Document ${doc.id} does not contain a challengeId field');
+          }
         }
-      }
 
-      setState(() {
-        startedChallenges.addAll(fetchedChallenges); // Add all challenges to the list at once
-      });
+        setState(() {
+          startedChallenges.addAll(fetchedChallenges); // Add all challenges to the list at once
+        });
+      } else {
+        logger.i('User is not authenticated');
+      }
     } catch (e) {
-      logger.i('Error fetching started challenges: $e'); // Ensure logger is initialized in your main.dart
+      logger.e('Error fetching started challenges: $e'); // Ensure logger is initialized in your main.dart
     } finally {
       setState(() {
         _isLoading = false; // Update loading status
       });
     }
   }
+
 
   Future<challenges.Challenge?> _getChallengeDetails(String challengeId) async {
     try {
@@ -100,6 +115,16 @@ class StartedChallengesPageState extends State<StartedChallengesPage> {
       ),
       body: _isLoading
           ? Center(child: const CircularProgressIndicator())
+          : startedChallenges.isEmpty
+          ? Center(
+        child: Text(
+          AppStrings.noChallengesMessage,
+          style: TextStyle(
+            fontSize: AppDimens.textSizeTitle,
+            color: AppColors.primaryTextColor,
+          ),
+        ),
+      )
           : ListView.builder(
         itemCount: startedChallenges.length,
         itemBuilder: (context, index) {

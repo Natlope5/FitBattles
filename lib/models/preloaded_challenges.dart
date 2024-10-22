@@ -8,6 +8,7 @@ import 'package:fitbattles/settings/app_strings.dart';
 import 'package:fitbattles/screens/started_challenges_page.dart';
 import 'package:fitbattles/challenges/challenge.dart' as challenges;
 import '../main.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Ensure to import FirebaseAuth
 
 class PreloadedChallengesPage extends StatefulWidget {
   const PreloadedChallengesPage({super.key});
@@ -28,7 +29,8 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
   }
 
   Future<void> _loadChallenges() async {
-    List<Challenge> challenges = (await ChallengeData.fetchChallenges()).cast<Challenge>();
+    List<Challenge> challenges = (await ChallengeData.fetchChallenges()).cast<
+        Challenge>();
     setState(() {
       preloadedChallenges = challenges; // Update the challenges list
     });
@@ -61,7 +63,8 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
                 border: isSelected
-                    ? Border.all(color: AppColors.selectedChallengeColor, width: 2) // Change border if selected
+                    ? Border.all(color: AppColors.selectedChallengeColor,
+                    width: 2) // Change border if selected
                     : null,
                 boxShadow: [
                   BoxShadow(
@@ -80,17 +83,23 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
                     style: TextStyle(
                       fontSize: AppDimens.textSizeTitle,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? AppColors.selectedChallengeColor : AppColors.defaultTextColor, // Change text color if selected
+                      color: isSelected
+                          ? AppColors.selectedChallengeColor
+                          : AppColors
+                          .defaultTextColor, // Change text color if selected
                     ),
                   ),
                   const SizedBox(height: 5),
                   Text(
                     '${AppStrings.challengeTypeLabel} ${challenge.type}',
-                    style: const TextStyle(fontSize: AppDimens.textSizeSubtitle),
+                    style: const TextStyle(
+                        fontSize: AppDimens.textSizeSubtitle),
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    '${AppStrings.challengeDurationLabel} ${challenge.startDate.toLocal().toString().split(' ')[0]} - ${challenge.endDate.toLocal().toString().split(' ')[0]}',
+                    '${AppStrings.challengeDurationLabel} ${challenge.startDate
+                        .toLocal().toString().split(' ')[0]} - ${challenge
+                        .endDate.toLocal().toString().split(' ')[0]}',
                   ),
                 ],
               ),
@@ -102,8 +111,8 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
   }
 
   void _showChallengeInfo(challenges.Challenge challenge) {
-    // Ensure that challengeId is non-nullable
-    String? challengeId = challenge.id; // Assuming challenge has a non-nullable id property
+    String? challengeId = challenge
+        .id; // Assuming challenge has a non-nullable id property
 
     showDialog(
       context: context,
@@ -117,10 +126,14 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
               Text('${AppStrings.challengeTypeLabel} ${challenge.type}'),
               const SizedBox(height: 5),
               Text(
-                '${AppStrings.challengeDurationLabel} ${challenge.startDate.toLocal().toString().split(' ')[0]} - ${challenge.endDate.toLocal().toString().split(' ')[0]}',
+                '${AppStrings.challengeDurationLabel} ${challenge.startDate
+                    .toLocal().toString().split(' ')[0]} - ${challenge.endDate
+                    .toLocal().toString().split(' ')[0]}',
               ),
               const SizedBox(height: 10),
-              Text(challenge.description.isNotEmpty ? challenge.description : 'No description available'),
+              Text(challenge.description.isNotEmpty
+                  ? challenge.description
+                  : 'No description available'),
             ],
           ),
           actions: [
@@ -134,25 +147,35 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
               onPressed: _isStartingChallenge
                   ? null
                   : () {
+                // Ensure the user is authenticated before starting the challenge
+                final userId = FirebaseAuth.instance.currentUser?.uid;
+                if (userId == null) {
+                  logger.i('User is not authenticated');
+                  return; // Prevent starting the challenge if not authenticated
+                }
                 // Start the challenge
-                _startChallenge(challengeId!, (String id) {
+                _startChallenge(challengeId!, userId, (String id) {
                   // Navigate to StartedChallengesPage with the started challenge
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) {
-                        // Here we are assuming you have a method to get started challenge by id
-                        final startedChallenge = ChallengeData.getAllChallenges().firstWhere(
+                        // Assuming you have a method to get started challenge by id
+                        final startedChallenge = ChallengeData
+                            .getAllChallenges().firstWhere(
                               (ch) => ch.id == id,
-                          orElse: () => challenges.Challenge(
-                            id: id,
-                            name: 'Challenge Not Found',
-                            type: 'Unknown',
-                            startDate: DateTime.now(),
-                            endDate: DateTime.now().add(const Duration(days: 7)),
-                            participants: [],
-                            description: 'This challenge could not be found.', opponentId: '',
-                          ),
+                          orElse: () =>
+                              challenges.Challenge(
+                                id: id,
+                                name: 'Challenge Not Found',
+                                type: 'Unknown',
+                                startDate: DateTime.now(),
+                                endDate: DateTime.now().add(
+                                    const Duration(days: 7)),
+                                participants: [],
+                                description: 'This challenge could not be found.',
+                                opponentId: '',
+                              ),
                         );
 
                         return StartedChallengesPage(
@@ -173,29 +196,39 @@ class PreloadedChallengesPageState extends State<PreloadedChallengesPage> {
     );
   }
 
-  void _startChallenge(String challengeId, Function(String) navigate) async {
+  void _startChallenge(String challengeId, String userId,
+      Function(String) navigate) async {
     setState(() {
       _isStartingChallenge = true; // Update loading state
     });
 
     try {
-      // Perform the Firestore operation to save the started challenge
-      await FirebaseFirestore.instance.collection('startedChallenges').add({
+      // Create a document for the started challenge in the Firestore collection
+      DocumentReference challengeRef = await FirebaseFirestore.instance
+          .collection('startedChallenges').add({
         'challengeId': challengeId,
-        'userId': 'exampleUserId', // Replace with actual user ID
-        'startDate': DateTime.now(),
+        'userId': userId,
+        // Use the actual user ID
+        'startDate': FieldValue.serverTimestamp(),
+        // Use server timestamp for consistency
+        // Add any additional fields relevant to the challenge, like status, etc.
       });
+
+      // Optionally update the challenge document with the generated ID
+      await challengeRef.update(
+          {'id': challengeRef.id}); // Add the generated document ID if needed
 
       // Update the user profile to include the new challenge
-      await FirebaseFirestore.instance.collection('users').doc('exampleUserId').update({
-        'startedChallenges': FieldValue.arrayUnion([challengeId]), // Add challenge ID to the user's startedChallenges array
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'startedChallenges': FieldValue.arrayUnion([challengeRef.id]),
+        // Add the challenge ID to the user's startedChallenges array
+        // You might want to add other relevant fields if applicable
       });
 
-      // Call the navigate function with the challengeId
-      navigate(challengeId); // This can be the ID of the newly created challenge if needed
+      // Call the navigate function with the challenge ID
+      navigate(challengeRef.id); // Pass the ID of the newly created challenge
     } catch (e) {
-      // Handle error appropriately
-      logger.i('Error starting challenge: $e');
+      logger.i('Error starting challenge: $e'); // Log the error appropriately
     } finally {
       setState(() {
         _isStartingChallenge = false; // Update loading state

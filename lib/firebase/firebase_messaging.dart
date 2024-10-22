@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth package
 import 'package:firebase_messaging/firebase_messaging.dart'; // Firebase Messaging package
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore package
 import 'package:logger/logger.dart'; // Logger for logging messages
 import 'package:fitbattles/settings/app_strings.dart'; // Import your strings file
+import 'package:http/http.dart' as http;
 
 final Logger logger = Logger();
 
@@ -278,4 +281,65 @@ Future<int> getChallengesTied() async {
     logger.e("Error fetching challenges tied: $e");
   }
   return 0; // Default if fetching fails
+}
+Future<void> startChallenge(String challengeId, String opponentDeviceToken) async {
+  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  try {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      logger.e('User not signed in.');
+      return;
+    }
+
+    String userId = user.uid;
+
+    // Save the challenge in Firestore
+    await firestore.collection('startedChallenges').add({
+      'challengeId': challengeId,
+      'userId': userId,
+      'startDate': Timestamp.now(),
+    });
+
+    logger.i('Challenge started: $challengeId for user: $userId');
+
+    // Notify opponent (if device token is provided)
+    if (opponentDeviceToken.isNotEmpty) {
+      await sendNotification(opponentDeviceToken, challengeId);
+    } else {
+      logger.w('Opponent device token is empty. Cannot send notification.');
+    }
+  } catch (e) {
+    logger.e('Error starting challenge: $e');
+  }
+}
+
+// Function to send a notification to the opponent
+Future<void> sendNotification(String deviceToken, String challengeId) async {
+  final url = 'https://fcm.googleapis.com/fcm/send';
+  final headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'key=YOUR_SERVER_KEY',  // Replace with your FCM server key
+  };
+  final body = jsonEncode({
+    'to': deviceToken,
+    'notification': {
+      'title': 'New Challenge!',
+      'body': 'You have been challenged in challenge $challengeId.',
+    },
+    'data': {
+      'challengeId': challengeId,
+    },
+  });
+
+  try {
+    final response = await http.post(Uri.parse(url), headers: headers, body: body);
+    if (response.statusCode == 200) {
+      logger.i('FCM notification sent successfully.');
+    } else {
+      logger.e('Failed to send FCM notification: ${response.body}');
+    }
+  } catch (e) {
+    logger.e('Error sending notification: $e');
+  }
 }

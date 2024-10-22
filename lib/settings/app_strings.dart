@@ -438,7 +438,18 @@ class AppStrings {
 
   static const String squatChallengeDescription = "Perform 100 squats daily for 30 days.";
 
- // Assuming you have ThemeProvider
+  static const String noChallengesMessage = 'No Challenges Available';
+
+
+
+  String selectedOpponent = "Opponent 1";
+
+  List<String> opponentsList = [
+    "Opponent 1",
+    "Opponent 2",
+    "Opponent 3",
+    "Opponent 4",
+  ];
 
 }
 
