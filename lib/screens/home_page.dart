@@ -274,17 +274,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildChallengesContainer(BuildContext context,
-      ThemeProvider themeProvider) {
+  Widget _buildChallengesContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
         color: themeProvider.isDarkMode ? Colors.black : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      width: MediaQuery
-          .of(context)
-          .size
-          .width * 0.9,
+      width: MediaQuery.of(context).size.width * 0.9,
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,62 +290,112 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                showPreloadedChallenges = !showPreloadedChallenges;
-              });
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
-              backgroundColor: const Color(0xFF85C83E),
+
+          // Toggle button for preloaded challenges
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  showPreloadedChallenges = !showPreloadedChallenges;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.black,
+                backgroundColor: const Color(0xFF85C83E),
+              ),
+              child: Text(showPreloadedChallenges
+                  ? 'Hide Preloaded Challenges'
+                  : 'Show Preloaded Challenges'),
             ),
-            child: Text(showPreloadedChallenges
-                ? 'Hide Preloaded Challenges'
-                : 'Show Preloaded Challenges'),
           ),
+
           const SizedBox(height: 16),
-          if (showPreloadedChallenges) _buildPreloadedChallengesList(
-              themeProvider),
+
+          if (showPreloadedChallenges) _buildPreloadedChallengesList(themeProvider),
+
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/create_challenge');
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
-              backgroundColor: const Color(0xFF85C83E),
+
+          // Preloaded Challenges Started Button
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ElevatedButton(
+              onPressed: () {
+                // Parsing the string dates into DateTime using DateFormat
+                DateFormat dateFormat = DateFormat("MM/dd/yy");
+                DateTime startDate = dateFormat.parse("10/21/22");
+                DateTime endDate = dateFormat.parse("10/28/22");
+
+                // Creating or passing a Challenge object dynamically for navigation
+                challenges.Challenge newChallenge = challenges.Challenge(
+                  name: "Running Challenge",
+                  type: "Distance",
+                  startDate: startDate,
+                  endDate: endDate,
+                  participants: [],
+                  description: "This is a fun running challenge!", opponentId: 'userId2',
+                );
+
+                // Navigate to StartedChallengesPage with the challenge passed as argument
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => StartedChallengesPage(
+                      startedChallenge: newChallenge,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.black,
+                backgroundColor: const Color(0xFF85C83E), // Text color
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12.0,
+                  horizontal: 24.0,
+                ),
+              ),
+              child: const Text('Preloaded Challenges Started'),
             ),
-            child: const Text('Create Challenge'),
           ),
-          // Button to navigate to the user's challenges page
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/user_challenges');
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
-              backgroundColor: const Color(0xFF85C83E),
-            ),
-            child: const Text('Challenges'), // Button text
-          ),
+
           const SizedBox(height: 16),
-          // Button to create a new challenge
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to the create new challenge page
-              Navigator.pushNamed(context, '/create_challenge');
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.black,
-              backgroundColor: const Color(0xFF85C83E),
+
+          // Create Challenge Button
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/create_challenge');
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.black,
+                backgroundColor: const Color(0xFF85C83E),
+              ),
+              child: const Text('Create Challenge'),
             ),
-            child: const Text('New Challenge'), // Button text
+          ),
+
+          const SizedBox(height: 16),
+
+          // View Challenges Button
+          Align(
+            alignment: Alignment.centerLeft,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/user_challenges');
+              },
+              style: ElevatedButton.styleFrom(
+                foregroundColor: Colors.black,
+                backgroundColor: const Color(0xFF85C83E),
+              ),
+              child: const Text('Challenges'),
+            ),
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildPreloadedChallengesList(ThemeProvider themeProvider) {
     return SizedBox(
@@ -682,7 +728,7 @@ class _HomePageState extends State<HomePage> {
                       _showFriendInfo(
                         context,
                         friends[index].split('/').last.split('.').first,
-                        friends[index],themeProvider,
+                        friends[index], themeProvider,
                         gamesWon: 25,
                         streakDays: 10,
                         rank: 3,
@@ -704,50 +750,11 @@ class _HomePageState extends State<HomePage> {
               },
             ),
           ),
-          const SizedBox(height: 10), // Space between friends list and button
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                // Parsing the string dates into DateTime using DateFormat
-                DateFormat dateFormat = DateFormat("MM/dd/yy");
-                DateTime startDate = dateFormat.parse("10/21/22");
-                DateTime endDate = dateFormat.parse("10/28/22");
-
-                // Creating or passing a Challenge object dynamically for navigation
-                challenges.Challenge newChallenge = challenges.Challenge(
-                  name: "Running Challenge",
-                  type: "Distance",
-                  startDate: startDate,
-                  endDate: endDate,
-                  participants: [],
-                  description: "This is a fun running challenge!", opponentId: 'userId2',
-                );
-
-                // Navigate to StartedChallengesPage with the challenge passed as argument
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => StartedChallengesPage(
-                      startedChallenge: newChallenge,
-                    ),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.black,
-                backgroundColor: const Color(0xFF85C83E), // Text color
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12.0,
-                  horizontal: 24.0,
-                ),
-              ),
-              child: const Text('Preloaded Challenges Started'),
-            ),
-          ),
         ],
       ),
     );
   }
+
 
   void _showFriendInfo(BuildContext context, String friendName, String friendImagePath,ThemeProvider themeProvider,
       {int gamesWon = 0, int streakDays = 0, int rank = 0}) {
