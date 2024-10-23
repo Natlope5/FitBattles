@@ -498,7 +498,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
           ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/currentGoals');
+              Navigator.pushNamed(context, '/history');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF85C83E),
