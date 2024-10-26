@@ -334,6 +334,12 @@ class _HomePageState extends State<HomePage> {
           ),
           child: const Text('New Challenge'), // Button text
           ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/rewards');
+            },
+            child: const Text('View Badges & Rewards'),
+          ),
         ],
       ),
     );
