@@ -334,6 +334,12 @@ class _HomePageState extends State<HomePage> {
           ),
           child: const Text('New Challenge'), // Button text
           ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/rewards');
+            },
+            child: const Text('View Badges & Rewards'),
+          ),
         ],
       ),
     );
@@ -498,7 +504,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 10),
           ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/currentGoals');
+              Navigator.pushNamed(context, '/history');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF85C83E),

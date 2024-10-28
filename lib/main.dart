@@ -4,6 +4,7 @@ import 'package:fitbattles/challenges/earned_points_page.dart';
 import 'package:fitbattles/screens/add_goal_page.dart';
 import 'package:fitbattles/screens/current_goals_page.dart';
 import 'package:fitbattles/screens/goals_completion_page.dart';
+import 'package:fitbattles/screens/badges_and_rewards_page.dart';
 import 'package:fitbattles/screens/workout_tracking_page.dart';
 import 'package:fitbattles/workouts/strength_workout_page.dart';
 import 'package:fitbattles/screens/friends_list_page.dart';
@@ -80,6 +81,7 @@ class MyApp extends StatelessWidget {
             '/addGoal': (context) => AddGoalPage(),
             '/currentGoals': (context) => CurrentGoalsPage(),
             '/goalHistory': (context) => GoalCompletionPage(),
+            '/rewards': (context) => const RewardsPage(),
           },
         );
       },
