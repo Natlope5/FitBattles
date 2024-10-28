@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'hydration_page.dart';
 import 'package:fitbattles/screens/goals_completion_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MyHistoryPage extends StatefulWidget {
   const MyHistoryPage({super.key});
@@ -11,7 +12,52 @@ class MyHistoryPage extends StatefulWidget {
   MyHistoryPageState createState() => MyHistoryPageState();
 }
 
+// Data class to hold history data
+class HistoryData {
+  final double waterIntake;
+  final double totalCaloriesBurned;
+
+  HistoryData({required this.waterIntake, required this.totalCaloriesBurned});
+}
+
 class MyHistoryPageState extends State<MyHistoryPage> {
+
+  // Fetch total calories burned
+  Future<double> _fetchTotalCaloriesBurned() async {
+    try {
+      String uid = FirebaseAuth.instance.currentUser!.uid;
+
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('workouts')
+          .get();
+
+      double totalCalories = 0.0;
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        double calories = data['calories'] != null ? (data['calories'] as num).toDouble() : 0.0;
+        totalCalories += calories;
+      }
+
+      return totalCalories;
+    } catch (e) {
+      print('Error fetching total calories burned: $e');
+      return 0.0;
+    }
+  }
+
+  // Fetch both water intake and total calories burned
+  Future<HistoryData> _fetchHistoryData() async {
+    final double waterIntake = await _fetchWaterIntake();
+    final double totalCaloriesBurned = await _fetchTotalCaloriesBurned();
+    return HistoryData(
+      waterIntake: waterIntake,
+      totalCaloriesBurned: totalCaloriesBurned,
+    );
+  }
+
   // Fetch data for a specific category
   Future<Map<String, dynamic>> _fetchData(String category) async {
     try {
@@ -105,17 +151,17 @@ class MyHistoryPageState extends State<MyHistoryPage> {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: FutureBuilder<double>(
-                future: _fetchWaterIntake(),
+              child: FutureBuilder<HistoryData>(
+                future: _fetchHistoryData(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
-                    return const Center(child: Text('Error fetching water intake.'));
+                    return const Center(child: Text('Error fetching data.'));
                   } else if (snapshot.hasData) {
-                    final waterIntake = snapshot.data!;
+                    final data = snapshot.data!;
                     return ListView(
-                      children: _buildHistoryCards(waterIntake),
+                      children: _buildHistoryCards(data.waterIntake, data.totalCaloriesBurned),
                     );
                   } else {
                     return const Center(child: Text('No data available.'));
@@ -130,10 +176,10 @@ class MyHistoryPageState extends State<MyHistoryPage> {
   }
 
   // Build the history cards dynamically
-  List<Widget> _buildHistoryCards(double waterIntake) {
+  List<Widget> _buildHistoryCards(double waterIntake, double totalCaloriesBurned) {
     final historyData = {
       'Points Won': 150,
-      'Calories Lost': 1200,
+      'Calories Lost': totalCaloriesBurned,
       'Water Intake (liters)': waterIntake,
       'Workout Sessions': 20,
       'Challenges Won': 5,
