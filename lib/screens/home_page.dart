@@ -511,6 +511,12 @@ class _HomePageState extends State<HomePage> {
             ),
             child: const Text('View History'),
           ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/healthReport');
+            },
+            child: const Text('View Health Report'),
+          ),
         ],
       ),
     );
