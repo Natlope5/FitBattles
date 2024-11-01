@@ -124,13 +124,6 @@ class _HomePageState extends State<HomePage> {
                   context, '/settings'); // Navigate to Settings page
             },
           ),
-          IconButton(
-            icon: Icon(
-                themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
-            onPressed: () {
-              themeProvider.toggleTheme(); // Toggle the theme
-            },
-          ),
         ],
       ),
       body: SingleChildScrollView(
