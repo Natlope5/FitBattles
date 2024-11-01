@@ -73,7 +73,7 @@ class SettingsPageState extends State<SettingsPage> {
               color: isDarkTheme ? Colors.white : Colors.black,
             ),
           ),
-          backgroundColor: isDarkTheme ? Colors.black : AppColors.appBarColor,
+          backgroundColor: isDarkTheme ? Color(-15592942) : AppColors.appBarColor,
         ),
         body: ListView(
           padding: const EdgeInsets.all(AppDimens.padding),
@@ -201,9 +201,8 @@ class SettingsPageState extends State<SettingsPage> {
             ElevatedButton(
               onPressed: _saveSettings,
               style: ElevatedButton.styleFrom(
-                foregroundColor: isDarkTheme ? Colors.white : Colors.black,
-                backgroundColor:
-                isDarkTheme ? Colors.black : AppColors.appBarColor,
+                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFF85C83E),
               ),
               child: const Text(
                 AppStrings.saveSettings,
@@ -240,7 +239,7 @@ class SettingsPageState extends State<SettingsPage> {
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimens.cardRadius)),
       elevation: AppDimens.cardElevation,
-      color: isDarkTheme ? Colors.black : Colors.white,
+      color: isDarkTheme ? Color(-15592942) : Colors.white,
       child: SwitchListTile(
         title: Text(
           title,
