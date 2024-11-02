@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart'; // Importing Flutter material package for UI components
 import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
 import 'package:logger/logger.dart'; // Importing logger for logging purposes
-import 'package:fitbattles/screens/home_page.dart'; // Importing HomePage for navigation after successful signup
+import 'package:fitbattles/pages/home_page.dart'; // Importing HomePage for navigation after successful signup
 import 'package:shared_preferences/shared_preferences.dart'; // Importing SharedPreferences package for managing sessions
 
 // Stateful widget for the Signup page

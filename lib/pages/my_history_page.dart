@@ -1,8 +1,8 @@
-import 'package:fitbattles/screens/workout_history_page.dart';
+import 'package:fitbattles/pages/workout_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'hydration_page.dart';
-import 'package:fitbattles/screens/goals_completion_page.dart';
+import 'package:fitbattles/pages/goals_completion_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class MyHistoryPage extends StatefulWidget {
