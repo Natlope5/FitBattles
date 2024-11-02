@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
 import 'package:fitbattles/screens/add_goal_page.dart';
+import 'package:fitbattles/screens/challenge_scheduling_page.dart';
 import 'package:fitbattles/screens/current_goals_page.dart';
 import 'package:fitbattles/screens/goals_completion_page.dart';
 import 'package:fitbattles/screens/badges_and_rewards_page.dart';
@@ -84,6 +85,7 @@ class MyApp extends StatelessWidget {
             '/goalHistory': (context) => GoalCompletionPage(),
             '/rewards': (context) => const RewardsPage(),
             '/healthReport': (context) => const HealthReportPage(),
+            '/scheduleChallenge': (context) => const ChallengeSchedulingPage(),
           },
         );
       },
