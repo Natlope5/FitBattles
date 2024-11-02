@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
 import 'package:fitbattles/screens/add_goal_page.dart';
-import 'package:fitbattles/screens/community_challenge_scheduling.dart';
+import 'package:fitbattles/screens/community_challenge.dart';
 import 'package:fitbattles/screens/current_goals_page.dart';
 import 'package:fitbattles/screens/goals_completion_page.dart';
 import 'package:fitbattles/screens/badges_and_rewards_page.dart';
