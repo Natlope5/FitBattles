@@ -9,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-import '../settings/app_strings.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
@@ -110,11 +109,11 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: const Color(0xFF5D6C8A), // Blue background
       appBar: AppBar(
-        backgroundColor: Colors.grey[600], // Gray AppBar
+        backgroundColor: Color(-15592942),
         automaticallyImplyLeading: false,
         title: const Text(
-          AppStrings.appName,
-          style: TextStyle(color: Colors.black),
+          "Home Page",
+          style: TextStyle(color: Colors.white),
         ),
         actions: [
           IconButton(
@@ -122,13 +121,6 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.pushNamed(
                   context, '/settings'); // Navigate to Settings page
-            },
-          ),
-          IconButton(
-            icon: Icon(
-                themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
-            onPressed: () {
-              themeProvider.toggleTheme(); // Toggle the theme
             },
           ),
         ],
