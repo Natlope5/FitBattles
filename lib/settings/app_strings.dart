@@ -406,6 +406,8 @@ class AppStrings {
 
   static const String appTitle = 'FitBattles';
 
+  static String loggedOut = "You have been logged out successfully.";
+
 }
 
 

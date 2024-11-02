@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart'; // Firebase authentication package
-import 'package:shared_preferences/shared_preferences.dart'; // Package for shared preferences to store user data
-import 'package:logger/logger.dart'; // Logger for logging errors and information
+import 'package:shared_preferences/shared_preferences.dart'; // Package for shared preferences
+import 'package:logger/logger.dart'; // Logger for logging
 import 'package:permission_handler/permission_handler.dart'; // Permission handler package
 
 class FirebaseAuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance; // FirebaseAuth instance for authentication
-  final Logger logger = Logger(); // Logger instance for logging
+  final FirebaseAuth _auth = FirebaseAuth.instance; // FirebaseAuth instance
+  final Logger logger = Logger(); // Logger instance for error and info logging
 
   /// Request camera and microphone permissions
   Future<void> requestCameraAndMicrophonePermissions() async {
@@ -13,93 +13,83 @@ class FirebaseAuthService {
       PermissionStatus cameraStatus = await Permission.camera.status;
       PermissionStatus microphoneStatus = await Permission.microphone.status;
 
-      // Request camera permission if denied
-      if (cameraStatus.isDenied) {
-        cameraStatus = await Permission.camera.request();
-      }
+      // Request camera and microphone permissions if denied
+      if (cameraStatus.isDenied) cameraStatus = await Permission.camera.request();
+      if (microphoneStatus.isDenied) microphoneStatus = await Permission.microphone.request();
 
-      // Request microphone permission if denied
-      if (microphoneStatus.isDenied) {
-        microphoneStatus = await Permission.microphone.request();
-      }
-
-      // Check if permissions were granted
+      // Check if permissions are granted and log the result
       if (cameraStatus.isGranted && microphoneStatus.isGranted) {
         logger.i('Camera and microphone permissions granted.');
       } else {
-        logger.e('Camera and microphone permissions are required to use this feature.');
+        logger.w('Permissions for camera and microphone are required to use this feature.');
       }
     } catch (e) {
-      logger.e('Error requesting permissions: $e');
+      logger.e('Error requesting permissions');
     }
   }
 
   /// Sign in with email and password
   Future<User?> signIn(String email, String password) async {
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
-          email: email, password: password); // Firebase sign-in
+      UserCredential userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
 
-      await _saveUserSession(userCredential.user); // Save session
-      logger.i('User signed in: ${userCredential.user?.email}'); // Log success
-
-      return userCredential.user; // Return the signed-in user
+      await _saveUserSession(userCredential.user);
+      logger.i('User signed in: ${userCredential.user?.email}');
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      logger.e('FirebaseAuthException during sign-in: ${e.message}'); // Log Firebase-specific error
+      logger.e('FirebaseAuthException during sign-in: ${e.message}');
       return null;
     } catch (e) {
-      logger.e('Error during sign-in: $e'); // Log general error
+      logger.e('General error during sign-in');
       return null;
     }
   }
 
-  /// Register a new user
+  /// Register a new user with email and password
   Future<User?> register(String email, String password) async {
     try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-          email: email, password: password); // Firebase registration
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
 
-      await _saveUserSession(userCredential.user); // Save session
-      logger.i('User registered: ${userCredential.user?.email}'); // Log success
+      await _saveUserSession(userCredential.user);
+      logger.i('User registered: ${userCredential.user?.email}');
 
-      // Send email verification if the user is created
+      // Send email verification if the user's email is unverified
       if (userCredential.user != null && !userCredential.user!.emailVerified) {
         await userCredential.user!.sendEmailVerification();
         logger.i('Verification email sent to ${userCredential.user!.email}');
       }
-
-      return userCredential.user; // Return the registered user
+      return userCredential.user;
     } on FirebaseAuthException catch (e) {
-      logger.e('FirebaseAuthException during registration: ${e.message}'); // Log Firebase-specific error
+      logger.e('FirebaseAuthException during registration: ${e.message}');
       return null;
     } catch (e) {
-      logger.e('Error during registration: $e'); // Log general error
+      logger.e('General error during registration');
       return null;
     }
   }
 
-  /// Reset password for the user
+  /// Reset the user's password
   Future<void> resetPassword(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email); // Firebase password reset
+      await _auth.sendPasswordResetEmail(email: email);
       logger.i('Password reset email sent to $email');
     } catch (e) {
-      logger.e('Error during password reset: $e'); // Log error
+      logger.e('Error during password reset');
     }
   }
 
-  /// Sign out user and clear session
+  /// Sign out the user and clear session data
   Future<void> signOut() async {
     try {
-      await _clearUserSession(); // Clear session before signing out
-      await _auth.signOut(); // Firebase sign-out
-      logger.i('User signed out.');
+      await _clearUserSession(); // Clear session data before signing out
+      await _auth.signOut();
+      logger.i('User signed out successfully.');
     } catch (e) {
-      logger.e('Error during sign-out: $e'); // Log error
+      logger.e('Error during sign-out');
     }
   }
 
-  /// Save session to SharedPreferences
+  /// Save user session data securely
   Future<void> _saveUserSession(User? user) async {
     if (user != null) {
       try {
@@ -107,16 +97,16 @@ class FirebaseAuthService {
         await prefs.setString('user_email', user.email ?? '');
         await prefs.setString('user_id', user.uid);
 
-        // Save session expiration time (set to 1 hour by default)
+        // Set a session expiration (default: 1 hour)
         await prefs.setInt('session_expiration', DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch);
         logger.i('User session saved.');
       } catch (e) {
-        logger.e('Error saving user session: $e'); // Log error
+        logger.e('Error saving user session');
       }
     }
   }
 
-  /// Clear session from SharedPreferences
+  /// Clear user session data
   Future<void> _clearUserSession() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -125,11 +115,11 @@ class FirebaseAuthService {
       await prefs.remove('session_expiration');
       logger.i('User session cleared.');
     } catch (e) {
-      logger.e('Error clearing user session: $e'); // Log error
+      logger.e('Error clearing user session');
     }
   }
 
-  /// Check if the user is logged in
+  /// Check if user is logged in with a valid session
   Future<bool> isUserLoggedIn() async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -141,10 +131,9 @@ class FirebaseAuthService {
         await signOut(); // Sign out if session expired
         return false;
       }
-
-      return userId != null; // Return true if user ID exists in session
+      return userId != null;
     } catch (e) {
-      logger.e('Error checking login status: $e'); // Log error
+      logger.e('Error checking login status');
       return false;
     }
   }
@@ -159,12 +148,12 @@ class FirebaseAuthService {
     try {
       User? user = _auth.currentUser;
       if (user != null) {
-        await user.reload(); // Refresh the user to get the updated email verification status
-        return user.emailVerified; // Return email verification status
+        await user.reload(); // Refresh the user for the latest email verification status
+        return user.emailVerified;
       }
-      return false; // Return false if user is null
+      return false;
     } catch (e) {
-      logger.e('Error checking email verification: $e'); // Log error
+      logger.e('Error checking email verification');
       return false;
     }
   }

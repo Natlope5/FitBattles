@@ -5,14 +5,14 @@ import 'package:provider/provider.dart';
 
 import '../main.dart';
 
-class ChallengeSchedulingPage extends StatefulWidget {
-  const ChallengeSchedulingPage({super.key});
+class CommunityChallengePage extends StatefulWidget {
+  const CommunityChallengePage({super.key});
 
   @override
-  ChallengeSchedulingPageState createState() => ChallengeSchedulingPageState();
+  CommunityChallengePageState createState() => CommunityChallengePageState();
 }
 
-class ChallengeSchedulingPageState extends State<ChallengeSchedulingPage> with SingleTickerProviderStateMixin {
+class CommunityChallengePageState extends State<CommunityChallengePage> with SingleTickerProviderStateMixin {
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   double challengeIntensity = 1.0;
@@ -57,7 +57,7 @@ class ChallengeSchedulingPageState extends State<ChallengeSchedulingPage> with S
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Schedule Challenge'),
+        title: const Text('Community Challenges'),
         backgroundColor: isDarkTheme ? Colors.black : const Color(0xFF5D6C8A),
       ),
       body: Padding(
@@ -69,7 +69,7 @@ class ChallengeSchedulingPageState extends State<ChallengeSchedulingPage> with S
               child: ScaleTransition(
                 scale: _animation,
                 child: Text(
-                  'Schedule Your Challenge!',
+                  'Community Challenges!',
                   style: TextStyle(
                     fontSize: 25,
                     fontWeight: FontWeight.bold,

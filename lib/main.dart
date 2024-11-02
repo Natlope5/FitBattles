@@ -85,7 +85,7 @@ class MyApp extends StatelessWidget {
             '/goalHistory': (context) => GoalCompletionPage(),
             '/rewards': (context) => const RewardsPage(),
             '/healthReport': (context) => const HealthReportPage(),
-            '/scheduleChallenge': (context) => const ChallengeSchedulingPage(),
+            '/scheduleChallenge': (context) => const CommunityChallengePage(),
           },
         );
       },

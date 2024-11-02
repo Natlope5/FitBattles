@@ -280,7 +280,7 @@ class _HomePageState extends State<HomePage> {
               foregroundColor: Colors.white, // Set text color to white
               backgroundColor: const Color(0xFF85C83E),
             ),
-            child: const Text('Schedule Challenge'), // New button text
+            child: const Text('Community Challenges'), // New button text
           ),
 
           // Existing button to create a new challenge
