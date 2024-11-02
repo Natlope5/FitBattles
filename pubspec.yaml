@@ -97,8 +97,3 @@ flutter:
     - assets/images/Ethan.png
     - assets/images/Diana.png
     - assets/images/Alice.png
-    - lib/l10n/int1_de.json
-    - lib/l10n/int1_en.json
-    - lib/l10n/int1_es.json
-    - lib/l10n/int1_fr.json
-    - lib/l10n/int1_zh.json

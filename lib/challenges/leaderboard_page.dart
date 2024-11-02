@@ -2,7 +2,6 @@ import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore package
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart'; // Import animation package
-import 'package:fitbattles/l10n/app_localizations.dart';
 
 // This widget represents a page that displays the leaderboard.
 class LeaderboardPage extends StatelessWidget {
@@ -10,20 +9,17 @@ class LeaderboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access localized strings
-    final localizations = AppLocalizations.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.leaderboardTitle), // Title from strings
+        title: const Text('Leaderboard'), // Hardcoded title
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh), // Refresh icon
             onPressed: () {
-              // Show SnackBar using localized string
+              // Show SnackBar with hardcoded message
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(localizations.leaderboardRefreshed),
+                const SnackBar(
+                  content: Text('Leaderboard refreshed!'), // Hardcoded refresh message
                 ),
               );
             },
@@ -41,8 +37,8 @@ class LeaderboardPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(
-              child: Text(localizations.errorLoadingLeaderboard), // Error message
+            return const Center(
+              child: Text('Error loading leaderboard'), // Hardcoded error message
             );
           }
 
@@ -76,7 +72,7 @@ class LeaderboardPage extends StatelessWidget {
                         ),
                         title: Text(player['name'] ?? 'Unknown'), // Display player's name, fallback if null
                         subtitle: Text(
-                          '${localizations.streak}: ${player['streakDays'] ?? 0} ${localizations.days}', // Show streak info using localized string
+                          'Streak: ${player['streakDays'] ?? 0} days', // Show streak info with hardcoded string
                         ),
                         trailing: Text(
                           player['score']?.toString() ?? '0', // Display player's score, fallback to 0
@@ -90,9 +86,9 @@ class LeaderboardPage extends StatelessWidget {
             ),
           )
               : Center( // Center widget for no data scenario
-            child: Text(
-              localizations.noLeaderboardData, // No data message
-              style: const TextStyle(fontSize: AppDimens.noDataFontSize), // Use dimension for no data font size
+            child: const Text(
+              'No leaderboard data available', // Hardcoded no data message
+              style: TextStyle(fontSize: AppDimens.noDataFontSize), // Use dimension for no data font size
             ),
           );
         },

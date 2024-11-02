@@ -22,16 +22,6 @@ class SettingsPageState extends State<SettingsPage> {
   bool _receiveNotifications = true;
   bool _receiveChallengeNotifications = true;
   bool _dailyReminder = false;
-  String _selectedLanguage = 'English';
-
-  // Languages: Added more options including Chinese, Italian, and German
-  final List<String> _languages = [
-    'English',
-    'Spanish',
-    'French',
-    'Chinese',
-    'German'
-  ];
 
   @override
   void initState() {
@@ -47,12 +37,6 @@ class SettingsPageState extends State<SettingsPage> {
       _receiveChallengeNotifications =
           prefs.getBool('receiveChallengeNotifications') ?? true;
       _dailyReminder = prefs.getBool('dailyReminder') ?? false;
-      _selectedLanguage = prefs.getString('selectedLanguage') ?? 'English';
-
-      // Ensure the selected language is valid
-      if (!_languages.contains(_selectedLanguage)) {
-        _selectedLanguage = 'English'; // fallback to default
-      }
     });
   }
 
@@ -162,41 +146,6 @@ class SettingsPageState extends State<SettingsPage> {
                 });
               },
             ),
-            // DropdownButton for language selection
-            ListTile(
-              title: Text(
-                'Select Language',
-                style: TextStyle(
-                  color: isDarkTheme ? Colors.white : Colors.black,
-                ),
-              ),
-              trailing: DropdownButton<String>(
-                value: _selectedLanguage,
-                dropdownColor: isDarkTheme ? Colors.black : Colors.white,
-                style: TextStyle(
-                  color: isDarkTheme ? Colors.white : Colors.black,
-                ),
-                iconEnabledColor: isDarkTheme ? Colors.white : Colors.black,
-                items: _languages.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: isDarkTheme ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedLanguage = newValue;
-                    });
-                  }
-                },
-              ),
-            ),
             const SizedBox(height: AppDimens.spaceBetweenEntries),
             ElevatedButton(
               onPressed: _saveSettings,
@@ -268,7 +217,6 @@ class SettingsPageState extends State<SettingsPage> {
     await prefs.setBool(
         'receiveChallengeNotifications', _receiveChallengeNotifications);
     await prefs.setBool('dailyReminder', _dailyReminder);
-    await prefs.setString('selectedLanguage', _selectedLanguage);
 
     _showMessage(AppStrings.settingsSaved);
   }
@@ -294,7 +242,6 @@ class SettingsPageState extends State<SettingsPage> {
           (Route<dynamic> route) => false,
     );
   }
-
 
   void _showMessage(String message) {
     scaffoldMessengerKey.currentState?.showSnackBar(

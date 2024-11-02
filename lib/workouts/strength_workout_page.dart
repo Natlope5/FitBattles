@@ -1,17 +1,17 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:fitbattles/l10n/app_localizations.dart'; // Import localization
-import 'package:fl_chart/fl_chart.dart'; // Import FL Chart package
+import 'package:logger/logger.dart';
+
+final Logger logger = Logger();
 
 class StrengthWorkoutPage extends StatelessWidget {
   const StrengthWorkoutPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context); // Access localized strings
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.strengthWorkoutTitle), // Use localized title
+        title: const Text('Strength Workout'), // Hardcoded title
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -24,14 +24,14 @@ class StrengthWorkoutPage extends StatelessWidget {
               color: Colors.blue,
             ),
             const SizedBox(height: 20),
-            Text(
-              localizations.strengthWorkoutChallengesTitle, // Use localized challenges title
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            const Text(
+              'Challenges', // Hardcoded challenges title
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
-            Text(
-              localizations.strengthWorkoutDescription, // Use localized description
-              style: const TextStyle(fontSize: 18),
+            const Text(
+              'Description of the strength workout challenges.', // Hardcoded description
+              style: TextStyle(fontSize: 18),
             ),
             const SizedBox(height: 10),
 
@@ -53,15 +53,15 @@ class StrengthWorkoutPage extends StatelessWidget {
                           );
                           switch (value.toInt()) {
                             case 0:
-                              return Text('Push Ups', style: style);
+                              return const Text('Push Ups', style: style);
                             case 1:
-                              return Text('Squats', style: style);
+                              return const Text('Squats', style: style);
                             case 2:
-                              return Text('Sit Ups', style: style);
+                              return const Text('Sit Ups', style: style);
                             case 3:
-                              return Text('Bench Press', style: style);
+                              return const Text('Bench Press', style: style);
                             case 4:
-                              return Text('Lunges', style: style);
+                              return const Text('Lunges', style: style);
                             default:
                               return const Text('');
                           }
@@ -88,11 +88,12 @@ class StrengthWorkoutPage extends StatelessWidget {
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(localizations.workoutStartedMessage), // Use localized message
+                    content: const Text('Workout has started!'), // Hardcoded message
                   ),
                 );
+                logger.i('Workout has started!'); // Log the action
               },
-              child: Text(localizations.startWorkoutButton), // Use localized button text
+              child: const Text('Start Workout'), // Hardcoded button text
             ),
           ],
         ),
