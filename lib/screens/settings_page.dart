@@ -22,9 +22,9 @@ class SettingsPageState extends State<SettingsPage> {
   bool _receiveNotifications = true;
   bool _receiveChallengeNotifications = true;
   bool _dailyReminder = false;
+  late bool _isDarkThemeEnabled;
   String _selectedLanguage = 'English';
 
-  // Languages: Added more options including Chinese, Italian, and German
   final List<String> _languages = [
     'English',
     'Spanish',
@@ -48,8 +48,8 @@ class SettingsPageState extends State<SettingsPage> {
           prefs.getBool('receiveChallengeNotifications') ?? true;
       _dailyReminder = prefs.getBool('dailyReminder') ?? false;
       _selectedLanguage = prefs.getString('selectedLanguage') ?? 'English';
+      _isDarkThemeEnabled = Theme.of(context).brightness == Brightness.dark;
 
-      // Ensure the selected language is valid
       if (!_languages.contains(_selectedLanguage)) {
         _selectedLanguage = 'English'; // fallback to default
       }
@@ -59,69 +59,79 @@ class SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    AppTheme selectedTheme = themeProvider.selectedTheme;
-
-    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
 
     return ScaffoldMessenger(
-      key: scaffoldMessengerKey, // Step 2: Use the GlobalKey here
+      key: scaffoldMessengerKey,
       child: Scaffold(
         appBar: AppBar(
           title: Text(
             AppStrings.settings,
             style: TextStyle(
-              color: isDarkTheme ? Colors.white : Colors.black,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white
+                  : Colors.black,
             ),
           ),
-          backgroundColor: isDarkTheme ? Color(-15592942) : AppColors.appBarColor,
+          backgroundColor: Theme.of(context).brightness == Brightness.dark
+              ? Color(-15592942)
+              : AppColors.appBarColor,
         ),
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? Color(-15592942)
+            : Color(0xFF5D6C8A),
         body: ListView(
           padding: const EdgeInsets.all(AppDimens.padding),
           children: [
-            Text(
-              AppStrings.selectTheme,
-              style: TextStyle(
-                fontSize: AppDimens.sectionTitleFontSize,
-                color: isDarkTheme ? Colors.white : Colors.black,
-              ),
-            ),
-            ListTile(
-              title: Text(
-                AppStrings.lightTheme,
+            // Language Dropdown Menu using _buildListTile
+            _buildListTile(
+              title: 'Select Language',
+              trailing: DropdownButton<String>(
+                value: _selectedLanguage,
+                dropdownColor: Theme.of(context).brightness == Brightness.dark
+                    ? Color(-15592942)
+                    : Colors.white,
                 style: TextStyle(
-                  color: isDarkTheme ? Colors.white : Colors.black,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
                 ),
-              ),
-              leading: Radio<AppTheme>(
-                value: AppTheme.light,
-                groupValue: selectedTheme,
-                onChanged: (AppTheme? value) {
-                  if (value != null) {
-                    themeProvider.toggleTheme();
-                    _showMessage(AppStrings.lightThemeSelected);
+                iconEnabledColor: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : Colors.black,
+                items: _languages.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(
+                      value,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.white
+                            : Colors.black,
+                      ),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) {
+                    setState(() {
+                      _selectedLanguage = newValue;
+                    });
                   }
                 },
               ),
             ),
-            ListTile(
-              title: Text(
-                AppStrings.darkTheme,
-                style: TextStyle(
-                  color: isDarkTheme ? Colors.white : Colors.black,
-                ),
-              ),
-              leading: Radio<AppTheme>(
-                value: AppTheme.dark,
-                groupValue: selectedTheme,
-                onChanged: (AppTheme? value) {
-                  if (value != null) {
-                    themeProvider.toggleTheme();
-                    _showMessage(AppStrings.darkThemeSelected);
-                  }
-                },
-              ),
+            _buildSwitchTile(
+              title: AppStrings.darkTheme,
+              subtitle: "Turn dark mode on or off.",
+              value: _isDarkThemeEnabled,
+              onChanged: (bool newValue) {
+                setState(() {
+                  _isDarkThemeEnabled = newValue;
+                  themeProvider.toggleTheme();
+                  _saveThemePreference(newValue);
+                });
+              },
             ),
-            // Switch tiles for settings like notifications and reminders
             _buildSwitchTile(
               title: AppStrings.shareData,
               subtitle: AppStrings.shareDataDesc,
@@ -162,42 +172,6 @@ class SettingsPageState extends State<SettingsPage> {
                 });
               },
             ),
-            // DropdownButton for language selection
-            ListTile(
-              title: Text(
-                'Select Language',
-                style: TextStyle(
-                  color: isDarkTheme ? Colors.white : Colors.black,
-                ),
-              ),
-              trailing: DropdownButton<String>(
-                value: _selectedLanguage,
-                dropdownColor: isDarkTheme ? Colors.black : Colors.white,
-                style: TextStyle(
-                  color: isDarkTheme ? Colors.white : Colors.black,
-                ),
-                iconEnabledColor: isDarkTheme ? Colors.white : Colors.black,
-                items: _languages.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: isDarkTheme ? Colors.white : Colors.black,
-                      ),
-                    ),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedLanguage = newValue;
-                    });
-                  }
-                },
-              ),
-            ),
-            const SizedBox(height: AppDimens.spaceBetweenEntries),
             ElevatedButton(
               onPressed: _saveSettings,
               style: ElevatedButton.styleFrom(
@@ -209,7 +183,6 @@ class SettingsPageState extends State<SettingsPage> {
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            const SizedBox(height: AppDimens.spaceBetweenEntries),
             ElevatedButton(
               onPressed: _logOut,
               style: ElevatedButton.styleFrom(
@@ -227,30 +200,61 @@ class SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildListTile({
+    required String title,
+    required Widget trailing,
+  }) {
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppDimens.cardRadius),
+      ),
+      elevation: AppDimens.cardElevation,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Color(-15592942) // Dark mode background color
+          : Colors.white, // Light mode background color
+      child: ListTile(
+        title: Text(
+          title,
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
+          ),
+        ),
+        trailing: trailing,
+      ),
+    );
+  }
+
   Widget _buildSwitchTile({
     required String title,
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-
     return Card(
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppDimens.cardRadius)),
+        borderRadius: BorderRadius.circular(AppDimens.cardRadius),
+      ),
       elevation: AppDimens.cardElevation,
-      color: isDarkTheme ? Color(-15592942) : Colors.white,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Color(-15592942)
+          : Colors.white,
       child: SwitchListTile(
         title: Text(
           title,
           style: TextStyle(
-            color: isDarkTheme ? Colors.white : Colors.black,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: TextStyle(
-            color: isDarkTheme ? Colors.white : Colors.black,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black,
           ),
         ),
         value: value,
@@ -260,12 +264,16 @@ class SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Future<void> _saveThemePreference(bool isDarkThemeEnabled) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkThemeEnabled', isDarkThemeEnabled);
+  }
+
   Future<void> _saveSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('shareData', _shareData);
     await prefs.setBool('receiveNotifications', _receiveNotifications);
-    await prefs.setBool(
-        'receiveChallengeNotifications', _receiveChallengeNotifications);
+    await prefs.setBool('receiveChallengeNotifications', _receiveChallengeNotifications);
     await prefs.setBool('dailyReminder', _dailyReminder);
     await prefs.setString('selectedLanguage', _selectedLanguage);
 
@@ -279,10 +287,8 @@ class SettingsPageState extends State<SettingsPage> {
       const SnackBar(content: Text('Logging out...')),
     );
 
-    // Delay navigation to allow the user to see the message
     await Future.delayed(const Duration(seconds: 1));
 
-    // Navigate to the LoginPage and clear the navigation stack
     Navigator.of(scaffoldMessengerKey.currentContext!).pushAndRemoveUntil(
       MaterialPageRoute(
         builder: (context) => LoginPage(
@@ -293,7 +299,6 @@ class SettingsPageState extends State<SettingsPage> {
           (Route<dynamic> route) => false,
     );
   }
-
 
   void _showMessage(String message) {
     scaffoldMessengerKey.currentState?.showSnackBar(

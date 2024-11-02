@@ -53,9 +53,9 @@ class ThemeProvider with ChangeNotifier {
   // Dark theme configuration
   ThemeData get _darkTheme => ThemeData(
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: Colors.black,
+    scaffoldBackgroundColor: Color(-15592942),
     appBarTheme: AppBarTheme(
-      backgroundColor: Color(0xFF5D6C8A), // Blue tone
+      backgroundColor: Color(-15592942),
       titleTextStyle: TextStyle(color: Colors.white),
     ),
     textTheme: const TextTheme(

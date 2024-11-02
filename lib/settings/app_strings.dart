@@ -229,7 +229,7 @@ class AppStrings {
   static const String settings = 'Settings';
   static const String selectTheme = 'Select Theme';
   static const String lightTheme = 'Light Theme';
-  static const String darkTheme = 'Dark Theme';
+  static const String darkTheme = 'Dark Mode';
   static const String lightThemeSelected = 'Light Theme selected';
   static const String darkThemeSelected = 'Dark Theme selected';
 
