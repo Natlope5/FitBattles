@@ -4,30 +4,33 @@ import 'package:fitbattles/settings/theme_provider.dart';
 import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_strings.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
-
 import '../main.dart';
 
 class GlobalNavigation {
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-  /// Navigates to the login screen.
   static Future<void> navigateToLogin() async {
     navigatorKey.currentState?.pushReplacementNamed('/login');
   }
 
-  /// Shows a SnackBar message.
   static void showMessage(String message) {
-    ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    final context = navigatorKey.currentContext;
+    if (context != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 }
 
 class AuthService {
-  /// Handles user logout process.
   Future<void> logOut() async {
-    // Implement logout logic here, such as clearing tokens or session data
-    logger.i("User logged out");
+    try {
+      // Implement logout logic here, such as clearing tokens or session data
+      logger.i("User logged out");
+    } catch (e) {
+      logger.e("Logout failed: $e");
+    }
   }
 }
 
@@ -54,7 +57,6 @@ class SettingsPageState extends State<SettingsPage> {
     _loadSettings();
   }
 
-  /// Loads the user's saved settings from local storage.
   Future<void> _loadSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -67,7 +69,6 @@ class SettingsPageState extends State<SettingsPage> {
     });
   }
 
-  /// Saves the user's settings to local storage.
   Future<void> _saveSettings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setBool('shareData', _shareData);
@@ -80,7 +81,6 @@ class SettingsPageState extends State<SettingsPage> {
     GlobalNavigation.showMessage(AppStrings.settingsSaved);
   }
 
-  /// Logs out the user and navigates to the login screen.
   Future<void> _logOut() async {
     await _authService.logOut();
     GlobalNavigation.showMessage(AppStrings.loggedOut);
@@ -89,8 +89,8 @@ class SettingsPageState extends State<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = ThemeProvider(); // Directly instantiated ThemeProvider
-    final isDarkTheme = themeProvider.isDarkMode; // Example getter in ThemeProvider
+    final themeProvider = ThemeProvider();
+    final isDarkTheme = themeProvider.isDarkMode;
 
     return Scaffold(
       appBar: AppBar(
@@ -107,8 +107,6 @@ class SettingsPageState extends State<SettingsPage> {
               color: isDarkTheme ? Colors.white : Colors.black,
             ),
           ),
-          // Theme selection UI...
-
           Text(
             'Privacy Settings',
             style: TextStyle(
@@ -189,7 +187,6 @@ class SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  /// Builds a switch tile with a title, subtitle, and toggle switch.
   Widget _buildSwitchTile({
     required String title,
     required String subtitle,

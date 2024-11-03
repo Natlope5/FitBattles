@@ -1,7 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:fitbattles/settings/badge_service.dart'; // Ensure this path is correct based on your project structure
 
-class RewardsPage extends StatelessWidget {
+class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
+
+  @override
+  RewardsPageState createState() => RewardsPageState();
+}
+
+class RewardsPageState extends State<RewardsPage> {
+  final BadgeService badgeService = BadgeService();
+  late Future<List<Map<String, String>>> badges;
+
+  @override
+  void initState() {
+    super.initState();
+    User? currentUser = FirebaseAuth.instance.currentUser; // Get the current user
+    if (currentUser != null) {
+      badges = badgeService.fetchBadges(currentUser.uid); // Use the actual user ID
+    } else {
+      badges = Future.value([]); // Handle the case where there's no logged-in user
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,44 +45,60 @@ class RewardsPage extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: GridView.builder(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                ),
-                itemCount: 10, // Placeholder for the number of badges
-                itemBuilder: (BuildContext context, int index) {
-                  return Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+              child: FutureBuilder<List<Map<String, String>>>(
+                future: badges,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No badges earned yet.'));
+                  }
+
+                  final badgeList = snapshot.data!;
+
+                  return GridView.builder(
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
                     ),
-                    elevation: 4,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.star, // Placeholder icon for badges
-                          size: 50,
-                          color: Colors.orange,
+                    itemCount: badgeList.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final badge = badgeList[index];
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        const SizedBox(height: 10),
-                        const Text(
-                          'Badge Name',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        elevation: 4,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.star, // Placeholder icon for badges
+                              size: 50,
+                              color: Colors.orange,
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              badge['name'] ?? 'Badge Name',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Earned: ${badge['dateEarned'] ?? 'N/A'}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 5),
-                        const Text(
-                          'Earned: 12/01/2023',
-                          style: TextStyle(
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
               ),

@@ -25,10 +25,16 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
   final TextEditingController challengeDescriptionController = TextEditingController();
 
   final List<String> communityChallenges = [
-    "10,000 Steps a Day",
-    "30 Days of Yoga",
-    "Daily Plank Challenge",
-    "Weekly Running Club"
+    "Core Crusher",
+    "Goal Setter",
+    "Healthy Habit",
+    "Community Leader",
+    "Nutrition Enthusiast",
+    "Cardio King/Queen",
+    "Strength Specialist",
+    "Fit Friend",
+    "10K Steps a Day",
+    "Consistent Trainer",
   ];
 
   @override
@@ -57,8 +63,6 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Community Challenges'),
-        backgroundColor: isDarkTheme ? Colors.black : const Color(0xFF5D6C8A),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
