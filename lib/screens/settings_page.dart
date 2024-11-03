@@ -1,203 +1,221 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fitbattles/settings/theme_provider.dart';
-import 'package:fitbattles/settings/app_colors.dart';
-import 'package:fitbattles/settings/app_strings.dart';
-import 'package:fitbattles/settings/app_dimens.dart';
-import '../main.dart';
-
-class GlobalNavigation {
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-  static Future<void> navigateToLogin() async {
-    navigatorKey.currentState?.pushReplacementNamed('/login');
-  }
-
-  static void showMessage(String message) {
-    final context = navigatorKey.currentContext;
-    if (context != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
-    }
-  }
-}
-
-class AuthService {
-  Future<void> logOut() async {
-    try {
-      // Implement logout logic here, such as clearing tokens or session data
-      logger.i("User logged out");
-    } catch (e) {
-      logger.e("Logout failed: $e");
-    }
-  }
-}
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, required String heading});
 
   @override
   SettingsPageState createState() => SettingsPageState();
 }
 
 class SettingsPageState extends State<SettingsPage> {
-  bool _shareData = false;
-  bool _receiveNotifications = true;
-  bool _receiveChallengeNotifications = true;
-  bool _dailyReminder = false;
-  bool _profileVisibility = true;
-  bool _allowFriendRequests = true;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  final AuthService _authService = AuthService();
+  String _name = '';
+  String _bio = '';
+  int _age = 0;
+  double _weight = 0.0;
+  String _heightFeet = '0';
+  String _heightInches = '0';
+  bool _shareData = false;
+  bool _receiveNotifications = false;
+  String _visibility = 'public';
+
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
+    _loadUserSettings();
   }
 
-  Future<void> _loadSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _shareData = prefs.getBool('shareData') ?? false;
-      _receiveNotifications = prefs.getBool('receiveNotifications') ?? true;
-      _receiveChallengeNotifications = prefs.getBool('receiveChallengeNotifications') ?? true;
-      _dailyReminder = prefs.getBool('dailyReminder') ?? false;
-      _profileVisibility = prefs.getBool('profileVisibility') ?? true;
-      _allowFriendRequests = prefs.getBool('allowFriendRequests') ?? true;
+  // Load user settings from Firestore
+  Future<void> _loadUserSettings() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        setState(() {
+          _name = userDoc['name'] ?? '';
+          _bio = userDoc['bio'] ?? '';
+          _age = userDoc['age'] ?? 0;
+          _weight = userDoc['weight'] ?? 0.0;
+          int totalHeightInInches = userDoc['height_inches'] ?? 0;
+          _heightFeet = (totalHeightInInches ~/ 12).toString(); // Feet
+          _heightInches = (totalHeightInInches % 12).toString(); // Remaining Inches
+          _shareData = userDoc['share_data'] ?? false;
+          _receiveNotifications = userDoc['receive_notifications'] ?? false;
+          _visibility = userDoc['visibility'] ?? 'public';
+        });
+      }
+    }
+  }
+
+  // Save user settings to Firestore
+  Future<String> _saveSettings() async {
+    User? user = _auth.currentUser;
+    if (user != null && _formKey.currentState!.validate()) {
+      try {
+        // Convert height to total inches
+        int totalHeightInInches = (int.parse(_heightFeet) * 12) + int.parse(_heightInches);
+
+        await _firestore.collection('users').doc(user.uid).update({
+          'name': _name,
+          'bio': _bio,
+          'age': _age,
+          'weight': _weight, // in lbs
+          'height_inches': totalHeightInInches, // total height in inches
+          'share_data': _shareData,
+          'receive_notifications': _receiveNotifications,
+          'visibility': _visibility,
+        });
+
+        // Reload the user settings after saving
+        await _loadUserSettings();
+
+        return 'Settings updated successfully!';
+      } catch (e) {
+        return 'Failed to update settings: ${e.toString()}'; // Include error message
+      }
+    }
+    return 'Failed to update settings: Form validation error'; // Validation error message
+  }
+
+  // Logout the user
+  Future<void> _logout() async {
+    await _auth.signOut();
+    _navigateToLogin();
+  }
+
+  void _navigateToLogin() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.of(context).pushReplacementNamed('/login');
     });
-  }
-
-  Future<void> _saveSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('shareData', _shareData);
-    await prefs.setBool('receiveNotifications', _receiveNotifications);
-    await prefs.setBool('receiveChallengeNotifications', _receiveChallengeNotifications);
-    await prefs.setBool('dailyReminder', _dailyReminder);
-    await prefs.setBool('profileVisibility', _profileVisibility);
-    await prefs.setBool('allowFriendRequests', _allowFriendRequests);
-
-    GlobalNavigation.showMessage(AppStrings.settingsSaved);
-  }
-
-  Future<void> _logOut() async {
-    await _authService.logOut();
-    GlobalNavigation.showMessage(AppStrings.loggedOut);
-    await GlobalNavigation.navigateToLogin();
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = ThemeProvider();
-    final isDarkTheme = themeProvider.isDarkMode;
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppStrings.settings),
-        backgroundColor: isDarkTheme ? Colors.black : AppColors.appBarColor,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(AppDimens.padding),
-        children: [
-          Text(
-            'Select Theme',
-            style: TextStyle(
-              fontSize: AppDimens.sectionTitleFontSize,
-              color: isDarkTheme ? Colors.white : Colors.black,
-            ),
-          ),
-          Text(
-            'Privacy Settings',
-            style: TextStyle(
-              fontSize: AppDimens.sectionTitleFontSize,
-              color: isDarkTheme ? Colors.white : Colors.black,
-            ),
-          ),
-          _buildSwitchTile(
-            title: 'Profile Visibility',
-            subtitle: 'Allow others to see your profile.',
-            value: _profileVisibility,
-            onChanged: (bool newValue) {
-              setState(() {
-                _profileVisibility = newValue;
-              });
-            },
-          ),
-          _buildSwitchTile(
-            title: 'Allow Friend Requests',
-            subtitle: 'Let others send you friend requests.',
-            value: _allowFriendRequests,
-            onChanged: (bool newValue) {
-              setState(() {
-                _allowFriendRequests = newValue;
-              });
-            },
-          ),
-          _buildSwitchTile(
-            title: 'Share Data with Friends',
-            subtitle: 'Enable data sharing with friends.',
-            value: _shareData,
-            onChanged: (bool newValue) {
-              setState(() {
-                _shareData = newValue;
-              });
-            },
-          ),
-          _buildSwitchTile(
-            title: 'Receive Notifications',
-            subtitle: 'Get notifications about new challenges and updates.',
-            value: _receiveNotifications,
-            onChanged: (bool newValue) {
-              setState(() {
-                _receiveNotifications = newValue;
-              });
-            },
-          ),
-          _buildSwitchTile(
-            title: 'Challenge Notifications',
-            subtitle: 'Receive notifications for challenge activities.',
-            value: _receiveChallengeNotifications,
-            onChanged: (bool newValue) {
-              setState(() {
-                _receiveChallengeNotifications = newValue;
-              });
-            },
-          ),
-          _buildSwitchTile(
-            title: 'Daily Reminder',
-            subtitle: 'Get a daily reminder for challenges.',
-            value: _dailyReminder,
-            onChanged: (bool newValue) {
-              setState(() {
-                _dailyReminder = newValue;
-              });
-            },
-          ),
-          ElevatedButton(
-            onPressed: _saveSettings,
-            child: const Text('Save Settings'),
-          ),
-          ElevatedButton(
-            onPressed: _logOut,
-            child: const Text('Log Out'),
+        title: Text('Settings'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _logout,
           ),
         ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
+          children: [
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    initialValue: _name,
+                    decoration: InputDecoration(labelText: 'Name'),
+                    onChanged: (value) => setState(() => _name = value),
+                    validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
+                  ),
+                  TextFormField(
+                    initialValue: _bio,
+                    decoration: InputDecoration(labelText: 'Bio'),
+                    onChanged: (value) => setState(() => _bio = value),
+                  ),
+                  TextFormField(
+                    initialValue: _age.toString(),
+                    decoration: InputDecoration(labelText: 'Age'),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => setState(() => _age = int.tryParse(value) ?? 0),
+                    validator: (value) => value!.isEmpty ? 'Please enter your age' : null,
+                  ),
+                  TextFormField(
+                    initialValue: _weight.toString(),
+                    decoration: InputDecoration(labelText: 'Weight (lbs)'),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => setState(() => _weight = double.tryParse(value) ?? 0.0),
+                    validator: (value) => value!.isEmpty ? 'Please enter your weight' : null,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          initialValue: _heightFeet,
+                          decoration: InputDecoration(labelText: 'Height (feet)'),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) => setState(() => _heightFeet = value),
+                          validator: (value) => value!.isEmpty ? 'Please enter feet' : null,
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          initialValue: _heightInches,
+                          decoration: InputDecoration(labelText: 'Height (inches)'),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) => setState(() => _heightInches = value),
+                          validator: (value) => value!.isEmpty ? 'Please enter inches' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SwitchListTile(
+                    title: Text('Share Data'),
+                    value: _shareData,
+                    onChanged: (value) => setState(() => _shareData = value),
+                  ),
+                  SwitchListTile(
+                    title: Text('Receive Notifications'),
+                    value: _receiveNotifications,
+                    onChanged: (value) => setState(() => _receiveNotifications = value),
+                  ),
+
+                  // Privacy Settings label
+                  SizedBox(height: 20), // Space before the title
+                  Text(
+                    'Privacy Settings',
+                    style: TextStyle(
+                      fontSize: 18, // You can adjust the size as needed
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 10), // Space after the title
+
+                  DropdownButtonFormField<String>(
+                    value: _visibility,
+                    decoration: InputDecoration(labelText: 'Profile Visibility'),
+                    items: ['public', 'friendsOnly', 'private'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (value) => setState(() => _visibility = value!),
+                  ),
+
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      String message = await _saveSettings();
+                      _showSnackbar(message);
+                    },
+                    child: Text('Save Changes'),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSwitchTile({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return SwitchListTile(
-      title: Text(title),
-      subtitle: Text(subtitle),
-      value: value,
-      onChanged: onChanged,
-    );
+  void _showSnackbar(String message) {
+    // Show the snackbar message
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }

@@ -19,7 +19,6 @@ import 'package:fitbattles/settings/theme_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:fitbattles/challenges/create_challenge_page.dart';
@@ -34,7 +33,6 @@ final Logger logger = Logger();
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class MyApp extends StatelessWidget {
-
   const MyApp({super.key});
 
   @override
@@ -46,25 +44,12 @@ class MyApp extends StatelessWidget {
           navigatorKey: navigatorKey,
           title: 'FitBattles',
           theme: themeProvider.currentTheme,
-          localizationsDelegates: [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en', ''),
-            Locale('es', ''),
-            Locale('fr', ''),
-            Locale('de', ''),
-            Locale('zh', ''),
-          ],
           initialRoute: '/login',
           routes: {
             '/login': (context) => LoginPage(title: '', setLocale: (locale) {}),
             '/': (context) => UserProfilePage(heading: 'Create Profile'),
             '/home': (context) => HomePage(id: '', email: '', uid: ''),
             '/workoutTracking': (context) => const WorkoutTrackingPage(),
-
             '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
@@ -78,19 +63,17 @@ class MyApp extends StatelessWidget {
             '/distanceWorkout': (context) => const DistanceWorkoutPage(),
             '/strengthWorkout': (context) => const StrengthWorkoutPage(),
             '/leaderboard': (context) => const LeaderboardPage(),
-            '/settings': (context) => const SettingsPage(),
+            '/settings': (context) => const SettingsPage(heading: 'Settings',),
             '/create_challenge': (context) => CreateChallengePage(),
             '/user_challenges': (context) => const UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),
             '/currentGoals': (context) => CurrentGoalsPage(),
             '/goalHistory': (context) => GoalCompletionPage(),
-            '/rewards': (context) =>  RewardsPage(),
+            '/rewards': (context) => RewardsPage(),
             '/healthReport': (context) => const HealthReportPage(),
             '/scheduleChallenge': (context) => const CommunityChallengePage(),
             '/customWorkout': (context) => CustomWorkoutPlanPage(),
-
           },
-
         );
       },
     );
@@ -105,7 +88,7 @@ void main() async {
 
   runApp(
     ChangeNotifierProvider(
-      create: (context) => ThemeProvider(), // Provide ThemeProvider for the whole app
+      create: (context) => ThemeProvider(),
       child: const MyApp(),
     ),
   );
