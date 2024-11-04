@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
+import 'package:fitbattles/l10n/app_localizations.dart';
 import 'package:fitbattles/screens/add_goal_page.dart';
 import 'package:fitbattles/screens/current_goals_page.dart';
 import 'package:fitbattles/screens/goals_completion_page.dart';
