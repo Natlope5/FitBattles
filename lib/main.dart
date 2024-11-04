@@ -45,6 +45,7 @@ class MyApp extends StatelessWidget {
           title: 'FitBattles',
           theme: themeProvider.currentTheme,
           localizationsDelegates: [
+            AppLocalizations.delegate,
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,
             GlobalCupertinoLocalizations.delegate,

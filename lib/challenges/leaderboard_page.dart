@@ -12,7 +12,9 @@ class LeaderboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Access localized strings
     final localizations = AppLocalizations.of(context);
-
+    if (localizations == null) {
+      return Center(child: CircularProgressIndicator());
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations.leaderboardTitle), // Title from strings
