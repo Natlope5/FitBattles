@@ -3,13 +3,14 @@ import 'package:intl/intl.dart';
 
 class AppLocalizations {
   final Locale locale;
+  String get points => 'Points'; // Points getter (IMPORTANT)
 
   AppLocalizations(this.locale);
 
   static const LocalizationsDelegate<
       AppLocalizations> delegate = _AppLocalizationsDelegate();
 
-  static AppLocalizations of(BuildContext context) {
+    static AppLocalizations of(BuildContext context) {
     return Localizations.of<AppLocalizations>(context, AppLocalizations)!;
   }
 

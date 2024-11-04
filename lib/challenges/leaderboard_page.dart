@@ -1,28 +1,54 @@
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore package
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart'; // Import animation package
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:fitbattles/l10n/app_localizations.dart';
 
-// This widget represents a page that displays the leaderboard.
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});
 
+  final bool useSampleData = true; // Set to `true` to use sample data
+
+  List<Map<String, dynamic>> get sampleLeaderboardData => [
+    {
+      'name': 'John Doe',
+      'score': 1500,
+      'streakDays': 50,
+      'imageUrl': 'https://via.placeholder.com/150',
+    },
+    {
+      'name': 'Jane Smith',
+      'score': 1400,
+      'streakDays': 45,
+      'imageUrl': 'https://via.placeholder.com/150',
+    },
+    {
+      'name': 'Bob Brown',
+      'score': 1350,
+      'streakDays': 30,
+      'imageUrl': 'https://via.placeholder.com/150',
+    },
+    {
+      'name': 'Alice Green',
+      'score': 1200,
+      'streakDays': 20,
+      'imageUrl': 'https://via.placeholder.com/150',
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
-    // Access localized strings
     final localizations = AppLocalizations.of(context);
     if (localizations == null) {
-      return Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator());
     }
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.leaderboardTitle), // Title from strings
+        title: Text(localizations.leaderboardTitle),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh), // Refresh icon
+            icon: const Icon(Icons.refresh),
             onPressed: () {
-              // Show SnackBar using localized string
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(localizations.leaderboardRefreshed),
@@ -32,11 +58,13 @@ class LeaderboardPage extends StatelessWidget {
           ),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: useSampleData
+          ? buildLeaderboardList(context, sampleLeaderboardData, localizations)
+          : StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
-            .orderBy('score', descending: true) // Order by score
-            .limit(10) // Limit to top 10 players
+            .orderBy('score', descending: true)
+            .limit(10)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -44,60 +72,83 @@ class LeaderboardPage extends StatelessWidget {
           }
           if (snapshot.hasError) {
             return Center(
-              child: Text(localizations.errorLoadingLeaderboard), // Error message
+              child: Text(localizations.errorLoadingLeaderboard),
             );
           }
+          final leaderboardData = snapshot.data?.docs
+              .map((doc) => doc.data() as Map<String, dynamic>)
+              .toList() ??
+              [];
 
-          final leaderboardData = snapshot.data?.docs ?? []; // Retrieve leaderboard data
+          return buildLeaderboardList(context, leaderboardData, localizations);
+        },
+      ),
+    );
+  }
 
-          return leaderboardData.isNotEmpty
-              ? AnimationLimiter( // Wrap the ListView in AnimationLimiter
-            child: ListView.builder(
-              itemCount: leaderboardData.length,
-              itemBuilder: (context, index) {
-                final player = leaderboardData[index];
+  Widget buildLeaderboardList(BuildContext context, List<Map<String, dynamic>> leaderboardData, AppLocalizations localizations) {
+    return leaderboardData.isNotEmpty
+        ? AnimationLimiter(
+      child: ListView.builder(
+        itemCount: leaderboardData.length,
+        itemBuilder: (context, index) {
+          final player = leaderboardData[index];
+          String imageUrl = player['imageUrl'] ?? 'assets/default_avatar.png';
 
-                // Use a default image if imageUrl is null or empty
-                String imageUrl = player['imageUrl'] ?? '';
-                if (imageUrl.isEmpty) {
-                  imageUrl = 'assets/default_avatar.png'; // Set default image
-                }
+          Color trophyColor;
+          if (index == 0) {
+            trophyColor = Colors.amber;
+          } else if (index == 1) {
+            trophyColor = Colors.grey;
+          } else if (index == 2) {
+            trophyColor = Colors.brown;
+          } else {
+            trophyColor = Colors.transparent;
+          }
 
-                return AnimationConfiguration.staggeredList(
-                  position: index,
-                  duration: const Duration(milliseconds: 500), // Animation duration
-                  child: FadeInAnimation(
-                    child: Card( // Card for better visual representation
-                      margin: const EdgeInsets.all(AppDimens.cardMargin), // Use dimension for margin
-                      child: ListTile(
-                        leading: CircleAvatar(
+          return AnimationConfiguration.staggeredList(
+            position: index,
+            duration: const Duration(milliseconds: 600),
+            child: SlideAnimation(
+              horizontalOffset: -200.0, // Slide in from the left
+              child: FadeInAnimation(
+                child: Card(
+                  margin: const EdgeInsets.all(AppDimens.cardMargin),
+                  child: ListTile(
+                    leading: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircleAvatar(
                           backgroundImage: imageUrl.startsWith('http')
-                              ? NetworkImage(imageUrl) // Use network image if URL is valid
-                              : AssetImage(imageUrl) as ImageProvider, // Fallback to asset image
-                          radius: AppDimens.avatarRadius, // Use dimension for radius
+                              ? NetworkImage(imageUrl)
+                              : AssetImage(imageUrl) as ImageProvider,
+                          radius: AppDimens.avatarRadius,
                         ),
-                        title: Text(player['name'] ?? 'Unknown'), // Display player's name, fallback if null
-                        subtitle: Text(
-                          '${localizations.streak}: ${player['streakDays'] ?? 0} ${localizations.days}', // Show streak info using localized string
-                        ),
-                        trailing: Text(
-                          player['score']?.toString() ?? '0', // Display player's score, fallback to 0
-                          style: const TextStyle(fontSize: AppDimens.scoreFontSize), // Use dimension for score font size
-                        ),
-                      ),
+                        if (index < 3)
+                          Positioned(
+                            bottom: 0,
+                            child: Icon(Icons.emoji_events, color: trophyColor),
+                          ),
+                      ],
+                    ),
+                    title: Text('#${index + 1} ${player['name'] ?? 'Unknown'}'),
+                    subtitle: Text('${localizations.streak}: ${player['streakDays'] ?? 0} ${localizations.days}'),
+                    trailing: Text(
+                      player['score']?.toString() ?? '0',
+                      style: const TextStyle(fontSize: AppDimens.scoreFontSize),
                     ),
                   ),
-                );
-              },
-            ),
-          )
-              : Center( // Center widget for no data scenario
-            child: Text(
-              localizations.noLeaderboardData, // No data message
-              style: const TextStyle(fontSize: AppDimens.noDataFontSize), // Use dimension for no data font size
+                ),
+              ),
             ),
           );
         },
+      ),
+    )
+        : Center(
+      child: Text(
+        localizations.noLeaderboardData,
+        style: const TextStyle(fontSize: AppDimens.noDataFontSize),
       ),
     );
   }
