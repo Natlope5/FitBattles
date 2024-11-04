@@ -1,197 +1,211 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth
-import '../settings/app_colors.dart';
-import '../settings/app_dimens.dart';
-import '../settings/app_strings.dart';
-import '../settings/theme_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../auth/login_page.dart'; // Replace with the actual login page import
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, required String heading});
 
   @override
   SettingsPageState createState() => SettingsPageState();
 }
 
 class SettingsPageState extends State<SettingsPage> {
-  final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
-  GlobalKey<ScaffoldMessengerState>(); // Step 1: Create a GlobalKey
-  bool _shareData = false;
-  bool _receiveNotifications = true;
-  bool _receiveChallengeNotifications = true;
-  bool _dailyReminder = false;
-  late bool _isDarkThemeEnabled;
-  String _selectedLanguage = 'English';
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  final List<String> _languages = [
-    'English',
-    'Spanish',
-    'French',
-    'Chinese',
-    'German'
-  ];
+  String _name = '';
+  String _bio = '';
+  int _age = 0;
+  double _weight = 0.0;
+  String _heightFeet = '0';
+  String _heightInches = '0';
+  bool _shareData = false;
+  bool _receiveNotifications = false;
+  String _visibility = 'public';
+
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
+    _loadUserSettings();
   }
 
-  Future<void> _loadSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _shareData = prefs.getBool('shareData') ?? false;
-      _receiveNotifications = prefs.getBool('receiveNotifications') ?? true;
-      _receiveChallengeNotifications =
-          prefs.getBool('receiveChallengeNotifications') ?? true;
-      _dailyReminder = prefs.getBool('dailyReminder') ?? false;
-      _selectedLanguage = prefs.getString('selectedLanguage') ?? 'English';
-      _isDarkThemeEnabled = Theme.of(context).brightness == Brightness.dark;
-
-      if (!_languages.contains(_selectedLanguage)) {
-        _selectedLanguage = 'English'; // fallback to default
+  // Load user settings from Firestore
+  Future<void> _loadUserSettings() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        setState(() {
+          _name = userDoc['name'] ?? '';
+          _bio = userDoc['bio'] ?? '';
+          _age = userDoc['age'] ?? 0;
+          _weight = userDoc['weight'] ?? 0.0;
+          int totalHeightInInches = userDoc['height_inches'] ?? 0;
+          _heightFeet = (totalHeightInInches ~/ 12).toString(); // Feet
+          _heightInches = (totalHeightInInches % 12).toString(); // Remaining Inches
+          _shareData = userDoc['share_data'] ?? false;
+          _receiveNotifications = userDoc['receive_notifications'] ?? false;
+          _visibility = userDoc['visibility'] ?? 'public';
+        });
       }
+    }
+  }
+
+  // Save user settings to Firestore
+  Future<String> _saveSettings() async {
+    User? user = _auth.currentUser;
+    if (user != null && _formKey.currentState!.validate()) {
+      try {
+        // Convert height to total inches
+        int totalHeightInInches = (int.parse(_heightFeet) * 12) + int.parse(_heightInches);
+
+        await _firestore.collection('users').doc(user.uid).update({
+          'name': _name,
+          'bio': _bio,
+          'age': _age,
+          'weight': _weight, // in lbs
+          'height_inches': totalHeightInInches, // total height in inches
+          'share_data': _shareData,
+          'receive_notifications': _receiveNotifications,
+          'visibility': _visibility,
+        });
+
+        // Reload the user settings after saving
+        await _loadUserSettings();
+
+        return 'Settings updated successfully!';
+      } catch (e) {
+        return 'Failed to update settings: ${e.toString()}'; // Include error message
+      }
+    }
+    return 'Failed to update settings: Form validation error'; // Validation error message
+  }
+
+  // Logout the user
+  Future<void> _logout() async {
+    await _auth.signOut();
+    _navigateToLogin();
+  }
+
+  void _navigateToLogin() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.of(context).pushReplacementNamed('/login');
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    return ScaffoldMessenger(
-      key: scaffoldMessengerKey,
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(
-            AppStrings.settings,
-            style: TextStyle(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white
-                  : Colors.black,
-            ),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Settings'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: _logout,
           ),
-          backgroundColor: Theme.of(context).brightness == Brightness.dark
-              ? Color(-15592942)
-              : AppColors.appBarColor,
-        ),
-        backgroundColor: Theme.of(context).brightness == Brightness.dark
-            ? Color(-15592942)
-            : Color(0xFF5D6C8A),
-        body: ListView(
-          padding: const EdgeInsets.all(AppDimens.padding),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ListView(
           children: [
-            // Language Dropdown Menu using _buildListTile
-            _buildListTile(
-              title: 'Select Language',
-              trailing: DropdownButton<String>(
-                value: _selectedLanguage,
-                dropdownColor: Theme.of(context).brightness == Brightness.dark
-                    ? Color(-15592942)
-                    : Colors.white,
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.white
-                      : Colors.black,
-                ),
-                iconEnabledColor: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.white
-                    : Colors.black,
-                items: _languages.map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(
-                      value,
-                      style: TextStyle(
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black,
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    initialValue: _name,
+                    decoration: InputDecoration(labelText: 'Name'),
+                    onChanged: (value) => setState(() => _name = value),
+                    validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
+                  ),
+                  TextFormField(
+                    initialValue: _bio,
+                    decoration: InputDecoration(labelText: 'Bio'),
+                    onChanged: (value) => setState(() => _bio = value),
+                  ),
+                  TextFormField(
+                    initialValue: _age.toString(),
+                    decoration: InputDecoration(labelText: 'Age'),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => setState(() => _age = int.tryParse(value) ?? 0),
+                    validator: (value) => value!.isEmpty ? 'Please enter your age' : null,
+                  ),
+                  TextFormField(
+                    initialValue: _weight.toString(),
+                    decoration: InputDecoration(labelText: 'Weight (lbs)'),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) => setState(() => _weight = double.tryParse(value) ?? 0.0),
+                    validator: (value) => value!.isEmpty ? 'Please enter your weight' : null,
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          initialValue: _heightFeet,
+                          decoration: InputDecoration(labelText: 'Height (feet)'),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) => setState(() => _heightFeet = value),
+                          validator: (value) => value!.isEmpty ? 'Please enter feet' : null,
+                        ),
                       ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: TextFormField(
+                          initialValue: _heightInches,
+                          decoration: InputDecoration(labelText: 'Height (inches)'),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) => setState(() => _heightInches = value),
+                          validator: (value) => value!.isEmpty ? 'Please enter inches' : null,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SwitchListTile(
+                    title: Text('Share Data'),
+                    value: _shareData,
+                    onChanged: (value) => setState(() => _shareData = value),
+                  ),
+                  SwitchListTile(
+                    title: Text('Receive Notifications'),
+                    value: _receiveNotifications,
+                    onChanged: (value) => setState(() => _receiveNotifications = value),
+                  ),
+
+                  // Privacy Settings label
+                  SizedBox(height: 20), // Space before the title
+                  Text(
+                    'Privacy Settings',
+                    style: TextStyle(
+                      fontSize: 18, // You can adjust the size as needed
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedLanguage = newValue;
-                    });
-                  }
-                },
-              ),
-            ),
-            _buildSwitchTile(
-              title: AppStrings.darkTheme,
-              subtitle: "Turn dark mode on or off.",
-              value: _isDarkThemeEnabled,
-              onChanged: (bool newValue) {
-                setState(() {
-                  _isDarkThemeEnabled = newValue;
-                  themeProvider.toggleTheme();
-                  _saveThemePreference(newValue);
-                });
-              },
-            ),
-            _buildSwitchTile(
-              title: AppStrings.shareData,
-              subtitle: AppStrings.shareDataDesc,
-              value: _shareData,
-              onChanged: (bool newValue) {
-                setState(() {
-                  _shareData = newValue;
-                });
-              },
-            ),
-            _buildSwitchTile(
-              title: AppStrings.receiveNotifications,
-              subtitle: AppStrings.receiveNotificationsDesc,
-              value: _receiveNotifications,
-              onChanged: (bool newValue) {
-                setState(() {
-                  _receiveNotifications = newValue;
-                });
-              },
-            ),
-            _buildSwitchTile(
-              title: 'Receive Challenge Notifications',
-              subtitle: 'Get notified about new challenges.',
-              value: _receiveChallengeNotifications,
-              onChanged: (bool newValue) {
-                setState(() {
-                  _receiveChallengeNotifications = newValue;
-                });
-              },
-            ),
-            _buildSwitchTile(
-              title: 'Daily Reminder',
-              subtitle: 'Receive a daily reminder for your tasks.',
-              value: _dailyReminder,
-              onChanged: (bool newValue) {
-                setState(() {
-                  _dailyReminder = newValue;
-                });
-              },
-            ),
-            ElevatedButton(
-              onPressed: _saveSettings,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: const Color(0xFF85C83E),
-              ),
-              child: const Text(
-                AppStrings.saveSettings,
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _logOut,
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.red,
-              ),
-              child: const Text(
-                'Log Out',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 10), // Space after the title
+
+                  DropdownButtonFormField<String>(
+                    value: _visibility,
+                    decoration: InputDecoration(labelText: 'Profile Visibility'),
+                    items: ['public', 'friendsOnly', 'private'].map((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    onChanged: (value) => setState(() => _visibility = value!),
+                  ),
+
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () async {
+                      String message = await _saveSettings();
+                      _showSnackbar(message);
+                    },
+                    child: Text('Save Changes'),
+                  ),
+                ],
               ),
             ),
           ],
@@ -200,109 +214,8 @@ class SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildListTile({
-    required String title,
-    required Widget trailing,
-  }) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimens.cardRadius),
-      ),
-      elevation: AppDimens.cardElevation,
-      color: Theme.of(context).brightness == Brightness.dark
-          ? Color(-15592942) // Dark mode background color
-          : Colors.white, // Light mode background color
-      child: ListTile(
-        title: Text(
-          title,
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : Colors.black,
-          ),
-        ),
-        trailing: trailing,
-      ),
-    );
-  }
-
-  Widget _buildSwitchTile({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppDimens.cardRadius),
-      ),
-      elevation: AppDimens.cardElevation,
-      color: Theme.of(context).brightness == Brightness.dark
-          ? Color(-15592942)
-          : Colors.white,
-      child: SwitchListTile(
-        title: Text(
-          title,
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : Colors.black,
-          ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Colors.white
-                : Colors.black,
-          ),
-        ),
-        value: value,
-        onChanged: onChanged,
-        activeColor: AppColors.switchActiveColor,
-      ),
-    );
-  }
-
-  Future<void> _saveThemePreference(bool isDarkThemeEnabled) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkThemeEnabled', isDarkThemeEnabled);
-  }
-
-  Future<void> _saveSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('shareData', _shareData);
-    await prefs.setBool('receiveNotifications', _receiveNotifications);
-    await prefs.setBool('receiveChallengeNotifications', _receiveChallengeNotifications);
-    await prefs.setBool('dailyReminder', _dailyReminder);
-    await prefs.setString('selectedLanguage', _selectedLanguage);
-
-    _showMessage(AppStrings.settingsSaved);
-  }
-
-  Future<void> _logOut() async {
-    await FirebaseAuth.instance.signOut();
-
-    scaffoldMessengerKey.currentState?.showSnackBar(
-      const SnackBar(content: Text('Logging out...')),
-    );
-
-    await Future.delayed(const Duration(seconds: 1));
-
-    Navigator.of(scaffoldMessengerKey.currentContext!).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (context) => LoginPage(
-          title: '',
-          setLocale: (locale) {},
-        ),
-      ),
-          (Route<dynamic> route) => false,
-    );
-  }
-
-  void _showMessage(String message) {
-    scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  void _showSnackbar(String message) {
+    // Show the snackbar message
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }
