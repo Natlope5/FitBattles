@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../l10n/location_tracker.dart'; // Importing the LocationTracker class for tracking distance
+import '../settings/location_tracker.dart'; // Importing the LocationTracker class for tracking distance
 
 // Stateful widget for tracking workout activities
 class WorkoutTracker extends StatefulWidget {

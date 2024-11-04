@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitbattles/challenges/challenge.dart';
 import 'package:fitbattles/challenges/challenge_data.dart';
-import 'package:fitbattles/l10n/app_localizations.dart'; // Import localization
 import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
@@ -22,21 +21,17 @@ class ChallengeSelectionWidgetState extends State<ChallengeSelectionWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(
-        context); // Localizations for text
-
     return Column(
       children: [
         DropdownButton<Challenge>(
-          hint: Text(localizations.selectChallenge), // Use localized string
+          hint: const Text('Select a Challenge'), // Hardcoded hint text
           value: selectedChallenge,
           onChanged: (Challenge? newValue) {
             setState(() {
               selectedChallenge = newValue;
             });
           },
-          items: ChallengeData.challenges.map<DropdownMenuItem<Challenge>>((
-              Challenge challenge) {
+          items: ChallengeData.challenges.map<DropdownMenuItem<Challenge>>((Challenge challenge) {
             return DropdownMenuItem<Challenge>(
               value: challenge,
               child: Text(challenge.name),
@@ -48,40 +43,33 @@ class ChallengeSelectionWidgetState extends State<ChallengeSelectionWidget> {
           onPressed: () {
             if (selectedChallenge != null) {
               String opponentToken = "example_opponent_token"; // Replace with the actual FCM token of the opponent
-              sendChallengeNotification(opponentToken, selectedChallenge!,
-                  localizations); // Pass localizations
+              sendChallengeNotification(opponentToken, selectedChallenge!);
             } else {
               // Show a message if no challenge is selected
               scaffoldMessengerKey.currentState?.showSnackBar(
-                SnackBar(content: Text(localizations
-                    .selectChallenge)), // Inform user to select a challenge
+                SnackBar(content: const Text('Please select a challenge')), // Hardcoded message
               );
             }
           },
           style: ElevatedButton.styleFrom(
             minimumSize: Size(double.infinity, AppDimens.buttonHeightMedium),
-            backgroundColor: AppColors
-                .primaryColor, // Use primary color from app colors
+            backgroundColor: AppColors.primaryColor, // Use primary color from app colors
           ),
-          child: Text(localizations.sendChallenge), // Use localized string
+          child: const Text('Send Challenge'), // Hardcoded button text
         ),
       ],
     );
   }
 
-  Future<void> sendChallengeNotification(String opponentToken,
-      Challenge selectedChallenge, AppLocalizations localizations) async {
+  Future<void> sendChallengeNotification(String opponentToken, Challenge selectedChallenge) async {
     try {
-      final challengeMessage = localizations
-          .challengeSent; // Get the localized string for "Challenge Sent"
-      final messageBody = '${localizations
-          .replacePlaceholder} ${selectedChallenge
-          .name}'; // You can customize the message body
+      final challengeMessage = 'Challenge Sent'; // Hardcoded message for "Challenge Sent"
+      final messageBody = 'You have been challenged to ${selectedChallenge.name}'; // Hardcoded message body
 
       await FirebaseFirestore.instance.collection('notifications').add({
         'to': opponentToken,
         'notification': {
-          'title': localizations.sendChallenge, // Use localized title
+          'title': 'Challenge Sent', // Hardcoded title
           'body': messageBody, // Use customized message body
         },
         'data': {
@@ -91,17 +79,14 @@ class ChallengeSelectionWidgetState extends State<ChallengeSelectionWidget> {
 
       // Use the GlobalKey to show the SnackBar
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text(
-            challengeMessage)), // Display "Challenge Sent" localized message
+        SnackBar(content: Text(challengeMessage)), // Display hardcoded "Challenge Sent" message
       );
 
-      logger.i('Challenge sent: ${selectedChallenge
-          .name}'); // Log the success message
+      logger.i('Challenge sent: ${selectedChallenge.name}'); // Log the success message
     } catch (e) {
       logger.e('Error sending notification: $e'); // Log the error message
       scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(content: Text(
-            localizations.errorLoadingLeaderboard)), // Show error message
+        SnackBar(content: const Text('Error loading leaderboard')), // Hardcoded error message
       );
     }
   }

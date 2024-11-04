@@ -1,27 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:fitbattles/l10n/app_localizations.dart'; // Adjust this import according to your project structure
 
 class ThemeSelection extends StatelessWidget {
   const ThemeSelection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.themeTitle), // Use the correct getter
+        title: const Text('Theme Selection'), // Hardcoded title
       ),
       body: Column(
         children: [
           ListTile(
-            title: Text(localizations.lightTheme), // Use the correct getter
+            title: const Text('Light Theme'), // Hardcoded light theme text
             onTap: () {
               // Handle light theme selection
             },
           ),
           ListTile(
-            title: Text(localizations.darkTheme), // Use the correct getter
+            title: const Text('Dark Theme'), // Hardcoded dark theme text
             onTap: () {
               // Handle dark theme selection
             },
@@ -31,4 +28,3 @@ class ThemeSelection extends StatelessWidget {
     );
   }
 }
-

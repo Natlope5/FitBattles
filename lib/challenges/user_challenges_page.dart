@@ -6,10 +6,10 @@ class UserChallengesPage extends StatefulWidget {
   const UserChallengesPage({super.key});
 
   @override
-  _UserChallengesPageState createState() => _UserChallengesPageState();
+  UserChallengesPageState createState() => UserChallengesPageState();
 }
 
-class _UserChallengesPageState extends State<UserChallengesPage> {
+class UserChallengesPageState extends State<UserChallengesPage> {
   final String uid = FirebaseAuth.instance.currentUser!.uid;
 
   @override
