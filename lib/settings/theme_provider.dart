@@ -55,7 +55,7 @@ class ThemeProvider with ChangeNotifier {
     brightness: Brightness.dark,
     scaffoldBackgroundColor: Colors.black,
     appBarTheme: AppBarTheme(
-      backgroundColor: Color(0xFF5D6C8A), // Blue tone
+      backgroundColor: Color(0xFF616A90), // Blue tone
       titleTextStyle: TextStyle(color: Colors.white),
     ),
     textTheme: const TextTheme(
