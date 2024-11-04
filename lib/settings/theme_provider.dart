@@ -25,8 +25,6 @@ class ThemeProvider with ChangeNotifier {
   AppTheme _selectedTheme = AppTheme.light;
   final ThemePreferences _themePreferences = ThemePreferences();
 
-
-
   ThemeProvider() {
     _loadTheme();
   }

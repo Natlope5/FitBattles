@@ -82,11 +82,13 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: const Color(0xFF5D6C8A), // Blue background
       appBar: AppBar(
-        backgroundColor: Color(-15592942),
+        backgroundColor: Colors.transparent, // Gray AppBar
         automaticallyImplyLeading: false,
         title: const Text(
           "Home Page",
           style: TextStyle(color: Colors.white),
+          AppStrings.appName,
+          style: TextStyle(color: Colors.transparent),
         ),
         actions: [
           IconButton(
@@ -132,7 +134,7 @@ class _HomePageState extends State<HomePage> {
     final textColor = themeProvider.isDarkMode ? Colors.white : Colors.black;
 
     return Container(
-      color: containerColor,
+      color: Colors.transparent,
       width: double.infinity,
       height: 200,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -153,7 +155,7 @@ class _HomePageState extends State<HomePage> {
           GestureDetector(
             onTap: _pickAndUploadImage,
             child: CircleAvatar(
-              radius: 40,
+              radius: 60,
               backgroundColor: themeProvider.isDarkMode
                   ? Colors.grey[700]
                   : Colors.grey[300],
@@ -179,7 +181,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Text(
             'Points Earned',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -196,7 +198,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 8),
           Text(
             '$pointsEarned / $pointsGoal points',
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16, color: Colors.black),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -227,7 +229,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
   Widget _buildChallengesContainer(BuildContext context,
       ThemeProvider themeProvider) {
     return Container(
@@ -248,8 +249,6 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-
-          // Existing button to navigate to user challenges
           ElevatedButton(
             onPressed: () {
               Navigator.pushNamed(context, '/user_challenges');
@@ -294,8 +293,75 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/rewards');
             },
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, // Set text color to white
-              backgroundColor: const Color(0xFF85C83E),
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
+            child: const Text('View Badges & Rewards'),
+
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/leaderboard');
+            },
+            style: ElevatedButton.styleFrom(
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
+            child: const Text('Leaderboard'),
+
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreloadedChallengesList(ThemeProvider themeProvider) {
+    return SizedBox(
+      height: 100,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: preloadedChallenges.length,
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: () {
+              _showChallengeInfo(preloadedChallenges[index]);
+            },
+            child: Container(
+              margin: const EdgeInsets.only(right: 16.0),
+              padding: const EdgeInsets.all(10.0),
+              decoration: BoxDecoration(
+                color: themeProvider.isDarkMode ? Colors.grey[700] : Colors
+                    .grey[200],
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF85C83E), width: 2),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    preloadedChallenges[index].name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(preloadedChallenges[index].type),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showChallengeInfo(Challenge challenge) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF85C83E),
+          title: Text(challenge.name),
+          content: Container(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(
+              'Type: ${challenge.type}\nStart Date: ${challenge
+                  .startDate}\nEnd Date: ${challenge.endDate}',
+              style: const TextStyle(color: Colors.black),
             ),
             child: const Text('View Badges & Rewards'), // Button text
           ),
@@ -303,7 +369,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
 
   Widget _buildWorkoutContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
@@ -321,7 +386,6 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-
           // Workout tracking button
           _buildWorkoutTrackingButton(context),
 
@@ -350,26 +414,19 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+          _buildWorkoutTrackingButton(context, themeProvider),
         ],
       ),
     );
   }
 
-
-
-
-
-  Widget _buildGoalsContainer(BuildContext context,
-      ThemeProvider themeProvider) {
+  Widget _buildGoalsContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
         color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      width: MediaQuery
-          .of(context)
-          .size
-          .width * 0.9,
+      width: MediaQuery.of(context).size.width * 0.9,
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,6 +442,7 @@ class _HomePageState extends State<HomePage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF85C83E),
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
             ),
             child: const Text('Add Goal'),
           ),
@@ -394,7 +452,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/currentGoals');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF85C83E),
+              backgroundColor: const Color(0xFF85C83E), foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
             ),
             child: const Text('Current Goals'),
           ),
@@ -437,6 +495,7 @@ class _HomePageState extends State<HomePage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF85C83E),
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
             ),
             child: const Text('View History'),
           ),
@@ -444,6 +503,10 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.pushNamed(context, '/healthReport');
             },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF85C83E),
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
+            ),
             child: const Text('View Health Report'),
           ),
         ],
@@ -562,9 +625,7 @@ class _HomePageState extends State<HomePage> {
     'assets/images/Alice.png',
   ];
 
-  // Widget to build the workout tracking navigation button
-  Widget _buildFriendsListButton(BuildContext context,
-      ThemeProvider themeProvider) {
+  Widget _buildFriendsListButton(BuildContext context, ThemeProvider themeProvider) {
     return ElevatedButton(
       onPressed: () {
         Navigator.pushNamed(
@@ -581,13 +642,13 @@ class _HomePageState extends State<HomePage> {
 }
 
 // Widget to build the workout tracking navigation button
-Widget _buildWorkoutTrackingButton(BuildContext context) {
+Widget _buildWorkoutTrackingButton(BuildContext context, ThemeProvider themeProvider) {
   return ElevatedButton(
     onPressed: () {
       Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
     },
     style: ElevatedButton.styleFrom(
-      foregroundColor: Colors.white,
+      foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
       backgroundColor: const Color(0xFF85C83E), // Use the theme color
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
     ),
