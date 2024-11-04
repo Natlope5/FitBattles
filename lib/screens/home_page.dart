@@ -108,13 +108,13 @@ class _HomePageState extends State<HomePage> {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF5D6C8A), // Blue background
+      backgroundColor: const Color(0xF5667295), // Blue background
       appBar: AppBar(
-        backgroundColor: Colors.grey[600], // Gray AppBar
+        backgroundColor: Colors.transparent, // Gray AppBar
         automaticallyImplyLeading: false,
         title: const Text(
           AppStrings.appName,
-          style: TextStyle(color: Colors.black),
+          style: TextStyle(color: Colors.transparent),
         ),
         actions: [
           IconButton(
@@ -167,7 +167,7 @@ class _HomePageState extends State<HomePage> {
     final textColor = themeProvider.isDarkMode ? Colors.white : Colors.black;
 
     return Container(
-      color: containerColor,
+      color: Colors.transparent,
       width: double.infinity,
       height: 200,
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -188,7 +188,7 @@ class _HomePageState extends State<HomePage> {
           GestureDetector(
             onTap: _pickAndUploadImage,
             child: CircleAvatar(
-              radius: 40,
+              radius: 60,
               backgroundColor: themeProvider.isDarkMode
                   ? Colors.grey[700]
                   : Colors.grey[300],
@@ -214,7 +214,7 @@ class _HomePageState extends State<HomePage> {
         children: [
           const Text(
             'Points Earned',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -231,7 +231,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 8),
           Text(
             '$pointsEarned / $pointsGoal points',
-            style: const TextStyle(fontSize: 16),
+            style: const TextStyle(fontSize: 16, color: Colors.black),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -338,7 +338,19 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.pushNamed(context, '/rewards');
             },
+            style: ElevatedButton.styleFrom(
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
             child: const Text('View Badges & Rewards'),
+
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/leaderboard');
+            },
+            style: ElevatedButton.styleFrom(
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
+            child: const Text('Leaderboard'),
+
           ),
         ],
       ),
@@ -428,7 +440,7 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 10),
           // Workout tracking button
-          _buildWorkoutTrackingButton(context),
+          _buildWorkoutTrackingButton(context, themeProvider),
         ],
       ),
     );
@@ -456,6 +468,7 @@ class _HomePageState extends State<HomePage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF85C83E),
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
             ),
             child: const Text('Add Goal'),
           ),
@@ -465,7 +478,7 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/currentGoals');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF85C83E),
+              backgroundColor: const Color(0xFF85C83E), foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
             ),
             child: const Text('Current Goals'),
           ),
@@ -508,6 +521,7 @@ class _HomePageState extends State<HomePage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF85C83E),
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
             ),
             child: const Text('View History'),
           ),
@@ -515,6 +529,10 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               Navigator.pushNamed(context, '/healthReport');
             },
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF85C83E),
+                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
+            ),
             child: const Text('View Health Report'),
           ),
         ],
@@ -651,13 +669,13 @@ class _HomePageState extends State<HomePage> {
 }
 
 // Widget to build the workout tracking navigation button
-Widget _buildWorkoutTrackingButton(BuildContext context) {
+Widget _buildWorkoutTrackingButton(BuildContext context, ThemeProvider themeProvider) {
   return ElevatedButton(
     onPressed: () {
       Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
     },
     style: ElevatedButton.styleFrom(
-      foregroundColor: Colors.white,
+      foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
       backgroundColor: const Color(0xFF85C83E), // Use the theme color
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
     ),
