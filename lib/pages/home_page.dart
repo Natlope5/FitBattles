@@ -87,8 +87,6 @@ class _HomePageState extends State<HomePage> {
         title: const Text(
           "Home Page",
           style: TextStyle(color: Colors.white),
-          AppStrings.appName,
-          style: TextStyle(color: Colors.transparent),
         ),
         actions: [
           IconButton(
@@ -129,8 +127,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildHeader(ThemeProvider themeProvider) {
-    final containerColor = themeProvider.isDarkMode ? Colors.black : Colors
-        .white;
     final textColor = themeProvider.isDarkMode ? Colors.white : Colors.black;
 
     return Container(
@@ -311,65 +307,6 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildPreloadedChallengesList(ThemeProvider themeProvider) {
-    return SizedBox(
-      height: 100,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: preloadedChallenges.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              _showChallengeInfo(preloadedChallenges[index]);
-            },
-            child: Container(
-              margin: const EdgeInsets.only(right: 16.0),
-              padding: const EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                color: themeProvider.isDarkMode ? Colors.grey[700] : Colors
-                    .grey[200],
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFF85C83E), width: 2),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    preloadedChallenges[index].name,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(preloadedChallenges[index].type),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showChallengeInfo(Challenge challenge) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF85C83E),
-          title: Text(challenge.name),
-          content: Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Type: ${challenge.type}\nStart Date: ${challenge
-                  .startDate}\nEnd Date: ${challenge.endDate}',
-              style: const TextStyle(color: Colors.black),
-            ),
-            child: const Text('View Badges & Rewards'), // Button text
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildWorkoutContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
@@ -386,11 +323,6 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          // Workout tracking button
-          _buildWorkoutTrackingButton(context),
-
-          const SizedBox(height: 10), // Add spacing between buttons
-
           // Custom Workout button
           ElevatedButton(
             onPressed: () {
