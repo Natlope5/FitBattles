@@ -2,7 +2,6 @@ import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
-import 'package:fitbattles/l10n/app_localizations.dart';
 
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});
@@ -38,20 +37,16 @@ class LeaderboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final localizations = AppLocalizations.of(context);
-    if (localizations == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
     return Scaffold(
       appBar: AppBar(
-        title: Text(localizations.leaderboardTitle),
+        title: const Text('Leaderboard'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(localizations.leaderboardRefreshed),
+                const SnackBar(
+                  content: Text('Leaderboard refreshed'),
                 ),
               );
             },
@@ -59,7 +54,7 @@ class LeaderboardPage extends StatelessWidget {
         ],
       ),
       body: useSampleData
-          ? buildLeaderboardList(context, sampleLeaderboardData, localizations)
+          ? buildLeaderboardList(context, sampleLeaderboardData)
           : StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
@@ -71,8 +66,8 @@ class LeaderboardPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(
-              child: Text(localizations.errorLoadingLeaderboard),
+            return const Center(
+              child: Text('Error loading leaderboard'),
             );
           }
           final leaderboardData = snapshot.data?.docs
@@ -80,13 +75,13 @@ class LeaderboardPage extends StatelessWidget {
               .toList() ??
               [];
 
-          return buildLeaderboardList(context, leaderboardData, localizations);
+          return buildLeaderboardList(context, leaderboardData);
         },
       ),
     );
   }
 
-  Widget buildLeaderboardList(BuildContext context, List<Map<String, dynamic>> leaderboardData, AppLocalizations localizations) {
+  Widget buildLeaderboardList(BuildContext context, List<Map<String, dynamic>> leaderboardData) {
     return leaderboardData.isNotEmpty
         ? AnimationLimiter(
       child: ListView.builder(
@@ -132,7 +127,7 @@ class LeaderboardPage extends StatelessWidget {
                       ],
                     ),
                     title: Text('#${index + 1} ${player['name'] ?? 'Unknown'}'),
-                    subtitle: Text('${localizations.streak}: ${player['streakDays'] ?? 0} ${localizations.days}'),
+                    subtitle: Text('Streak: ${player['streakDays'] ?? 0} days'),
                     trailing: Text(
                       player['score']?.toString() ?? '0',
                       style: const TextStyle(fontSize: AppDimens.scoreFontSize),
@@ -145,10 +140,10 @@ class LeaderboardPage extends StatelessWidget {
         },
       ),
     )
-        : Center(
+        : const Center(
       child: Text(
-        localizations.noLeaderboardData,
-        style: const TextStyle(fontSize: AppDimens.noDataFontSize),
+        'No leaderboard data available',
+        style: TextStyle(fontSize: AppDimens.noDataFontSize),
       ),
     );
   }
