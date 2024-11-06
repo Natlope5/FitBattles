@@ -90,6 +90,13 @@ class _HomePageState extends State<HomePage> {
         ),
         actions: [
           IconButton(
+            icon: Icon(
+                themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
+            onPressed: () {
+              themeProvider.toggleTheme(); // Toggle the theme
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.pushNamed(
