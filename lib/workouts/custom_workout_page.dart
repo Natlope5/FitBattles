@@ -2,6 +2,7 @@ import 'dart:convert'; // For encoding and decoding JSON
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // For shared preferences
+import 'package:share_plus/share_plus.dart'; // For sharing functionality
 
 class CustomWorkoutPlanPage extends StatefulWidget {
   const CustomWorkoutPlanPage({super.key});
@@ -120,6 +121,24 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     }
   }
 
+  // Function to share the workout plan
+  void _shareWorkoutPlan() {
+    final String workoutPlanText = _getWorkoutPlanText();
+    Share.share(workoutPlanText);
+  }
+
+  // Function to generate the text representation of the workout plan
+  String _getWorkoutPlanText() {
+    String planText = "Workout Plan: ${_planNameController.text}\n\n";
+    for (var exercise in _exercises) {
+      planText += "Exercise: ${exercise['name']}\n";
+      planText += "Sets: ${exercise['sets']}\n";
+      planText += "Reps: ${exercise['reps']}\n";
+      planText += "Weight: ${exercise['weight']} kg\n\n";
+    }
+    return planText;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -135,6 +154,12 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
       appBar: AppBar(
         title: const Text("Custom Workout Plan"),
         backgroundColor: const Color(0xFF5D6C8A),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: _shareWorkoutPlan, // Share button
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -262,7 +287,7 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                           ElevatedButton(
                             onPressed: _addExercise,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF5D6C8A),
+                              backgroundColor: const Color(0xFF85C83E),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -270,7 +295,8 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                             child: Text(
                               "Add Exercise",
                               style: TextStyle(
-                                  color: isDarkMode ? Colors.white : Colors.black),
+                                color: isDarkMode ? Colors.white : Colors.black,
+                              ),
                             ),
                           ),
                         ],
@@ -280,27 +306,7 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                 ),
               ),
             ),
-            const Divider(color: Colors.black),
-            Text(
-              "Exercises",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,  color: isDarkMode ? Colors.white : Colors.black),
-            ),
-            const SizedBox(height: 10),
-            ..._exercises.map((exercise) => ListTile(
-              title: Text(
-                exercise['name'],
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black, // Adjust text color
-                ),
-              ),
-              subtitle: Text(
-                "Sets: ${exercise['sets']}, Reps: ${exercise['reps']}, Weight: ${exercise['weight']} kg",
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black, // Adjust subtitle color
-                ),
-              ),
-            )),
-            const Divider(color: Colors.black),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _saveWorkoutPlan,
               style: ElevatedButton.styleFrom(
