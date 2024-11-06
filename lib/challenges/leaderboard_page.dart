@@ -6,35 +6,6 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});
 
-  final bool useSampleData = true; // Set to `true` to use sample data
-
-  List<Map<String, dynamic>> get sampleLeaderboardData => [
-    {
-      'name': 'John Doe',
-      'score': 1500,
-      'streakDays': 50,
-      'imageUrl': 'https://via.placeholder.com/150',
-    },
-    {
-      'name': 'Jane Smith',
-      'score': 1400,
-      'streakDays': 45,
-      'imageUrl': 'https://via.placeholder.com/150',
-    },
-    {
-      'name': 'Bob Brown',
-      'score': 1350,
-      'streakDays': 30,
-      'imageUrl': 'https://via.placeholder.com/150',
-    },
-    {
-      'name': 'Alice Green',
-      'score': 1200,
-      'streakDays': 20,
-      'imageUrl': 'https://via.placeholder.com/150',
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,12 +24,10 @@ class LeaderboardPage extends StatelessWidget {
           ),
         ],
       ),
-      body: useSampleData
-          ? buildLeaderboardList(context, sampleLeaderboardData)
-          : StreamBuilder<QuerySnapshot>(
+      body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
-            .orderBy('score', descending: true)
+            .orderBy('points', descending: true)
             .limit(10)
             .snapshots(),
         builder: (context, snapshot) {
@@ -70,10 +39,17 @@ class LeaderboardPage extends StatelessWidget {
               child: Text('Error loading leaderboard'),
             );
           }
-          final leaderboardData = snapshot.data?.docs
-              .map((doc) => doc.data() as Map<String, dynamic>)
-              .toList() ??
-              [];
+          // Map each document in the snapshot to a list of player data with null checks
+          final leaderboardData = snapshot.data?.docs.map((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+
+            return {
+              'name': data['name'] ?? 'Unknown',
+              'points': data['points'] ?? 0,
+              'streakDays': data['streakDays'] ?? 0,
+              'imageUrl': data['imageUrl'] ?? 'assets/default_avatar.png',
+            };
+          }).toList() ?? [];
 
           return buildLeaderboardList(context, leaderboardData);
         },
@@ -90,6 +66,7 @@ class LeaderboardPage extends StatelessWidget {
           final player = leaderboardData[index];
           String imageUrl = player['imageUrl'] ?? 'assets/default_avatar.png';
 
+          // Define trophy colors based on rank
           Color trophyColor;
           if (index == 0) {
             trophyColor = Colors.amber;
@@ -105,7 +82,7 @@ class LeaderboardPage extends StatelessWidget {
             position: index,
             duration: const Duration(milliseconds: 600),
             child: SlideAnimation(
-              horizontalOffset: -200.0, // Slide in from the left
+              horizontalOffset: -200.0,
               child: FadeInAnimation(
                 child: Card(
                   margin: const EdgeInsets.all(AppDimens.cardMargin),
@@ -126,10 +103,10 @@ class LeaderboardPage extends StatelessWidget {
                           ),
                       ],
                     ),
-                    title: Text('#${index + 1} ${player['name'] ?? 'Unknown'}'),
-                    subtitle: Text('Streak: ${player['streakDays'] ?? 0} days'),
+                    title: Text('#${index + 1} ${player['name']}'),
+                    subtitle: Text('Streak: ${player['streakDays']} days'),
                     trailing: Text(
-                      player['score']?.toString() ?? '0',
+                      player['points'].toString(),
                       style: const TextStyle(fontSize: AppDimens.scoreFontSize),
                     ),
                   ),

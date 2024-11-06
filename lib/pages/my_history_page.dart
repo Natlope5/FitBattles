@@ -42,6 +42,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
         totalCalories += calories;
       }
 
+      await _saveTotalCaloriesAsPoints(totalCalories);
       return totalCalories;
     } catch (e) {
       logger.i('Error fetching total calories burned: $e');
@@ -57,6 +58,13 @@ class MyHistoryPageState extends State<MyHistoryPage> {
       waterIntake: waterIntake,
       totalCaloriesBurned: totalCaloriesBurned,
     );
+  }
+
+  Future<void> _saveTotalCaloriesAsPoints(double totalCalories) async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'points': totalCalories,
+    });
   }
 
   // Fetch data for a specific category
