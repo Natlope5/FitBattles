@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fitbattles/settings/badge_service.dart'; // Ensure this path is correct based on your project structure
+import 'package:fitbattles/settings/badge_service.dart';
 
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});

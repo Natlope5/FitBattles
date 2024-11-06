@@ -1,6 +1,7 @@
-import 'package:fitbattles/settings/workout_plan.dart';
+import 'dart:convert'; // For encoding and decoding JSON
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // For shared preferences
 
 class CustomWorkoutPlanPage extends StatefulWidget {
   const CustomWorkoutPlanPage({super.key});
@@ -19,8 +20,8 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
   final TextEditingController _weightController = TextEditingController();
   bool _showAddExercise = false;
   final logger = Logger();
+  List<String> logMessages = [];
 
-  // Dispose controllers to free resources
   @override
   void dispose() {
     _planNameController.dispose();
@@ -31,20 +32,22 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     super.dispose();
   }
 
+  // Function to add exercises
   void _addExercise() {
-    // Validation for empty input
     if (_exerciseNameController.text.isEmpty ||
         _setsController.text.isEmpty ||
         _repsController.text.isEmpty ||
         _weightController.text.isEmpty) {
       logger.w("Exercise fields cannot be empty");
+      setState(() {
+        logMessages.add("Exercise fields cannot be empty");
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields.')),
       );
       return;
     }
 
-    // Add exercise to list
     setState(() {
       _exercises.add({
         'name': _exerciseNameController.text,
@@ -66,7 +69,8 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     });
   }
 
-  void _saveWorkoutPlan() {
+  // Function to save the workout plan to shared preferences
+  void _saveWorkoutPlan() async {
     final messenger = ScaffoldMessenger.of(context);
 
     if (_planNameController.text.isEmpty) {
@@ -76,25 +80,57 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
       return;
     }
 
-    final workoutPlan = WorkoutPlan(
-      name: _planNameController.text,
-      exercises: _exercises,
-    );
+    final workoutPlan = {
+      'name': _planNameController.text,
+      'exercises': _exercises,
+    };
 
-    saveWorkoutPlan(workoutPlan).then((_) {
+    try {
+      // Get shared preferences instance
+      final prefs = await SharedPreferences.getInstance();
+      // Convert the workout plan to a JSON string
+      String jsonPlan = json.encode(workoutPlan);
+      // Save the workout plan string to shared preferences
+      await prefs.setString('custom_workout_plan', jsonPlan);
+
       messenger.showSnackBar(
         const SnackBar(content: Text('Workout Plan Saved!')),
       );
-    }).catchError((error) {
+    } catch (error) {
       messenger.showSnackBar(
         SnackBar(content: Text('Failed to save workout plan: $error')),
       );
-    });
+    }
   }
 
+  // Function to load workout plan from shared preferences
+  void _loadWorkoutPlan() async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonPlan = prefs.getString('custom_workout_plan');
+
+    if (jsonPlan != null) {
+      final planData = json.decode(jsonPlan);
+
+      setState(() {
+        _planNameController.text = planData['name'] ?? '';
+        _exercises.clear();
+        _exercises.addAll(
+            List<Map<String, dynamic>>.from(planData['exercises']));
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadWorkoutPlan(); // Load the saved workout plan when the page is loaded
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Check for current theme brightness
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Custom Workout Plan"),
@@ -108,11 +144,14 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
               controller: _planNameController,
               decoration: InputDecoration(
                 labelText: "Workout Plan Name",
-                labelStyle: TextStyle(color: const Color(0xFF85C83E)),
+                labelStyle: const TextStyle(color: Colors.white),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
+                filled: true,
+                fillColor: Colors.black,
               ),
+              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
             ),
             const SizedBox(height: 20),
             GestureDetector(
@@ -126,23 +165,29 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                 curve: Curves.easeInOut,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.grey[800]
-                      : Colors.white,
+                  color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: const Color(0xFF85C83E),
+                    width: 1.5,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(25),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
+                      color: Colors.black.withAlpha(50),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
-                    const Text(
+                    Text(
                       "Add Exercise",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.black : Colors.white,
+                      ),
                     ),
                     AnimatedOpacity(
                       opacity: _showAddExercise ? 1.0 : 0.0,
@@ -155,7 +200,10 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                               labelText: "Exercise Name",
                               border: OutlineInputBorder(),
                               filled: true,
-                              fillColor: Colors.white,
+                              fillColor: Colors.black,
+                            ),
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black,
                             ),
                           ),
                           const SizedBox(height: 10),
@@ -167,8 +215,13 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                                   decoration: const InputDecoration(
                                     labelText: "Sets",
                                     border: OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: Colors.black,
                                   ),
                                   keyboardType: TextInputType.number,
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -178,8 +231,13 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                                   decoration: const InputDecoration(
                                     labelText: "Reps",
                                     border: OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: Colors.black,
                                   ),
                                   keyboardType: TextInputType.number,
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 10),
@@ -189,8 +247,13 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                                   decoration: const InputDecoration(
                                     labelText: "Weight (kg)",
                                     border: OutlineInputBorder(),
+                                    filled: true,
+                                    fillColor: Colors.black,
                                   ),
                                   keyboardType: TextInputType.number,
+                                  style: TextStyle(
+                                    color: isDarkMode ? Colors.white : Colors.black,
+                                  ),
                                 ),
                               ),
                             ],
@@ -204,7 +267,11 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                                 borderRadius: BorderRadius.circular(20),
                               ),
                             ),
-                            child: const Text("Add Exercise", style: TextStyle(color: Colors.white)),
+                            child: Text(
+                              "Add Exercise",
+                              style: TextStyle(
+                                  color: isDarkMode ? Colors.white : Colors.black),
+                            ),
                           ),
                         ],
                       ),
@@ -213,38 +280,45 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                 ),
               ),
             ),
-            const Divider(color: Colors.grey),
-            const Text(
+            const Divider(color: Colors.black),
+            Text(
               "Exercises",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,  color: isDarkMode ? Colors.white : Colors.black),
             ),
             const SizedBox(height: 10),
             ..._exercises.map((exercise) => ListTile(
-              title: Text(exercise['name']),
+              title: Text(
+                exercise['name'],
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black, // Adjust text color
+                ),
+              ),
               subtitle: Text(
-                  "Sets: ${exercise['sets']}, Reps: ${exercise['reps']}, Weight: ${exercise['weight']} kg"),
+                "Sets: ${exercise['sets']}, Reps: ${exercise['reps']}, Weight: ${exercise['weight']} kg",
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black, // Adjust subtitle color
+                ),
+              ),
             )),
-            const SizedBox(height: 20),
+            const Divider(color: Colors.black),
             ElevatedButton(
               onPressed: _saveWorkoutPlan,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF5D6C8A),
+                backgroundColor: const Color(0xFF85C83E),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 20),
               ),
-              child: const Text(
+              child: Text(
                 "Save Workout Plan",
-                style: TextStyle(fontSize: 16, color: Colors.white),
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
               ),
             ),
           ],
         ),
       ),
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? Colors.grey[900]
-          : Colors.white,
     );
   }
 }
