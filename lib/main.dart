@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/challenges/distance_workout_page.dart';
 import 'package:fitbattles/challenges/earned_points_page.dart';
 import 'package:fitbattles/pages/add_goal_page.dart';
+import 'package:fitbattles/pages/challenges/weekly_challenges_page.dart';
 import 'package:fitbattles/pages/community_challenge.dart';
 import 'package:fitbattles/pages/current_goals_page.dart';
 import 'package:fitbattles/workouts/custom_workout_page.dart';
@@ -73,6 +74,7 @@ class MyApp extends StatelessWidget {
             '/healthReport': (context) => const HealthReportPage(),
             '/scheduleChallenge': (context) => const CommunityChallengePage(),
             '/customWorkout': (context) => CustomWorkoutPlanPage(),
+            '/weeklyChallenges': (context) => WeeklyChallengesPage(),
           },
         );
       },
