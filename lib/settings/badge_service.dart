@@ -3,69 +3,97 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class BadgeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> checkAndAwardBadges(String userId) async {
-    final userStats = await _firestore.collection('userStats').doc(userId).get();
-    final completedChallenges = userStats.data()?['completedChallenges'] ?? 0;
-    final workoutDays = userStats.data()?['workoutDays'] ?? 0;
-    final stepsCount = userStats.data()?['dailySteps'] ?? 0;
-    final nutritionTracked = userStats.data()?['nutritionTrackedDays'] ?? 0;
-    final strengthMilestone = userStats.data()?['strengthMilestone'] ?? 0;
-    final friendsReferred = userStats.data()?['friendsReferred'] ?? 0;
-
-    // Award badges based on user statistics
-    if (completedChallenges >= 1) {
-      await _awardBadge(userId, "Core Crusher");
-    }
-    if (workoutDays >= 12) {
-      await _awardBadge(userId, "Consistent Trainer");
-    }
-    if (userStats.data()?['goalsAchieved'] ?? false) {
-      await _awardBadge(userId, "Goal Setter");
-    }
-    if (userStats.data()?['healthyHabitDays'] >= 30) {
-      await _awardBadge(userId, "Healthy Habit Builder");
-    }
-    if (userStats.data()?['communityWorkoutLed'] ?? false) {
-      await _awardBadge(userId, "Community Leader");
-    }
-    if (nutritionTracked >= 30) {
-      await _awardBadge(userId, "Nutrition Enthusiast");
-    }
-    if (stepsCount >= 10000) {
-      await _awardBadge(userId, "10K Steps a Day");
-    }
-    if (completedChallenges >= 7) {
-      await _awardBadge(userId, "Cardio King/Queen");
-    }
-    if (strengthMilestone >= 100) {
-      await _awardBadge(userId, "Strength Specialist");
-    }
-    if (friendsReferred >= 1) {
-      await _awardBadge(userId, "Fit Friend");
-    }
-  }
-
-  Future<void> _awardBadge(String userId, String badgeName) async {
-    final badgesRef = _firestore.collection('users').doc(userId).collection('badges');
-    final badgeDoc = await badgesRef.doc(badgeName).get();
-
-    if (!badgeDoc.exists) {
-      await badgesRef.doc(badgeName).set({
-        'name': badgeName,
-        'earnedDate': Timestamp.now(),
-      });
-    }
-  }
-
+  // Fetch badges from Firestore
   Future<List<Map<String, String>>> fetchBadges(String userId) async {
-    final badgesRef = _firestore.collection('users').doc(userId).collection('badges');
-    final querySnapshot = await badgesRef.get();
+    try {
+      final snapshot = await _firestore
+          .collection('badges')
+          .where('userId', isEqualTo: userId)
+          .get();
 
-    return querySnapshot.docs.map((doc) {
-      return {
-        'name': doc['name'] as String, // Ensure this is a string
-        'earnedDate': (doc['earnedDate'] as Timestamp).toDate().toString(), // Convert to string
-      };
-    }).toList();
+      if (snapshot.docs.isEmpty) {
+        return [];
+      }
+
+      return snapshot.docs.map((doc) {
+        final badgeData = doc.data();
+        return {
+          'name': badgeData['name']?.toString() ?? 'Unnamed Badge',
+          'dateEarned': (badgeData['dateEarned'] as Timestamp?)?.toDate().toString() ?? 'N/A',
+        };
+      }).toList();
+    } catch (e) {
+      throw Exception('Error fetching badges: $e');
+    }
+  }
+
+  // Fetch current points from Firestore
+  // Fetch current points from Firestore
+  Future<int> fetchUserPoints(String userId) async {
+    try {
+      final doc = await _firestore.collection('users').doc(userId).get();
+      // Make sure the document exists and has data before attempting to access the points field
+      if (doc.exists && doc.data() != null) {
+        final points = doc.data()?['points'];
+        if (points is double) {
+          return points.toInt(); // Convert double to int
+        }
+        return points ?? 0; // In case points is an int, just return it
+      } else {
+        return 0; // Return 0 if no data is found for the user
+      }
+    } catch (e) {
+      throw Exception('Error fetching user points: $e');
+    }
+  }
+
+
+  // Update points in Firestore
+  Future<void> updatePoints(String userId, int points) async {
+    try {
+      final userRef = _firestore.collection('users').doc(userId);
+      await userRef.update({'points': points});
+    } catch (e) {
+      throw Exception('Error updating points: $e');
+    }
+  }
+
+  // Earn a badge (this can still be used as part of earning criteria)
+  Future<void> earnBadge(String userId, String badgeName) async {
+    try {
+      final badgeRef = _firestore.collection('badges').doc(); // New document for a new badge
+      final currentDate = Timestamp.now(); // Current date/time to store when the badge is earned
+
+      await badgeRef.set({
+        'userId': userId,
+        'name': badgeName,
+        'dateEarned': currentDate,
+      });
+    } catch (e) {
+      throw Exception('Error saving badge: $e');
+    }
+  }
+
+  // Logic to handle points for burning calories
+  Future<void> awardPointsForCaloriesBurned(String userId, int caloriesBurned) async {
+    // Example: Earn 1 point for every 100 calories burned
+    final pointsEarned = caloriesBurned ~/ 100;
+    if (pointsEarned > 0) {
+      final currentPoints = await fetchUserPoints(userId);
+      final newTotalPoints = currentPoints + pointsEarned;
+      await updatePoints(userId, newTotalPoints);
+    }
+  }
+
+  // Logic to handle points for winning challenges
+  Future<void> awardPointsForChallengeWin(String userId, String challengeName) async {
+    // Example: Earn 50 points for winning a challenge
+    final pointsEarned = 50; // Fixed points for winning a challenge
+    final currentPoints = await fetchUserPoints(userId);
+    final newTotalPoints = currentPoints + pointsEarned;
+    await updatePoints(userId, newTotalPoints);
+
+    // Optionally, you could also earn a badge for winning a challenge:
+    await earnBadge(userId, 'Challenge Winner: $challengeName');
   }
 }

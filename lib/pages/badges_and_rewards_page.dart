@@ -11,16 +11,19 @@ class RewardsPage extends StatefulWidget {
 
 class RewardsPageState extends State<RewardsPage> {
   final BadgeService badgeService = BadgeService();
+  late Future<int> userPoints;
   late Future<List<Map<String, String>>> badges;
 
   @override
   void initState() {
     super.initState();
-    User? currentUser = FirebaseAuth.instance.currentUser; // Get the current user
+    User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      badges = badgeService.fetchBadges(currentUser.uid); // Use the actual user ID
+      userPoints = badgeService.fetchUserPoints(currentUser.uid);
+      badges = badgeService.fetchBadges(currentUser.uid);
     } else {
-      badges = Future.value([]); // Handle the case where there's no logged-in user
+      userPoints = Future.value(0); // Handle the case where the user is not logged in
+      badges = Future.value([]); // Handle the case where no badges are earned
     }
   }
 
@@ -37,11 +40,33 @@ class RewardsPageState extends State<RewardsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Your Badges',
+              'Your Badges & Points',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(height: 20),
+            FutureBuilder<int>(
+              future: userPoints,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData) {
+                  return const Center(child: Text('No points available.'));
+                }
+
+                final points = snapshot.data ?? 0;
+                return Text(
+                  'Points: $points',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -53,50 +78,17 @@ class RewardsPageState extends State<RewardsPage> {
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No badges earned yet.'));
+                    return const Center(child: Text('No badges earned.'));
                   }
 
-                  final badgeList = snapshot.data!;
-
-                  return GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
-                    itemCount: badgeList.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final badge = badgeList[index];
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 4,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.star, // Placeholder icon for badges
-                              size: 50,
-                              color: Colors.orange,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              badge['name'] ?? 'Badge Name',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              'Earned: ${badge['dateEarned'] ?? 'N/A'}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
+                  final badges = snapshot.data ?? [];
+                  return ListView.builder(
+                    itemCount: badges.length,
+                    itemBuilder: (context, index) {
+                      final badge = badges[index];
+                      return ListTile(
+                        title: Text(badge['name'] ?? 'Unknown Badge'),
+                        subtitle: Text(badge['dateEarned'] ?? 'Date N/A'),
                       );
                     },
                   );
