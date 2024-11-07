@@ -61,26 +61,46 @@ class SettingsPageState extends State<SettingsPage> {
         // Convert height to total inches
         int totalHeightInInches = (int.parse(_heightFeet) * 12) + int.parse(_heightInches);
 
-        await _firestore.collection('users').doc(user.uid).update({
-          'name': _name,
-          'bio': _bio,
-          'age': _age,
-          'weight': _weight, // in lbs
-          'height_inches': totalHeightInInches, // total height in inches
-          'share_data': _shareData,
-          'receive_notifications': _receiveNotifications,
-          'visibility': _visibility,
-        });
+        DocumentReference userDoc = _firestore.collection('users').doc(user.uid);
+
+        // Check if the document exists
+        bool docExists = (await userDoc.get()).exists;
+
+        if (docExists) {
+          // Update the document
+          await userDoc.update({
+            'name': _name,
+            'bio': _bio,
+            'age': _age,
+            'weight': _weight, // in lbs
+            'height_inches': totalHeightInInches,
+            'share_data': _shareData,
+            'receive_notifications': _receiveNotifications,
+            'visibility': _visibility,
+          });
+        } else {
+          // Create the document if it does not exist
+          await userDoc.set({
+            'name': _name,
+            'bio': _bio,
+            'age': _age,
+            'weight': _weight,
+            'height_inches': totalHeightInInches,
+            'share_data': _shareData,
+            'receive_notifications': _receiveNotifications,
+            'visibility': _visibility,
+          });
+        }
 
         // Reload the user settings after saving
         await _loadUserSettings();
 
         return 'Settings updated successfully!';
       } catch (e) {
-        return 'Failed to update settings: ${e.toString()}'; // Include error message
+        return 'Failed to update settings: ${e.toString()}';
       }
     }
-    return 'Failed to update settings: Form validation error'; // Validation error message
+    return 'Failed to update settings: Form validation error';
   }
 
   // Logout the user
