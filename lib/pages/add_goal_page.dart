@@ -6,10 +6,10 @@ class AddGoalPage extends StatefulWidget {
   const AddGoalPage({super.key});
 
   @override
-  _AddGoalPageState createState() => _AddGoalPageState();
+  AddGoalPageState createState() => AddGoalPageState();
 }
 
-class _AddGoalPageState extends State<AddGoalPage> {
+class AddGoalPageState extends State<AddGoalPage> {
   final TextEditingController _goalNameController = TextEditingController();
   final TextEditingController _goalAmountController = TextEditingController();
 
@@ -17,9 +17,11 @@ class _AddGoalPageState extends State<AddGoalPage> {
     final String goalName = _goalNameController.text;
     final double? goalAmount = double.tryParse(_goalAmountController.text);
 
+    String message;
+
     if (goalName.isNotEmpty && goalAmount != null) {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
-      List<String>? goalHistory = prefs.getStringList('currentGoals') ?? [];
+      List<String> goalHistory = prefs.getStringList('currentGoals') ?? [];
 
       // Add new goal to the list
       final newGoal = {
@@ -34,18 +36,22 @@ class _AddGoalPageState extends State<AddGoalPage> {
       // Save back to SharedPreferences
       await prefs.setStringList('currentGoals', goalHistory);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Goal added successfully!')),
-      );
+      message = 'Goal added successfully!';
 
       // Clear inputs
       _goalNameController.clear();
       _goalAmountController.clear();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter valid goal name and amount.')),
-      );
+      message = 'Please enter valid goal name and amount.';
     }
+
+    // Ensure the widget is still mounted before accessing context
+    if (!mounted) return;
+
+    // Show the message in a snackbar after async operations are done
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
