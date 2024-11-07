@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class CustomWorkoutPlanPage extends StatefulWidget {
   const CustomWorkoutPlanPage({super.key});
@@ -24,10 +25,18 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
   final logger = Logger();
   List<String> logMessages = [];
 
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+
   @override
   void initState() {
     super.initState();
     _loadExercises(); // Load exercises when the page is first opened
+
+    // Initialize the notification plugin
+    var initializationSettings = InitializationSettings(
+      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+    );
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   @override
@@ -59,6 +68,23 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     prefs.setString('exercises', exercisesString);
   }
 
+  // Function to show a notification
+  Future<void> _showNotification(String title, String body) async {
+    var androidDetails = AndroidNotificationDetails(
+      'channel_id',
+      'channel_name',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+    var notificationDetails = NotificationDetails(android: androidDetails);
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      notificationDetails,
+    );
+  }
+
   // Function to add exercises
   void _addExercise() {
     if (_exerciseNameController.text.isEmpty ||
@@ -71,38 +97,35 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
         logMessages.add("All fields, including day selection, must be filled");
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields.')),
+        const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
 
     setState(() {
       _exercises.add({
-        'day': _selectedDay,
         'name': _exerciseNameController.text,
         'sets': int.tryParse(_setsController.text) ?? 0,
         'reps': int.tryParse(_repsController.text) ?? 0,
         'weight': double.tryParse(_weightController.text) ?? 0.0,
+        'day': _selectedDay,
       });
-      _exerciseNameController.clear();
-      _setsController.clear();
-      _repsController.clear();
-      _weightController.clear();
-      _showAddExercise = true; // Show the confirmation message
-
-      // Log the exercise added message
-      logMessages.add("Exercise added: ${_exerciseNameController.text} on $_selectedDay");
-
-      // Hide the add exercise confirmation message after 2 seconds
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() {
-          _showAddExercise = false; // Hide the confirmation message
-        });
-      });
-
-      // Save exercises to SharedPreferences
-      _saveExercises();
+      _showAddExercise = true; // Show success message after adding
+      logMessages.add("Exercise added successfully");
     });
+
+    _saveExercises();
+    logger.i("Exercise added: ${_exerciseNameController.text}");
+
+    // Call _showNotification to notify the user
+    _showNotification("Exercise Added", "You have added a new exercise: ${_exerciseNameController.text}");
+
+    // Clear text fields after adding an exercise
+    _exerciseNameController.clear();
+    _setsController.clear();
+    _repsController.clear();
+    _weightController.clear();
+    _selectedDay = null;
   }
 
   // Function to delete exercise
@@ -115,13 +138,6 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
 
   // Function to share the workout plan
   void _shareWorkoutPlan() {
-    if (_exercises.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No exercises to share. Please add some.')),
-      );
-      return;
-    }
-
     final StringBuffer shareContent = StringBuffer("My Workout Plan:\n\n");
     for (var exercise in _exercises) {
       shareContent.writeln(
@@ -156,19 +172,14 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
               value: _selectedDay,
               hint: const Text("Select a day"),
               items: _daysOfWeek.map((String day) {
-                return DropdownMenuItem<String>(
-                  value: day,
-                  child: Text(day),
-                );
+                return DropdownMenuItem<String>(value: day, child: Text(day));
               }).toList(),
               onChanged: (value) {
                 setState(() {
                   _selectedDay = value;
                 });
               },
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ),
+              decoration: const InputDecoration(border: OutlineInputBorder()),
             ),
             const SizedBox(height: 10),
             TextField(
@@ -252,33 +263,25 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
                   ),
                 ),
               ),
-            const SizedBox(height: 20),
-            const Text(
-              "Added Exercises",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
             const SizedBox(height: 10),
-            ListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _exercises.length,
-              itemBuilder: (context, index) {
-                final exercise = _exercises[index];
-                return ListTile(
-                  title: Text("${exercise['name']} (${exercise['day']})"),
+            // Display added exercises
+            ..._exercises.map((exercise) {
+              return Card(
+                elevation: 2.0,
+                margin: const EdgeInsets.symmetric(vertical: 5),
+                child: ListTile(
+                  title: Text(exercise['name']),
                   subtitle: Text(
-                      "Sets: ${exercise['sets']} Reps: ${exercise['reps']} Weight: ${exercise['weight']} kg"),
+                      "${exercise['day']}: ${exercise['sets']} sets x ${exercise['reps']} reps @ ${exercise['weight']} kg"),
                   trailing: IconButton(
                     icon: const Icon(Icons.delete),
-                    color: Colors.red,
-                    onPressed: () => _deleteExercise(index), // Delete the exercise
+                    onPressed: () {
+                      _deleteExercise(_exercises.indexOf(exercise));
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            }),
           ],
         ),
       ),
