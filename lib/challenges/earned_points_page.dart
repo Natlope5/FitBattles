@@ -20,8 +20,8 @@ class EarnedPointsPage extends StatelessWidget {
         title: const Text(AppStrings.earnedPointsTitle),
         backgroundColor: AppColors.appBarColor,
       ),
-      body: StreamBuilder<Map<String, dynamic>>(
-        stream: pointsService.getUserStatsStream(userId), // Use stream for real-time updates
+      body: FutureBuilder<int>(
+        future: pointsService.calculateTotalPoints(userId), // Get the total points
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -30,16 +30,10 @@ class EarnedPointsPage extends StatelessWidget {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          final userStats = snapshot.data!;
-          final points = (userStats['points'] ?? 0).toInt();
-          final streakDays = (userStats['streakDays'] ?? 0).toInt();
-          final totalChallengesCompleted = (userStats['totalChallengesCompleted'] ?? 0).toInt();
-          final pointsEarnedToday = (userStats['pointsEarnedToday'] ?? 0).toInt();
-          final bestDayPoints = (userStats['bestDayPoints'] ?? 0).toInt();
-
-          double progress = points / 1000;
-          List<String> awards = _determineAwards(totalChallengesCompleted);
-          String rank = _determineRank(points);
+          final totalPoints = snapshot.data ?? 0;
+          double progress = totalPoints / 1000; // Assuming 1000 points is the goal
+          List<String> awards = _determineAwards(totalPoints);
+          String rank = _determineRank(totalPoints);
 
           return Padding(
             padding: const EdgeInsets.all(AppDimens.padding),
@@ -54,7 +48,7 @@ class EarnedPointsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  '$points ${AppStrings.pointsLabel}',
+                  '$totalPoints ${AppStrings.pointsLabel}',
                   style: TextStyle(
                       fontSize: AppDimens.pointsSize,
                       fontWeight: FontWeight.bold,
@@ -106,10 +100,10 @@ class EarnedPointsPage extends StatelessWidget {
 
                 // Stats Section
                 EarnedPointsStatsSection(
-                  totalChallengesCompleted: totalChallengesCompleted,
-                  pointsEarnedToday: pointsEarnedToday,
-                  bestDayPoints: bestDayPoints,
-                  streakDays: streakDays,
+                  totalChallengesCompleted: (snapshot.data ?? 0), // Adjust if needed
+                  pointsEarnedToday: 0, // You can add logic here if needed
+                  bestDayPoints: 0, // You can add logic here if needed
+                  streakDays: 0, // You can add logic here if needed
                 ),
 
                 const SizedBox(height: 30),
@@ -130,17 +124,17 @@ class EarnedPointsPage extends StatelessWidget {
     );
   }
 
-  // Determines the awards based on completed challenges
-  List<String> _determineAwards(int challengesCompleted) {
+  // Determines the awards based on total points
+  List<String> _determineAwards(int points) {
     List<String> awards = [];
-    if (challengesCompleted >= 5) awards.add(AppStrings.bronzeTrophy);
-    if (challengesCompleted >= 10) awards.add(AppStrings.silverTrophy);
-    if (challengesCompleted >= 20) awards.add(AppStrings.goldTrophy);
-    if (challengesCompleted >= 50) awards.add(AppStrings.platinumTrophy);
+    if (points >= 500) awards.add(AppStrings.bronzeTrophy);
+    if (points >= 1000) awards.add(AppStrings.silverTrophy);
+    if (points >= 2000) awards.add(AppStrings.goldTrophy);
+    if (points >= 5000) awards.add(AppStrings.platinumTrophy);
     return awards;
   }
 
-  // Determines the rank based on earned points
+  // Determines the rank based on total points
   String _determineRank(int points) {
     if (points < 100) {
       return 'Novice';
