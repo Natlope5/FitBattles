@@ -3,6 +3,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PointsService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  // Stream to get real-time user stats updates
+  Stream<Map<String, dynamic>> getUserStatsStream(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((snapshot) => snapshot.data() as Map<String, dynamic>);
+  }
+
   // Fetch points won for a user
   Future<int> getPointsWon(String userId) async {
     try {

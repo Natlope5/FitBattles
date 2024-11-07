@@ -204,28 +204,22 @@ class _HomePageState extends State<HomePage> {
             style: const TextStyle(fontSize: 16, color: Colors.black),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                  const EarnedPointsPage(
-                    points: 1000,
-                    streakDays: 350,
-                    totalChallengesCompleted: 0,
-                    pointsEarnedToday: 0,
-                    bestDayPoints: 0,
-                    userId: '',
-                  ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EarnedPointsPage(
+                  userId: widget.id, // Only pass userId, as EarnedPointsPage fetches other data from Firebase
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, // Set text color to white
-              backgroundColor: const Color(0xFF85C83E),
-            ),
-            child: const Text('View Earned Points'),
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: const Color(0xFF85C83E),
+          ),
+          child: const Text('View Earned Points'),
           ),
         ],
       ),

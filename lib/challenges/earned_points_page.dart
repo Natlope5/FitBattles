@@ -7,9 +7,9 @@ import 'package:fitbattles/points/earned_points_stats_section.dart';
 import 'package:fitbattles/settings/points_service.dart';
 
 class EarnedPointsPage extends StatelessWidget {
-  final String userId; // Pass the userId from the previous page
+  final String userId;
 
-  const EarnedPointsPage({super.key, required this.userId, required int points, required int streakDays, required int totalChallengesCompleted, required int pointsEarnedToday, required int bestDayPoints});
+  const EarnedPointsPage({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +20,8 @@ class EarnedPointsPage extends StatelessWidget {
         title: const Text(AppStrings.earnedPointsTitle),
         backgroundColor: AppColors.appBarColor,
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: pointsService.getUserStats(userId), // Fetch user stats
+      body: StreamBuilder<Map<String, dynamic>>(
+        stream: pointsService.getUserStatsStream(userId), // Use stream for real-time updates
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -31,11 +31,11 @@ class EarnedPointsPage extends StatelessWidget {
           }
 
           final userStats = snapshot.data!;
-          final points = userStats['points'] ?? 0;
-          final streakDays = userStats['streakDays'] ?? 0;
-          final totalChallengesCompleted = userStats['totalChallengesCompleted'] ?? 0;
-          final pointsEarnedToday = userStats['pointsEarnedToday'] ?? 0;
-          final bestDayPoints = userStats['bestDayPoints'] ?? 0;
+          final points = (userStats['points'] ?? 0).toInt();
+          final streakDays = (userStats['streakDays'] ?? 0).toInt();
+          final totalChallengesCompleted = (userStats['totalChallengesCompleted'] ?? 0).toInt();
+          final pointsEarnedToday = (userStats['pointsEarnedToday'] ?? 0).toInt();
+          final bestDayPoints = (userStats['bestDayPoints'] ?? 0).toInt();
 
           double progress = points / 1000;
           List<String> awards = _determineAwards(totalChallengesCompleted);
@@ -64,7 +64,7 @@ class EarnedPointsPage extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
-                    value: progress,
+                    value: progress.clamp(0.0, 1.0),
                     minHeight: 10,
                     backgroundColor: Colors.grey[300],
                     color: AppColors.progressColor,
