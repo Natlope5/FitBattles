@@ -1,8 +1,8 @@
-import 'dart:convert'; // For encoding and decoding JSON
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // For shared preferences
-import 'package:share_plus/share_plus.dart'; // For sharing functionality
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class CustomWorkoutPlanPage extends StatefulWidget {
   const CustomWorkoutPlanPage({super.key});
@@ -14,7 +14,8 @@ class CustomWorkoutPlanPage extends StatefulWidget {
 class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     with TickerProviderStateMixin {
   final List<Map<String, dynamic>> _exercises = [];
-  final TextEditingController _planNameController = TextEditingController();
+  final List<String> _daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  String? _selectedDay;
   final TextEditingController _exerciseNameController = TextEditingController();
   final TextEditingController _setsController = TextEditingController();
   final TextEditingController _repsController = TextEditingController();
@@ -24,8 +25,13 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
   List<String> logMessages = [];
 
   @override
+  void initState() {
+    super.initState();
+    _loadExercises(); // Load exercises when the page is first opened
+  }
+
+  @override
   void dispose() {
-    _planNameController.dispose();
     _exerciseNameController.dispose();
     _setsController.dispose();
     _repsController.dispose();
@@ -33,15 +39,36 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     super.dispose();
   }
 
+  // Function to load exercises from SharedPreferences
+  Future<void> _loadExercises() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? exercisesString = prefs.getString('exercises');
+    if (exercisesString != null) {
+      List<dynamic> exercisesList = jsonDecode(exercisesString);
+      setState(() {
+        _exercises.clear();
+        _exercises.addAll(exercisesList.map((e) => Map<String, dynamic>.from(e)));
+      });
+    }
+  }
+
+  // Function to save exercises to SharedPreferences
+  Future<void> _saveExercises() async {
+    final prefs = await SharedPreferences.getInstance();
+    String exercisesString = jsonEncode(_exercises);
+    prefs.setString('exercises', exercisesString);
+  }
+
   // Function to add exercises
   void _addExercise() {
     if (_exerciseNameController.text.isEmpty ||
         _setsController.text.isEmpty ||
         _repsController.text.isEmpty ||
-        _weightController.text.isEmpty) {
-      logger.w("Exercise fields cannot be empty");
+        _weightController.text.isEmpty ||
+        _selectedDay == null) {
+      logger.w("All fields, including day selection, must be filled");
       setState(() {
-        logMessages.add("Exercise fields cannot be empty");
+        logMessages.add("All fields, including day selection, must be filled");
       });
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields.')),
@@ -51,6 +78,7 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
 
     setState(() {
       _exercises.add({
+        'day': _selectedDay,
         'name': _exerciseNameController.text,
         'sets': int.tryParse(_setsController.text) ?? 0,
         'reps': int.tryParse(_repsController.text) ?? 0,
@@ -60,89 +88,47 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
       _setsController.clear();
       _repsController.clear();
       _weightController.clear();
-      _showAddExercise = true;
+      _showAddExercise = true; // Show the confirmation message
 
-      Future.delayed(const Duration(milliseconds: 200), () {
+      // Log the exercise added message
+      logMessages.add("Exercise added: ${_exerciseNameController.text} on $_selectedDay");
+
+      // Hide the add exercise confirmation message after 2 seconds
+      Future.delayed(const Duration(seconds: 2), () {
         setState(() {
-          _showAddExercise = false;
+          _showAddExercise = false; // Hide the confirmation message
         });
       });
+
+      // Save exercises to SharedPreferences
+      _saveExercises();
     });
   }
 
-  // Function to save the workout plan to shared preferences
-  void _saveWorkoutPlan() async {
-    final messenger = ScaffoldMessenger.of(context);
-
-    if (_planNameController.text.isEmpty) {
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Please enter a workout plan name.')),
-      );
-      return;
-    }
-
-    final workoutPlan = {
-      'name': _planNameController.text,
-      'exercises': _exercises,
-    };
-
-    try {
-      // Get shared preferences instance
-      final prefs = await SharedPreferences.getInstance();
-      // Convert the workout plan to a JSON string
-      String jsonPlan = json.encode(workoutPlan);
-      // Save the workout plan string to shared preferences
-      await prefs.setString('custom_workout_plan', jsonPlan);
-
-      messenger.showSnackBar(
-        const SnackBar(content: Text('Workout Plan Saved!')),
-      );
-    } catch (error) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('Failed to save workout plan: $error')),
-      );
-    }
-  }
-
-  // Function to load workout plan from shared preferences
-  void _loadWorkoutPlan() async {
-    final prefs = await SharedPreferences.getInstance();
-    final jsonPlan = prefs.getString('custom_workout_plan');
-
-    if (jsonPlan != null) {
-      final planData = json.decode(jsonPlan);
-
-      setState(() {
-        _planNameController.text = planData['name'] ?? '';
-        _exercises.clear();
-        _exercises.addAll(
-            List<Map<String, dynamic>>.from(planData['exercises']));
-      });
-    }
+  // Function to delete exercise
+  void _deleteExercise(int index) {
+    setState(() {
+      _exercises.removeAt(index);
+    });
+    _saveExercises(); // Save the updated list after deletion
   }
 
   // Function to share the workout plan
   void _shareWorkoutPlan() {
-    final String workoutPlanText = _getWorkoutPlanText();
-    Share.share(workoutPlanText);
-  }
-
-  // Function to generate the text representation of the workout plan
-  String _getWorkoutPlanText() {
-    String planText = "Workout Plan: ${_planNameController.text}\n\n";
-    for (var exercise in _exercises) {
-      planText += "Exercise: ${exercise['name']}\n";
-      planText += "Sets: ${exercise['sets']}\n";
-      planText += "Reps: ${exercise['reps']}\n";
-      planText += "Weight: ${exercise['weight']} kg\n\n";
+    if (_exercises.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No exercises to share. Please add some.')),
+      );
+      return;
     }
-    return planText;
-  }
 
-  @override
-  void initState() {
-    super.initState();
-    _loadWorkoutPlan(); // Load the saved workout plan when the page is loaded
+    final StringBuffer shareContent = StringBuffer("My Workout Plan:\n\n");
+    for (var exercise in _exercises) {
+      shareContent.writeln(
+          "${exercise['day']}: ${exercise['name']} - ${exercise['sets']} sets x ${exercise['reps']} reps @ ${exercise['weight']} kg");
+    }
+
+    Share.share(shareContent.toString());
   }
 
   @override
@@ -157,7 +143,8 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
-            onPressed: _shareWorkoutPlan, // Share button
+            onPressed: _shareWorkoutPlan,
+            tooltip: 'Share Workout Plan',
           ),
         ],
       ),
@@ -165,162 +152,132 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            TextField(
-              controller: _planNameController,
-              decoration: InputDecoration(
-                labelText: "Workout Plan Name",
-                labelStyle: const TextStyle(color: Colors.white),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                filled: true,
-                fillColor: Colors.black,
-              ),
-              style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
-            ),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: () {
+            DropdownButtonFormField<String>(
+              value: _selectedDay,
+              hint: const Text("Select a day"),
+              items: _daysOfWeek.map((String day) {
+                return DropdownMenuItem<String>(
+                  value: day,
+                  child: Text(day),
+                );
+              }).toList(),
+              onChanged: (value) {
                 setState(() {
-                  _showAddExercise = !_showAddExercise;
+                  _selectedDay = value;
                 });
               },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 500),
-                curve: Curves.easeInOut,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey[800] : Colors.grey[100],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: const Color(0xFF85C83E),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(50),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      "Add Exercise",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.black : Colors.white,
-                      ),
-                    ),
-                    AnimatedOpacity(
-                      opacity: _showAddExercise ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 300),
-                      child: Column(
-                        children: [
-                          TextField(
-                            controller: _exerciseNameController,
-                            decoration: const InputDecoration(
-                              labelText: "Exercise Name",
-                              border: OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Colors.black,
-                            ),
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.white : Colors.black,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _setsController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Sets",
-                                    border: OutlineInputBorder(),
-                                    filled: true,
-                                    fillColor: Colors.black,
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: TextField(
-                                  controller: _repsController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Reps",
-                                    border: OutlineInputBorder(),
-                                    filled: true,
-                                    fillColor: Colors.black,
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: TextField(
-                                  controller: _weightController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Weight (kg)",
-                                    border: OutlineInputBorder(),
-                                    filled: true,
-                                    fillColor: Colors.black,
-                                  ),
-                                  keyboardType: TextInputType.number,
-                                  style: TextStyle(
-                                    color: isDarkMode ? Colors.white : Colors.black,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          ElevatedButton(
-                            onPressed: _addExercise,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF85C83E),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            child: Text(
-                              "Add Exercise",
-                              style: TextStyle(
-                                color: isDarkMode ? Colors.white : Colors.black,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _exerciseNameController,
+              decoration: const InputDecoration(
+                labelText: "Exercise Name",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _setsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Sets",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _repsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Reps",
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _weightController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: "Weight (kg)",
+                border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _saveWorkoutPlan,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF85C83E),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+              onPressed: _addExercise,
+              child: const Text("Add Exercise"),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "Log Messages",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(8.0),
+              height: 150,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: logMessages.map((msg) {
+                    return Text(
+                      msg,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
-              child: Text(
-                "Save Workout Plan",
-                style: TextStyle(
-                  color: isDarkMode ? Colors.white : Colors.black,
+            ),
+            const SizedBox(height: 20),
+            if (_showAddExercise)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  color: Colors.green,
+                  padding: const EdgeInsets.all(8.0),
+                  child: const Text(
+                    'Exercise added successfully!',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
+            const SizedBox(height: 20),
+            const Text(
+              "Added Exercises",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _exercises.length,
+              itemBuilder: (context, index) {
+                final exercise = _exercises[index];
+                return ListTile(
+                  title: Text("${exercise['name']} (${exercise['day']})"),
+                  subtitle: Text(
+                      "Sets: ${exercise['sets']} Reps: ${exercise['reps']} Weight: ${exercise['weight']} kg"),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete),
+                    color: Colors.red,
+                    onPressed: () => _deleteExercise(index), // Delete the exercise
+                  ),
+                );
+              },
             ),
           ],
         ),
