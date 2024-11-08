@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class CurrentGoalsPage extends StatefulWidget {
   const CurrentGoalsPage({super.key});
@@ -11,11 +12,44 @@ class CurrentGoalsPage extends StatefulWidget {
 
 class CurrentGoalsPageState extends State<CurrentGoalsPage> {
   List<Map<String, dynamic>> _currentGoals = [];
+  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
     _loadCurrentGoals();
+    _initializeNotifications();
+  }
+
+  // Initialize notifications
+  Future<void> _initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+    await _notificationsPlugin.initialize(initializationSettings);
+  }
+
+  // Show notification
+  Future<void> _showNotification(String title, String body) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+      'goal_channel', // Channel ID
+      'Goal Notifications', // Channel Name
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await _notificationsPlugin.show(
+      0, // Notification ID
+      title, // Title
+      body, // Body
+      platformChannelSpecifics, // Notification details
+      payload: 'Some data', // Optional payload
+    );
   }
 
   // Load goals from SharedPreferences
@@ -26,7 +60,7 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
     if (savedGoals != null) {
       setState(() {
         _currentGoals = savedGoals
-            .map((goal) => jsonDecode(goal) as Map<String, dynamic>) // Decode and cast to the correct type
+            .map((goal) => jsonDecode(goal) as Map<String, dynamic>)
             .toList();
       });
     }
@@ -38,25 +72,27 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
       _currentGoals[index]['currentProgress'] = progress;
       if (progress >= _currentGoals[index]['amount']) {
         _currentGoals[index]['isCompleted'] = true;
+        // Trigger notification when goal is completed
+        _showNotification(
+            'Goal Achieved!',
+            'You have completed the goal: ${_currentGoals[index]['name']}');
       }
     });
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> updatedGoals =
-    _currentGoals.map((goal) => jsonEncode(goal)).toList();
+    List<String> updatedGoals = _currentGoals.map((goal) => jsonEncode(goal)).toList();
     await prefs.setStringList('currentGoals', updatedGoals);
   }
 
   // Delete a goal
   Future<void> _deleteGoal(int index) async {
     setState(() {
-      _currentGoals.removeAt(index); // Remove the goal from the list
+      _currentGoals.removeAt(index);
     });
 
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String> updatedGoals =
-    _currentGoals.map((goal) => jsonEncode(goal)).toList();
-    await prefs.setStringList('currentGoals', updatedGoals); // Update SharedPreferences
+    List<String> updatedGoals = _currentGoals.map((goal) => jsonEncode(goal)).toList();
+    await prefs.setStringList('currentGoals', updatedGoals);
   }
 
   @override
@@ -70,11 +106,8 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
         itemBuilder: (context, index) {
           final goal = _currentGoals[index];
 
-          // Ensure the goal data is properly initialized and handled
           double currentProgress = goal['currentProgress']?.toDouble() ?? 0.0;
           double amount = goal['amount']?.toDouble() ?? 0.0;
-
-          // Clamp the value of currentProgress to be within the range of 0 and the amount
           currentProgress = currentProgress.clamp(0.0, amount);
 
           return Card(
@@ -84,9 +117,7 @@ class CurrentGoalsPageState extends State<CurrentGoalsPage> {
               subtitle: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Progress: $currentProgress / $amount',
-                  ),
+                  Text('Progress: $currentProgress / $amount'),
                   Slider(
                     value: currentProgress,
                     min: 0,
