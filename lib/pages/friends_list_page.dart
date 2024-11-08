@@ -1,7 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/settings/app_colors.dart';
 import 'package:fitbattles/settings/app_dimens.dart';
 import 'package:flutter/material.dart';
 import 'package:fitbattles/settings/app_strings.dart';
+
+import '../main.dart';
 
 class FriendsListPage extends StatefulWidget {
   const FriendsListPage({super.key});
@@ -11,23 +15,49 @@ class FriendsListPage extends StatefulWidget {
 }
 
 class _FriendsListPage extends State<FriendsListPage> {
-  final List<Map<String, dynamic>> exampleFriends = [
-    {'name': 'Bob', 'image': 'assets/images/Bob.png'},
-    {'name': 'Charlie', 'image': 'assets/images/Charlie.png'},
-    // ... other friends
-  ];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   List<Map<String, dynamic>> addedFriends = [];
   String searchQuery = '';
+  List<Map<String, dynamic>> friends = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFriends();
+  }
+
+  // Fetch the list of users from Firestore
+  Future<void> _loadFriends() async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser != null) {
+        final snapshot = await _firestore.collection('users').get();
+        setState(() {
+          friends = snapshot.docs.map((doc) {
+            return {
+              'name': doc['name'],
+              'image': doc['imageUrl'], // assuming 'imageUrl' field exists
+            };
+          }).toList();
+        });
+      }
+    } catch (e) {
+      logger.e('Error loading friends: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final filteredFriends = exampleFriends.where((friend) {
+    final filteredFriends = friends.where((friend) {
       return friend['name'].toLowerCase().contains(searchQuery.toLowerCase());
     }).toList();
 
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDarkTheme ? Colors.white : Colors.black;
+    final backgroundColor = isDarkTheme ? Colors.grey[800] : Colors.white;
+    final inputFieldColor = isDarkTheme ? Colors.grey[800] : Colors.white;
 
     return Scaffold(
       appBar: AppBar(
@@ -46,7 +76,7 @@ class _FriendsListPage extends State<FriendsListPage> {
                 labelText: AppStrings.searchFriendsLabel,
                 labelStyle: TextStyle(color: textColor),
                 border: const OutlineInputBorder(),
-                fillColor: isDarkTheme ? Colors.grey[800] : Colors.white,
+                fillColor: inputFieldColor,
                 filled: true,
               ),
               style: TextStyle(color: textColor),
@@ -58,40 +88,43 @@ class _FriendsListPage extends State<FriendsListPage> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: filteredFriends.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: ClipOval(
-                    child: Image.asset(
-                      filteredFriends[index]['image'],
-                      fit: BoxFit.cover,
+            child: Container(
+              color: backgroundColor,
+              child: ListView.builder(
+                itemCount: filteredFriends.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: ClipOval(
+                      child: Image.network(
+                        filteredFriends[index]['image'],
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    filteredFriends[index]['name'],
-                    style: TextStyle(color: textColor),
-                  ),
-                  tileColor: AppColors.tileColor,
-                  trailing: IconButton(
-                    icon: Icon(Icons.add, color: textColor),
-                    onPressed: () {
-                      setState(() {
-                        addedFriends.add(filteredFriends[index]);
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${filteredFriends[index]['name']} ${AppStrings.addedFriendMessage}',
-                            style: TextStyle(color: textColor),
+                    title: Text(
+                      filteredFriends[index]['name'],
+                      style: TextStyle(color: textColor),
+                    ),
+                    tileColor: backgroundColor,
+                    trailing: IconButton(
+                      icon: Icon(Icons.add, color: textColor),
+                      onPressed: () {
+                        setState(() {
+                          addedFriends.add(filteredFriends[index]);
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              '${filteredFriends[index]['name']} ${AppStrings.addedFriendMessage}',
+                              style: TextStyle(color: textColor),
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                  onTap: () => showFriendInfoDialog(filteredFriends[index]),
-                );
-              },
+                        );
+                      },
+                    ),
+                    onTap: () => showFriendInfoDialog(filteredFriends[index]),
+                  );
+                },
+              ),
             ),
           ),
           const Divider(),
@@ -118,31 +151,34 @@ class _FriendsListPage extends State<FriendsListPage> {
             ),
           )
               : Expanded(
-            child: ListView.builder(
-              itemCount: addedFriends.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: ClipOval(
-                    child: Image.asset(
-                      addedFriends[index]['image'],
-                      fit: BoxFit.cover,
+            child: Container(
+              color: backgroundColor,
+              child: ListView.builder(
+                itemCount: addedFriends.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    leading: ClipOval(
+                      child: Image.network(
+                        addedFriends[index]['image'],
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                  ),
-                  title: Text(
-                    addedFriends[index]['name'],
-                    style: TextStyle(color: textColor),
-                  ),
-                  tileColor: AppColors.tileColor,
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: AppColors.deleteIconColor),
-                    onPressed: () {
-                      setState(() {
-                        addedFriends.removeAt(index);
-                      });
-                    },
-                  ),
-                );
-              },
+                    title: Text(
+                      addedFriends[index]['name'],
+                      style: TextStyle(color: textColor),
+                    ),
+                    tileColor: backgroundColor,
+                    trailing: IconButton(
+                      icon: Icon(Icons.delete, color: AppColors.deleteIconColor),
+                      onPressed: () {
+                        setState(() {
+                          addedFriends.removeAt(index);
+                        });
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -166,7 +202,7 @@ class _FriendsListPage extends State<FriendsListPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ClipOval(
-                child: Image.asset(
+                child: Image.network(
                   friend['image'],
                   width: AppDimens.avatarSize,
                   height: AppDimens.avatarSize,
