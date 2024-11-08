@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
 
@@ -133,6 +134,7 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+
   Widget _buildHeader(ThemeProvider themeProvider) {
     final textColor = themeProvider.isDarkMode ? Colors.white : Colors.black;
 
@@ -209,20 +211,14 @@ class _HomePageState extends State<HomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                  const EarnedPointsPage(
-                    points: 1000,
-                    streakDays: 350,
-                    totalChallengesCompleted: 0,
-                    pointsEarnedToday: 0,
-                    bestDayPoints: 0,
-                    userId: '',
+                  builder: (context) => EarnedPointsPage(
+                    userId: widget.id, // Only pass userId, as EarnedPointsPage fetches other data from Firebase
                   ),
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, // Set text color to white
+              foregroundColor: Colors.white,
               backgroundColor: const Color(0xFF85C83E),
             ),
             child: const Text('View Earned Points'),
@@ -232,17 +228,15 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildChallengesContainer(BuildContext context,
-      ThemeProvider themeProvider) {
+
+
+  Widget _buildChallengesContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
       decoration: BoxDecoration(
         color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
         borderRadius: BorderRadius.circular(10),
       ),
-      width: MediaQuery
-          .of(context)
-          .size
-          .width * 0.9,
+      width: MediaQuery.of(context).size.width * 0.9,
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,32 +246,8 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/user_challenges');
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, // Set text color to white
-              backgroundColor: const Color(0xFF85C83E),
-            ),
-            child: const Text('Challenges'), // Button text
-          ),
-          const SizedBox(height: 16),
 
-          // New button for scheduling a challenge
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(
-                  context, '/scheduleChallenge'); // Navigate to scheduling page
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, // Set text color to white
-              backgroundColor: const Color(0xFF85C83E),
-            ),
-            child: const Text('Community Challenges'), // New button text
-          ),
-
-          // Existing button to create a new challenge
+          // New button for creating a new challenge (1st)
           ElevatedButton(
             onPressed: () {
               Navigator.pushNamed(context, '/create_challenge');
@@ -290,29 +260,59 @@ class _HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 16),
 
-          // Existing button to view badges & rewards
+          // New button for scheduling a community challenge (2nd)
           ElevatedButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/rewards');
+              Navigator.pushNamed(context, '/scheduleChallenge'); // Navigate to scheduling page
             },
             style: ElevatedButton.styleFrom(
-                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
-            child: const Text('View Badges & Rewards'),
-
+              foregroundColor: Colors.white, // Set text color to white
+              backgroundColor: const Color(0xFF85C83E),
+            ),
+            child: const Text('Community Challenges'), // Button text
           ),
+          const SizedBox(height: 16),
+
+          // Button to view the leaderboard (3rd)
           ElevatedButton(
             onPressed: () {
               Navigator.pushNamed(context, '/leaderboard');
             },
             style: ElevatedButton.styleFrom(
-                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
+            ),
             child: const Text('Leaderboard'),
+          ),
+          const SizedBox(height: 16),
 
+          // Button to view badges & rewards (4th)
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/rewards');
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
+            ),
+            child: const Text('View Badges & Rewards'),
+          ),
+          const SizedBox(height: 16),
+
+          // Button to view all challenges (5th)
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/user_challenges');
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: Colors.white, // Set text color to white
+              backgroundColor: const Color(0xFF85C83E),
+            ),
+            child: const Text('Challenges'), // Button text
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildWorkoutContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
@@ -563,6 +563,8 @@ class _HomePageState extends State<HomePage> {
     'assets/images/Diana.png',
     'assets/images/Alice.png',
   ];
+
+
 
   Widget _buildFriendsListButton(BuildContext context, ThemeProvider themeProvider) {
     return ElevatedButton(

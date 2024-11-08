@@ -19,6 +19,36 @@ class FirebaseAuthService {
     }
   }
 
+  Future<void> addStatsToFirestore(String userId) async {
+    try {
+      // Reference to the user's document in Firestore
+      DocumentReference userDoc = FirebaseFirestore.instance.collection('users').doc(userId);
+
+      // Firestore document data
+      Map<String, dynamic> userStats = {
+        'pointsEarned': 1200,  // Total points the user has earned
+        'pointsGoal': 1500,    // User's goal
+        'totalChallengesCompleted': 50,  // Total number of challenges completed
+        'pointsEarnedToday': 20,  // Points earned today
+        'bestDayPoints': 50,  // Points earned on their best day
+        'streakDays': 5,  // Active streak of days
+      };
+
+      // Set the data in Firestore
+      await userDoc.set(userStats);
+      logger.i("User stats added to Firestore!");
+    } catch (e) {
+      logger.e("Error adding stats to Firestore: $e");
+    }
+  }
+
+
+
+
+
+
+
+
   /// Register a new user with email and password
   Future<String> register(String email, String password, int age, String bio, double height, double weight, String name, String visibility) async {
     try {

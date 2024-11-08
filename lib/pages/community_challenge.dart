@@ -63,6 +63,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
 
     return Scaffold(
       appBar: AppBar(
+        title: Text('Community Challenges'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -83,7 +84,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
               ),
             ),
             const SizedBox(height: 20),
-
+            // Text fields for creating a custom challenge
             _buildTextField('Challenge Name', challengeNameController, isDarkTheme),
             const SizedBox(height: 16),
             _buildTextField('Challenge Description', challengeDescriptionController, isDarkTheme, maxLines: 3),
@@ -108,6 +109,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
 
             const Text('Join a Community Challenge:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
+            // Display preloaded challenges
             Expanded(
               child: ListView.builder(
                 itemCount: communityChallenges.length,
@@ -135,6 +137,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
               ),
             ),
 
+            // Button to create a custom challenge
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF85C83E),
@@ -159,6 +162,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     );
   }
 
+  // Create challenge with custom ID
   void createChallengeWithId(String challengeId, String name, String description) {
     CollectionReference challengesRef = _firestore.collection('communityChallenges');
     challengesRef.doc(challengeId).set({
@@ -166,6 +170,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
       'description': description,
       'participants': [],
       'intensity': challengeIntensity,
+      'createdAt': FieldValue.serverTimestamp(),
     }).then((_) {
       logger.i('Challenge created with custom ID: $challengeId');
     }).catchError((error) {
@@ -173,25 +178,35 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     });
   }
 
-  void _joinChallenge(String challenge) {
+  // Join a community challenge
+  void _joinChallenge(String challengeName) {
     String userId = "currentUserId"; // Replace with actual user ID retrieval logic
     CollectionReference challengesRef = _firestore.collection('communityChallenges');
 
-    challengesRef.doc(challenge).update({
-      'participants': FieldValue.arrayUnion([userId])
-    }).then((_) {
-      _showSnackBar('Successfully joined $challenge!');
+    challengesRef.where('name', isEqualTo: challengeName).get().then((querySnapshot) {
+      if (querySnapshot.docs.isNotEmpty) {
+        String challengeId = querySnapshot.docs.first.id;
+        challengesRef.doc(challengeId).update({
+          'participants': FieldValue.arrayUnion([userId])
+        }).then((_) {
+          _showSnackBar('Successfully joined $challengeName!');
+        }).catchError((error) {
+          _showSnackBar('Failed to join $challengeName: ${error.toString()}');
+        });
+      }
     }).catchError((error) {
-      _showSnackBar('Failed to join $challenge: ${error.toString()}');
+      _showSnackBar('Failed to join $challengeName: ${error.toString()}');
     });
   }
 
+  // Show Snackbar message
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
 
+  // Build text fields for user input
   Widget _buildTextField(String label, TextEditingController controller, bool isDarkTheme, {int maxLines = 1}) {
     return TextField(
       controller: controller,
