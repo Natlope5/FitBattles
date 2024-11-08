@@ -11,6 +11,20 @@ class EarnedPointsPage extends StatelessWidget {
 
   const EarnedPointsPage({super.key, required this.userId});
 
+  static Future<Map<String, dynamic>> _fetchUserStatistics(String userId, PointsService pointsService) async {
+    final totalPoints = await pointsService.calculateTotalPoints(userId);
+    final pointsEarnedToday = await pointsService.calculatePointsEarnedToday(userId);
+    final bestDayPoints = await pointsService.calculateBestDayPoints(userId);
+    final streakDays = await pointsService.calculateStreakDays(userId);
+
+    return {
+      'totalPoints': totalPoints,
+      'pointsEarnedToday': pointsEarnedToday,
+      'bestDayPoints': bestDayPoints,
+      'streakDays': streakDays,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     PointsService pointsService = PointsService();
@@ -20,8 +34,8 @@ class EarnedPointsPage extends StatelessWidget {
         title: const Text(AppStrings.earnedPointsTitle),
         backgroundColor: AppColors.appBarColor,
       ),
-      body: FutureBuilder<int>(
-        future: pointsService.calculateTotalPoints(userId), // Get the total points
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _fetchUserStatistics(userId, pointsService),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -30,23 +44,27 @@ class EarnedPointsPage extends StatelessWidget {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          final totalPoints = snapshot.data ?? 0;
+          final totalPoints = snapshot.data?['totalPoints'] ?? 0;
+          final pointsEarnedToday = snapshot.data?['pointsEarnedToday'] ?? 0;
+          final bestDayPoints = snapshot.data?['bestDayPoints'] ?? 0;
+          final streakDays = snapshot.data?['streakDays'] ?? 0;
+
           double progress = totalPoints / 1000; // Assuming 1000 points is the goal
           List<String> awards = _determineAwards(totalPoints);
           String rank = _determineRank(totalPoints);
 
-          return Padding(
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(AppDimens.padding),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 const Text(
                   AppStrings.earnedPointsTitle,
                   style: TextStyle(
                       fontSize: AppDimens.titleSize, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 Text(
                   '$totalPoints ${AppStrings.pointsLabel}',
                   style: TextStyle(
@@ -54,7 +72,7 @@ class EarnedPointsPage extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                       color: AppColors.totalPointsColor),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: LinearProgressIndicator(
@@ -69,7 +87,7 @@ class EarnedPointsPage extends StatelessWidget {
                   '${(progress * 100).toStringAsFixed(1)}${AppStrings.goalPercentageLabel}',
                   style: const TextStyle(fontSize: AppDimens.statsTextSize),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
 
                 if (progress < 1) ...[
                   const Text(
@@ -77,14 +95,14 @@ class EarnedPointsPage extends StatelessWidget {
                     style: TextStyle(
                         fontSize: AppDimens.statsTextSize, color: Colors.grey),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
                 ] else ...[
                   const Text(
                     AppStrings.congratulationsMessage,
                     style: TextStyle(
                         fontSize: AppDimens.statsTextSize, color: Colors.green),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 15),
                 ],
 
                 Text(
@@ -100,21 +118,10 @@ class EarnedPointsPage extends StatelessWidget {
 
                 // Stats Section
                 EarnedPointsStatsSection(
-                  totalChallengesCompleted: (snapshot.data ?? 0), // Adjust if needed
-                  pointsEarnedToday: 0, // You can add logic here if needed
-                  bestDayPoints: 0, // You can add logic here if needed
-                  streakDays: 0, // You can add logic here if needed
-                ),
-
-                const SizedBox(height: 30),
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: AppColors.appBarColor,
-                    minimumSize: Size(double.infinity, AppDimens.buttonHeight),
-                  ),
-                  child: const Text(AppStrings.backToHomeButton),
+                  totalChallengesCompleted: 0, // Placeholder if not tracked
+                  pointsEarnedToday: pointsEarnedToday,
+                  bestDayPoints: bestDayPoints,
+                  streakDays: streakDays,
                 ),
               ],
             ),
