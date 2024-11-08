@@ -16,16 +16,25 @@ class WeeklyChallengesPageState extends State<WeeklyChallengesPage> {
   @override
   void initState() {
     super.initState();
-    _fetchChallenge();
+    _fetchChallengeData();
   }
 
-  Future<void> _fetchChallenge() async {
-    _challengeData = await _challengeService.getCurrentWeeklyChallenge();
-    setState(() {}); // Refresh UI with new data
+  Future<void> _fetchChallengeData() async {
+    final challenge = await _challengeService.getCurrentWeeklyChallenge();
+    final userProgress = await _challengeService.getUserChallengeProgress();
+
+    setState(() {
+      _challengeData = challenge;
+      _userProgress = userProgress;
+    });
   }
 
-  void _updateProgress() async {
+  void _updateProgress(int progress) async {
+    setState(() {
+      _userProgress = progress;
+    });
     await _challengeService.updateUserChallengeProgress(_userProgress);
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Progress updated')),
@@ -51,7 +60,7 @@ class WeeklyChallengesPageState extends State<WeeklyChallengesPage> {
             const SizedBox(height: 10),
             Text(_challengeData!['description'] ?? 'Complete this challenge!'),
             const SizedBox(height: 20),
-            Text('Your Progress: $_userProgress'),
+            Text('Your Progress: $_userProgress%'),
             Slider(
               min: 0,
               max: 100,
@@ -62,8 +71,9 @@ class WeeklyChallengesPageState extends State<WeeklyChallengesPage> {
                 });
               },
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _updateProgress,
+              onPressed: () => _updateProgress(_userProgress),
               child: const Text('Update Progress'),
             ),
           ],
