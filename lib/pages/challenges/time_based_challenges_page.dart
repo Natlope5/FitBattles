@@ -52,7 +52,7 @@ class TimeBasedChallengesPageState extends State<TimeBasedChallengesPage> {
     await prefs.setInt('weekly_challenge_progress', _weeklyProgress);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Weekly progress saved locally')),
+        const SnackBar(content: Text('Weekly progress saved!')),
       );
     }
   }
@@ -66,7 +66,7 @@ class TimeBasedChallengesPageState extends State<TimeBasedChallengesPage> {
     await prefs.setInt('monthly_challenge_progress', _monthlyProgress);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Monthly progress saved locally')),
+        const SnackBar(content: Text('Monthly progress saved!')),
       );
     }
   }
