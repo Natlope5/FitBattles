@@ -6,10 +6,10 @@ class CurrentGoalsPage extends StatefulWidget {
   const CurrentGoalsPage({super.key});
 
   @override
-  _CurrentGoalsPageState createState() => _CurrentGoalsPageState();
+  CurrentGoalsPageState createState() => CurrentGoalsPageState();
 }
 
-class _CurrentGoalsPageState extends State<CurrentGoalsPage> {
+class CurrentGoalsPageState extends State<CurrentGoalsPage> {
   List<Map<String, dynamic>> _currentGoals = [];
 
   @override

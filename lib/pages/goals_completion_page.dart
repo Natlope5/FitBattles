@@ -6,10 +6,10 @@ class GoalCompletionPage extends StatefulWidget {
   const GoalCompletionPage({super.key});
 
   @override
-  _GoalCompletionPageState createState() => _GoalCompletionPageState();
+  GoalCompletionPageState createState() => GoalCompletionPageState();
 }
 
-class _GoalCompletionPageState extends State<GoalCompletionPage> {
+class GoalCompletionPageState extends State<GoalCompletionPage> {
   List<Map<String, dynamic>> _completedGoals = [];
   int _completedGoalCount = 0;
 

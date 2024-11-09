@@ -7,10 +7,10 @@ class WorkoutTrackingPage extends StatefulWidget {
   const WorkoutTrackingPage({super.key});
 
   @override
-  _WorkoutTrackingPageState createState() => _WorkoutTrackingPageState();
+  WorkoutTrackingPageState createState() => WorkoutTrackingPageState();
 }
 
-class _WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
+class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
   bool isWorkingOut = false;
   Duration workoutDuration = Duration.zero;
   final TextEditingController _durationController = TextEditingController(); // Controller for manually inputting workout duration
