@@ -261,11 +261,11 @@ class _HomePageState extends State<HomePage> {
               ),
               ElevatedButton(
                 onPressed: () {
-                  Navigator.pushNamed(context, '/weeklyChallenges');
+                  Navigator.pushNamed(context, '/timeBasedChallenges');
                 },
                 style: ElevatedButton.styleFrom(
                     foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
-                child: const Text('Weekly Challenges'),
+                child: const Text('Time-Based Challenges'),
               ),
             ],
           ),
