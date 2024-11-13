@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
-// This is the main page for displaying the leaderboard
 class LeaderboardPage extends StatefulWidget {
   const LeaderboardPage({super.key});
 
@@ -10,65 +10,58 @@ class LeaderboardPage extends StatefulWidget {
 }
 
 class LeaderboardPageState extends State<LeaderboardPage> {
-  // List to hold the leaderboard data retrieved from Firestore
   final List<Map<String, dynamic>> _leaderboardData = [];
 
-  // Initializes the page and listens for updates to the leaderboard
   @override
   void initState() {
     super.initState();
-    _listenToLeaderboardChanges(); // Listen for real-time updates from Firestore
+    _listenToLeaderboardChanges();
   }
 
-  // Listens for real-time changes in the leaderboard data from Firestore
   void _listenToLeaderboardChanges() {
     FirebaseFirestore.instance
-        .collection('users') // Refers to the 'users' collection in Firestore
-        .orderBy('points', descending: true) // Orders users by points in descending order
-        .snapshots() // Listens to real-time updates
+        .collection('users')
+        .orderBy('points', descending: true)
+        .snapshots()
         .listen((snapshot) {
-      if (snapshot.docs.isNotEmpty) { // Check if there are any documents in the snapshot
+      if (snapshot.docs.isNotEmpty) {
         final newLeaderboardData = snapshot.docs.map((doc) {
-          final data = doc.data(); // Retrieves the document data
+          final data = doc.data();
           return {
-            'id': doc.id, // Document ID (used to update points later)
-            'name': data['name'] ?? 'Unknown', // User's name, default to 'Unknown' if not available
-            'points': data['points'] ?? 0, // User's points, default to 0 if not available
-            'streakDays': data['streakDays'] ?? 0, // User's streak, default to 0 if not available
-            'imageUrl': data['imageUrl'] ?? 'assets/default_avatar.png', // User's profile image URL, default to 'assets/default_avatar.png'
+            'id': doc.id,
+            'name': data['name'] ?? 'Unknown',
+            'points': data['points'] ?? 0,
+            'streakDays': data['streakDays'] ?? 0,
+            'imageUrl': data['imageUrl'] ?? 'assets/default_avatar.png',
           };
-        }).toList(); // Convert the documents to a list of maps
+        }).toList();
 
-        // Update the state with the new leaderboard data
         setState(() {
-          _leaderboardData.clear(); // Clear the old leaderboard data
-          _leaderboardData.addAll(newLeaderboardData); // Add the new leaderboard data
+          _leaderboardData.clear();
+          _leaderboardData.addAll(newLeaderboardData);
         });
       }
     });
   }
 
-  // Function to update the user's points in Firestore
   Future<void> _updateUserPoints(String userId, int pointsToAdd) async {
     final DocumentReference userRef = FirebaseFirestore.instance.collection('users').doc(userId);
 
     try {
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final DocumentSnapshot userSnapshot = await transaction.get(userRef);
-        if (userSnapshot.exists) { // If the user exists
-          final int currentPoints = userSnapshot['points'] ?? 0; // Get the current points, default to 0 if not available
-          transaction.update(userRef, {'points': currentPoints + pointsToAdd}); // Update the points
+        if (userSnapshot.exists) {
+          final int currentPoints = userSnapshot['points'] ?? 0;
+          transaction.update(userRef, {'points': currentPoints + pointsToAdd});
         }
       });
 
-      // Show success message if the points were updated successfully
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Points updated successfully')),
         );
       }
     } catch (e) {
-      // Show error message if the points update failed
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to update points: $e')),
@@ -77,67 +70,84 @@ class LeaderboardPageState extends State<LeaderboardPage> {
     }
   }
 
-  // Builds the UI for the leaderboard page
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Leaderboard'), // Title for the app bar
+        title: const Text('Leaderboard'),
         actions: [
-          // Refresh button to reload leaderboard data
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _listenToLeaderboardChanges,
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _buildLeaderboardList(context), // Displays the leaderboard list
-          ),
-        ],
-      ),
+      body: _buildLeaderboardList(context),
     );
   }
 
-  // Builds the list of leaderboard items
   Widget _buildLeaderboardList(BuildContext context) {
-    return _leaderboardData.isNotEmpty // Checks if there is any leaderboard data
-        ? ListView.builder(
-      itemCount: _leaderboardData.length, // Number of items in the leaderboard
-      itemBuilder: (context, index) {
-        final player = _leaderboardData[index]; // Get the player data for the current index
-        String imageUrl = player['imageUrl'] ?? 'assets/default_avatar.png'; // Get the player's image URL, default to the avatar if not available
+    return _leaderboardData.isNotEmpty
+        ? AnimationLimiter(
+      child: ListView.builder(
+        itemCount: _leaderboardData.length,
+        itemBuilder: (context, index) {
+          final player = _leaderboardData[index];
+          String imageUrl = player['imageUrl'];
 
-        // Determine the trophy color based on the player's rank
-        Color trophyColor;
-        if (index == 0) {
-          trophyColor = Colors.amber; // First place: Gold
-        } else if (index == 1) {
-          trophyColor = Colors.grey; // Second place: Silver
-        } else if (index == 2) {
-          trophyColor = Colors.brown; // Third place: Bronze
-        } else {
-          trophyColor = Colors.transparent; // No trophy for others
-        }
+          Color trophyColor;
+          if (index == 0) {
+            trophyColor = Colors.amber;
+          } else if (index == 1) {
+            trophyColor = Colors.grey;
+          } else if (index == 2) {
+            trophyColor = Colors.brown;
+          } else {
+            trophyColor = Colors.transparent;
+          }
 
-        // Return the ListTile widget for each leaderboard item
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundImage: imageUrl.startsWith('http')
-                ? NetworkImage(imageUrl) // Use a network image if the URL starts with 'http'
-                : AssetImage(imageUrl) as ImageProvider, // Use an asset image if it's a local file
-          ),
-          title: Text(player['name']), // Display the player's name
-          subtitle: Text('Points: ${player['points']}'), // Display the player's points
-          trailing: Icon(Icons.star, color: trophyColor), // Display the trophy icon
-          onTap: () {
-            _updateUserPoints(player['id'], 10); // Update the player's points when tapped
-          },
-        );
-      },
+          return AnimationConfiguration.staggeredList(
+            position: index,
+            duration: const Duration(milliseconds: 600),
+            child: SlideAnimation(
+              horizontalOffset: -200.0,
+              child: FadeInAnimation(
+                child: Card(
+                  margin: const EdgeInsets.all(8.0),
+                  child: ListTile(
+                    leading: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CircleAvatar(
+                          backgroundImage: imageUrl.startsWith('http')
+                              ? NetworkImage(imageUrl)
+                              : AssetImage(imageUrl) as ImageProvider,
+                          radius: 24.0,
+                        ),
+                        if (index < 3)
+                          Positioned(
+                            bottom: 0,
+                            child: Icon(Icons.emoji_events, color: trophyColor),
+                          ),
+                      ],
+                    ),
+                    title: Text('#${index + 1} ${player['name']}'),
+                    subtitle: Text('Streak: ${player['streakDays']} days'),
+                    trailing: Text(
+                      player['points'].toString(),
+                      style: const TextStyle(fontSize: 16.0),
+                    ),
+                    onTap: () {
+                      _updateUserPoints(player['id'], 10);
+                    },
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     )
-        : const Center(child: Text('No leaderboard data available.')); // Show a message if there is no leaderboard data
+        : const Center(child: Text('No leaderboard data available.'));
   }
 }
