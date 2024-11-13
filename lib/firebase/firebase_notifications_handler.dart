@@ -69,7 +69,8 @@ class NotificationsHandler {
       showWhen: false,
     );
 
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifics);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       0,
@@ -77,12 +78,15 @@ class NotificationsHandler {
       'Don\'t forget to drink water!',
       tz.TZDateTime.now(tz.local).add(const Duration(hours: 1)),
       platformChannelSpecifics,
-      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation
+          .absoluteTime,
       matchDateTimeComponents: DateTimeComponents.time,
+      androidScheduleMode: AndroidScheduleMode
+          .exact, // Provide an enum value here
     );
   }
 
-  void _handleNotificationTap(Map<String, dynamic> data) {
+    void _handleNotificationTap(Map<String, dynamic> data) {
     final String? route = data['route'];
     if (route != null) {
       logger.d('Navigating to route: $route');

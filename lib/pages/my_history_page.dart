@@ -22,7 +22,6 @@ class HistoryData {
 }
 
 class MyHistoryPageState extends State<MyHistoryPage> {
-
   // Fetch total calories burned
   Future<double> _fetchTotalCaloriesBurned() async {
     try {
@@ -140,6 +139,8 @@ class MyHistoryPageState extends State<MyHistoryPage> {
   // Build the main UI of the History Page
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My History'),
@@ -150,12 +151,12 @@ class MyHistoryPageState extends State<MyHistoryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Summary',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF5D6C8A),
+                color: isDarkMode ? Colors.white : const Color(0xFF5D6C8A),
               ),
             ),
             const SizedBox(height: 20),
@@ -170,7 +171,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
                   } else if (snapshot.hasData) {
                     final data = snapshot.data!;
                     return ListView(
-                      children: _buildHistoryCards(data.waterIntake, data.totalCaloriesBurned),
+                      children: _buildHistoryCards(data.waterIntake, data.totalCaloriesBurned, isDarkMode),
                     );
                   } else {
                     return const Center(child: Text('No data available.'));
@@ -185,7 +186,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
   }
 
   // Build the history cards dynamically
-  List<Widget> _buildHistoryCards(double waterIntake, double totalCaloriesBurned) {
+  List<Widget> _buildHistoryCards(double waterIntake, double totalCaloriesBurned, bool isDarkMode) {
     final historyData = {
       'Points Won': 150,
       'Calories Lost': totalCaloriesBurned,
@@ -209,19 +210,19 @@ class MyHistoryPageState extends State<MyHistoryPage> {
           leading: _getIconForCategory(entry.key),
           title: Text(
             entry.key,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           subtitle: Text(
             entry.key == 'Friends Involved' || entry.key == 'Goals & Achievements'
                 ? 'Tap to view'
                 : '${entry.value}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           trailing: const Icon(
@@ -274,19 +275,21 @@ class MyHistoryPageState extends State<MyHistoryPage> {
       case 'Calories Lost':
         return const Icon(Icons.local_fire_department, color: Colors.redAccent);
       case 'Water Intake (liters)':
-        return const Icon(Icons.local_drink, color: Colors.lightBlueAccent);
+        return const Icon(Icons.local_drink, color: Colors.blue);
       case 'Workout Sessions':
         return const Icon(Icons.fitness_center, color: Colors.green);
       case 'Challenges Won':
-        return const Icon(Icons.emoji_events, color: Colors.orangeAccent);
+        return const Icon(Icons.check_circle, color: Colors.green);
       case 'Challenges Lost':
-        return const Icon(Icons.sentiment_dissatisfied, color: Colors.grey);
+        return const Icon(Icons.cancel, color: Colors.red);
       case 'Challenges Tied':
-        return const Icon(Icons.thumbs_up_down, color: Colors.blueGrey);
+        return const Icon(Icons.exposure, color: Colors.grey);
+      case 'Friends Involved':
+        return const Icon(Icons.people, color: Colors.teal);
       case 'Goals & Achievements':
-        return const Icon(Icons.flag, color: Colors.blueAccent); // Icon for Goals
+        return const Icon(Icons.emoji_events, color: Colors.orange);
       default:
-        return const Icon(Icons.help_outline, color: Colors.teal);
+        return const Icon(Icons.help, color: Colors.black);
     }
   }
 }

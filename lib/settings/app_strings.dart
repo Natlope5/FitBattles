@@ -408,6 +408,56 @@ class AppStrings {
 
   static String loggedOut = "You have been logged out successfully.";
 
+
+
+
+
+  // Titles
+  static const String pointsInfoTitle = 'Points Information';
+  static const String createProfileTitle = 'Create Profile';
+  static const String settingsTitle = 'Settings';
+
+
+
+
+  // Messages
+
+  static const String fetchErrorMessage = 'Error loading data, please try again later.';
+
+  // Button Labels
+
+  static const String registerButton = 'Register';
+
+  static const String viewLeaderboardButton = 'View Leaderboard';
+  static const String addGoalButton = 'Add Goal';
+
+  // Navigation Titles
+  static const String homePageTitle = 'Home';
+  static const String friendsPageTitle = 'Friends';
+  static const String historyPageTitle = 'History';
+  static const String workoutTrackingPageTitle = 'Workout Tracking';
+  static const String healthReportPageTitle = 'Health Report';
+  static const String rewardsPageTitle = 'Badges and Rewards';
+
+  // Placeholder Texts
+  static const String emailPlaceholder = 'Enter your email';
+  static const String passwordPlaceholder = 'Enter your password';
+
+  // Notifications
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }
 
 
