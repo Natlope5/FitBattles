@@ -58,7 +58,7 @@ class WorkoutSuggestionPage extends StatelessWidget {
               color: Colors.green[50],
               child: ListTile(
                 title: const Text('Keep Going!'),
-                subtitle: Text("You're ${goalProgress}% towards your goal. Try a 5-minute cardio boost!"),
+                subtitle: Text("You're $goalProgress% towards your goal. Try a 5-minute cardio boost!"),
                 leading: const Icon(Icons.directions_run, color: Colors.green),
                 trailing: GestureDetector(
                   onTap: () => Navigator.push(

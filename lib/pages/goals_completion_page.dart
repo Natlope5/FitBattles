@@ -6,10 +6,10 @@ class GoalCompletionPage extends StatefulWidget {
   const GoalCompletionPage({super.key});
 
   @override
-  _GoalCompletionPageState createState() => _GoalCompletionPageState();
+  GoalCompletionPageState createState() => GoalCompletionPageState();
 }
 
-class _GoalCompletionPageState extends State<GoalCompletionPage> {
+class GoalCompletionPageState extends State<GoalCompletionPage> {
   @override
   Widget build(BuildContext context) {
     String uid = FirebaseAuth.instance.currentUser!.uid;

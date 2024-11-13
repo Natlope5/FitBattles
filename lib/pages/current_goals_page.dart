@@ -96,6 +96,10 @@ class CurrentGoalsPage extends StatelessWidget {
                 final newProgress = double.tryParse(progressController.text);
                 if (newProgress != null) {
                   final uid = FirebaseAuth.instance.currentUser!.uid;
+
+                  // Store the navigator context before async operation
+                  final navigator = Navigator.of(context);
+
                   await FirebaseFirestore.instance
                       .collection('users')
                       .doc(uid)
@@ -105,7 +109,7 @@ class CurrentGoalsPage extends StatelessWidget {
                     'currentProgress': newProgress,
                     'isCompleted': newProgress >= goalAmount,
                   });
-                  Navigator.pop(context);
+                  navigator.pop();
                 }
               },
               child: const Text('Update'),

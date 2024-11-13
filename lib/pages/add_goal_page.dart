@@ -6,10 +6,10 @@ class AddGoalPage extends StatefulWidget {
   const AddGoalPage({super.key});
 
   @override
-  _AddGoalPageState createState() => _AddGoalPageState();
+  AddGoalPageState createState() => AddGoalPageState();
 }
 
-class _AddGoalPageState extends State<AddGoalPage> {
+class AddGoalPageState extends State<AddGoalPage> {
   final TextEditingController _goalNameController = TextEditingController();
   final TextEditingController _goalAmountController = TextEditingController();
 
@@ -33,6 +33,7 @@ class _AddGoalPageState extends State<AddGoalPage> {
           .collection('goals')
           .add(newGoal);
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Goal added successfully!')),
       );
