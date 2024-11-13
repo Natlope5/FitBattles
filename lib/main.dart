@@ -54,13 +54,7 @@ class MyApp extends StatelessWidget {
             '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
-            '/pointsInfo': (context) => const EarnedPointsPage(
-              points: 1000,
-              streakDays: 360,
-              totalChallengesCompleted: 0,
-              pointsEarnedToday: 0,
-              bestDayPoints: 0, userId: '',
-            ),
+            '/pointsInfo': (context) => EarnedPointsPage(userId: ''), // Updated line
             '/distanceWorkout': (context) => const DistanceWorkoutPage(),
             '/strengthWorkout': (context) => const StrengthWorkoutPage(),
             '/leaderboard': (context) => const LeaderboardPage(),

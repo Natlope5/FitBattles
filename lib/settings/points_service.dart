@@ -3,29 +3,128 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class PointsService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Fetch points won for a user
-  Future<int> getPointsWon(String userId) async {
-    try {
-      DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
-      // Cast data to Map<String, dynamic>
-      return (userDoc.data() as Map<String, dynamic>)['points'] ?? 0; // Default to 0 if no data
-    } catch (e) {
-      // Handle errors (you might want to log this or throw a specific exception)
-      return 0;
+  // Stream to get real-time user stats updates
+  Stream<Map<String, dynamic>> getUserStatsStream(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((snapshot) => snapshot.data() as Map<String, dynamic>);
+  }
+
+  // New method to calculate total points from workouts
+  Future<int> calculateTotalPoints(String userId) async {
+    int totalPoints = 0;
+
+    final workoutsSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('workouts')
+        .get();
+
+    for (var doc in workoutsSnapshot.docs) {
+      int points = (doc.data()['points'] ?? 0).toInt();
+      totalPoints += points;
     }
+
+    return totalPoints;
+  }
+
+  // Calculate points earned today
+  Future<int> calculatePointsEarnedToday(String userId) async {
+    int pointsToday = 0;
+    DateTime now = DateTime.now();
+
+    final workoutsSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('workouts')
+        .get();
+
+    for (var doc in workoutsSnapshot.docs) {
+      DateTime workoutDate = (doc.data()['timestamp'] as Timestamp).toDate();
+      if (workoutDate.year == now.year &&
+          workoutDate.month == now.month &&
+          workoutDate.day == now.day) {
+        int points = (doc.data()['points'] ?? 0).toInt();
+        pointsToday += points;
+      }
+    }
+
+    return pointsToday;
+  }
+
+  // Calculate best day points
+  Future<int> calculateBestDayPoints(String userId) async {
+    Map<String, int> pointsByDay = {};
+
+    final workoutsSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('workouts')
+        .get();
+
+    for (var doc in workoutsSnapshot.docs) {
+      DateTime workoutDate = (doc.data()['timestamp'] as Timestamp).toDate();
+      String dayKey = "${workoutDate.year}-${workoutDate.month}-${workoutDate.day}";
+
+      int points = (doc.data()['points'] ?? 0).toInt();
+      pointsByDay[dayKey] = (pointsByDay[dayKey] ?? 0) + points;
+    }
+
+    int bestDayPoints = pointsByDay.values.fold(0, (max, points) => points > max ? points : max);
+
+    return bestDayPoints;
+  }
+
+  // Calculate streak days
+  Future<int> calculateStreakDays(String userId) async {
+    List<DateTime> workoutDates = [];
+
+    final workoutsSnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('workouts')
+        .orderBy('timestamp', descending: true)
+        .get();
+
+    for (var doc in workoutsSnapshot.docs) {
+      DateTime workoutDate = (doc.data()['timestamp'] as Timestamp).toDate();
+      workoutDates.add(workoutDate);
+    }
+
+    int streakDays = 0;
+    DateTime? previousDate;
+
+    for (var date in workoutDates) {
+      if (previousDate == null) {
+        streakDays = 1;
+      } else {
+        // Check if the date is exactly one day before the previous date
+        if (previousDate.difference(date).inDays == 1) {
+          streakDays += 1;
+        } else {
+          break; // Streak is broken
+        }
+      }
+      previousDate = date;
+    }
+
+    return streakDays;
   }
 
   // Fetch user's statistics
   Future<Map<String, dynamic>> getUserStats(String userId) async {
     try {
-      DocumentSnapshot userDoc = await _firestore.collection('users').doc(userId).get();
-      // Cast data to Map<String, dynamic>
-      final data = userDoc.data() as Map<String, dynamic>; // Cast the document data
+      int pointsEarnedToday = await calculatePointsEarnedToday(userId);
+      int bestDayPoints = await calculateBestDayPoints(userId);
+      int streakDays = await calculateStreakDays(userId);
+
       return {
-        'totalChallengesCompleted': data["totalChallengesCompleted"] ?? 0,
-        'pointsEarnedToday': data["pointsEarnedToday"] ?? 0,
-        'bestDayPoints': data['bestDayPoints'] ?? 0,
-        'streakDays': data['streakDays'] ?? 0,
+        'totalChallengesCompleted': 0, // Placeholder, adjust as needed
+        'pointsEarnedToday': pointsEarnedToday,
+        'bestDayPoints': bestDayPoints,
+        'streakDays': streakDays,
       };
     } catch (e) {
       // Handle errors
