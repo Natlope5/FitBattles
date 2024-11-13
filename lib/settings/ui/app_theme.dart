@@ -1,4 +1,4 @@
-import 'package:fitbattles/settings/app_strings.dart';
+import 'package:fitbattles/settings/ui/app_strings.dart';
 
 enum MyAppTheme { light, dark }
 

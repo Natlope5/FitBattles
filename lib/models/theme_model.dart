@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fitbattles/settings/app_colors.dart';
+import 'package:fitbattles/settings/ui/app_colors.dart';
 
 class ThemeModel {
   // Light theme settings

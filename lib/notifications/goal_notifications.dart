@@ -1,7 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logger/logger.dart';
-import 'package:fitbattles/settings/app_strings.dart'; // Import your strings file
+import 'package:fitbattles/settings/ui/app_strings.dart'; // Import your strings file
 import 'package:flutter/material.dart'; // Import this for BuildContext and navigatorKey
 
 class GoalNotificationsHandler {

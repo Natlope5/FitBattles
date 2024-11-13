@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fitbattles/settings/app_colors.dart';
-import 'package:fitbattles/settings/app_dimens.dart';
+import 'package:fitbattles/settings/ui/app_colors.dart';
+import 'package:fitbattles/settings/ui/app_dimens.dart';
 import 'package:flutter/material.dart';
-import 'package:fitbattles/settings/app_strings.dart';
+import 'package:fitbattles/settings/ui/app_strings.dart';
 
 import '../main.dart';
 

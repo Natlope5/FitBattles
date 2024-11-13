@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fitbattles/settings/theme_provider.dart';
+import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../main.dart';
+import '../../main.dart';
 
 class CommunityChallengePage extends StatefulWidget {
   const CommunityChallengePage({super.key});

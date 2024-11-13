@@ -1,5 +1,5 @@
-import 'package:fitbattles/settings/app_strings.dart';
-import 'package:fitbattles/settings/app_dimens.dart';
+import 'package:fitbattles/settings/ui/app_strings.dart';
+import 'package:fitbattles/settings/ui/app_dimens.dart';
 import 'package:flutter/material.dart';
 
 // Awards section widget for the EarnedPointsPage

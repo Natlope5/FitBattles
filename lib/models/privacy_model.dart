@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
-import 'package:fitbattles/settings/app_strings.dart'; // Import your strings file
+import 'package:fitbattles/settings/ui/app_strings.dart'; // Import your strings file
 
 class PrivacyModel {
   final String id;
