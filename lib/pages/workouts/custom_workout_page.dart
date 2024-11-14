@@ -251,6 +251,12 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
               ),
             ),
             const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/workoutSuggestions');
+              },
+              child: const Text('View Suggestions'),
+            ),
             if (_showAddExercise)
               Padding(
                 padding: const EdgeInsets.all(8.0),

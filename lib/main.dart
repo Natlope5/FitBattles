@@ -8,6 +8,7 @@ import 'package:fitbattles/pages/workouts/custom_workout_page.dart';
 import 'package:fitbattles/pages/goals/goals_completion_page.dart';
 import 'package:fitbattles/pages/badges_and_rewards_page.dart';
 import 'package:fitbattles/pages/health_report_page.dart';
+import 'package:fitbattles/pages/workouts/workout_suggestion_page.dart';
 import 'package:fitbattles/pages/workouts/workout_tracking_page.dart';
 import 'package:fitbattles/pages/friends_list_page.dart';
 import 'package:fitbattles/pages/home_page.dart';
@@ -65,6 +66,7 @@ class MyApp extends StatelessWidget {
             '/scheduleChallenge': (context) => const CommunityChallengePage(),
             '/customWorkout': (context) => CustomWorkoutPlanPage(),
             '/timeBasedChallenges': (context) => TimeBasedChallengesPage(),
+            '/workoutSuggestions': (context) => WorkoutSuggestionPage(),
           },
         );
       },
