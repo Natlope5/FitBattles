@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/settings/badge_service.dart';
+import 'package:intl/intl.dart'; // Import for date formatting
 
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
@@ -13,18 +14,30 @@ class RewardsPageState extends State<RewardsPage> {
   final BadgeService badgeService = BadgeService();
   late Future<int> userPoints;
   late Future<List<Map<String, String>>> badges;
+  bool _isLoading = true; // Add a loading state
 
   @override
   void initState() {
     super.initState();
+    _loadData();
+  }
+
+  // Load points and badges, and check for badge eligibility
+  Future<void> _loadData() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      userPoints = badgeService.fetchUserPoints(currentUser.uid);
-      badges = badgeService.fetchBadges(currentUser.uid);
+      await badgeService.awardPointsAndCheckBadges(currentUser.uid, 0, 'challengeCompleted'); // Check for badge eligibility
+      setState(() {
+        userPoints = badgeService.fetchUserPoints(currentUser.uid);
+        badges = badgeService.fetchBadges(currentUser.uid);
+      });
     } else {
-      userPoints = Future.value(0); // Handle the case where the user is not logged in
-      badges = Future.value([]); // Handle the case where no badges are earned
+      userPoints = Future.value(0);
+      badges = Future.value([]);
     }
+    setState(() {
+      _isLoading = false; // Set loading to false once data is fetched
+    });
   }
 
   @override
@@ -34,7 +47,9 @@ class RewardsPageState extends State<RewardsPage> {
         title: const Text('Badges & Rewards'),
         backgroundColor: const Color(0xFF5D6C8A),
       ),
-      body: Padding(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator()) // Show loading spinner while loading
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,14 +96,17 @@ class RewardsPageState extends State<RewardsPage> {
                     return const Center(child: Text('No badges earned.'));
                   }
 
-                  final badges = snapshot.data ?? [];
+                  final badgeList = snapshot.data ?? [];
                   return ListView.builder(
-                    itemCount: badges.length,
+                    itemCount: badgeList.length,
                     itemBuilder: (context, index) {
-                      final badge = badges[index];
+                      final badge = badgeList[index];
+                      final formattedDate = DateFormat('dd MMM yyyy').format(DateTime.parse(badge['date'] ?? ''));
+
                       return ListTile(
+                        leading: const Icon(Icons.emoji_events, color: Colors.amber), // Badge icon
                         title: Text(badge['name'] ?? 'Unknown Badge'),
-                        subtitle: Text(badge['dateEarned'] ?? 'Date N/A'),
+                        subtitle: Text(formattedDate), // Formatted date
                       );
                     },
                   );

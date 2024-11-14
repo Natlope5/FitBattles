@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
             '/leaderboard': (context) => const LeaderboardPage(),
             '/settings': (context) => const SettingsPage(heading: 'Settings',),
             '/create_challenge': (context) => CreateChallengePage(),
-            '/user_challenges': (context) => const UserChallengesPage(),
+            '/user_challenges': (context) => UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),
             '/currentGoals': (context) => CurrentGoalsPage(),
             '/goalHistory': (context) => GoalCompletionPage(),

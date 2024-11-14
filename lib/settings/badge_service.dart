@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../main.dart';
 
 class BadgeService {
@@ -9,7 +8,6 @@ class BadgeService {
   Future<int> fetchUserPoints(String userId) async {
     final docSnapshot = await _firestore.collection('users').doc(userId).get();
     if (docSnapshot.exists && docSnapshot.data() != null) {
-      // Ensure the 'points' field is a number and handle type safety
       return (docSnapshot.data()!['points'] as num?)?.toInt() ?? 0;
     }
     return 0;
@@ -20,10 +18,20 @@ class BadgeService {
     final docSnapshot = await _firestore.collection('users').doc(userId).get();
     if (docSnapshot.exists && docSnapshot.data() != null) {
       List<dynamic> badges = docSnapshot.data()!['badges'] ?? [];
-      // Ensure badges list contains only maps and handle type casting safely
       return badges.map((badge) => Map<String, String>.from(badge)).toList();
     }
     return [];
+  }
+
+  // Count completed challenges for a user
+  Future<int> countCompletedChallenges(String userId) async {
+    final querySnapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('challenges')
+        .where('challengeCompleted', isEqualTo: true)
+        .get();
+    return querySnapshot.docs.length;
   }
 
   // Award points and check for badge eligibility
@@ -35,36 +43,48 @@ class BadgeService {
         final snapshot = await transaction.get(userRef);
         if (snapshot.exists && snapshot.data() != null) {
           int currentPoints = (snapshot.data()!['points'] as num?)?.toInt() ?? 0;
+
+          // Initialize badges as an empty array if it doesn't exist
           List<dynamic> currentBadges = snapshot.data()!['badges'] ?? [];
+          if (currentBadges.isEmpty) {
+            transaction.update(userRef, {'badges': []});
+          }
 
           // Add points
           currentPoints += pointsToAdd;
           transaction.update(userRef, {'points': currentPoints});
 
-          // Badge criteria
+          // Badge criteria with check function for completed challenges
           final badgeCriteria = {
-            'challengeCompleted': {'threshold': 50, 'badgeName': 'Challenge Master'},
-            'communityChallengeCompleted': {'threshold': 100, 'badgeName': 'Community Hero'},
-            'goalAchieved': {'threshold': 200, 'badgeName': 'Goal Achiever'}
+            'challengeCompleted': {
+              'threshold': 1,
+              'badgeName': 'Challenge Master',
+              'checkFunction': () => countCompletedChallenges(userId),
+            },
           };
 
-          // Check for badge eligibility safely
-          if (badgeCriteria[taskType] != null &&
-              !currentBadges.any((badge) => badge['name'] == badgeCriteria[taskType]!['badgeName']) &&
-              currentPoints >= (badgeCriteria[taskType]!['threshold'] as int)) {
-            currentBadges.add({
-              'name': badgeCriteria[taskType]!['badgeName'] as String,
-              'date': DateTime.now().toIso8601String(),
-            });
-            transaction.update(userRef, {'badges': currentBadges});
+          // Check if badge criteria is met
+          if (badgeCriteria.containsKey(taskType) &&
+              !currentBadges.any((badge) => badge['name'] == badgeCriteria[taskType]!['badgeName'])) {
+            final checkFunction = badgeCriteria[taskType]!['checkFunction'] as Future<int> Function()?;
+            if (checkFunction != null) {
+              final completedCount = await checkFunction();
+              if (completedCount >= (badgeCriteria[taskType]!['threshold'] as int)) {
+                // Add new badge to the badges array in Firebase
+                final newBadge = {
+                  'name': badgeCriteria[taskType]!['badgeName'] as String,
+                  'date': DateTime.now().toIso8601String(),
+                };
+                currentBadges.add(newBadge);
+                transaction.update(userRef, {'badges': currentBadges});
+              }
+            }
           }
         }
       });
 
-      // Print logs for debugging purposes; use proper logging in production
       logger.i('Points awarded and badge check completed.');
     } catch (e) {
-      // Print logs for debugging purposes; use proper logging in production
       logger.i('Error awarding points and checking badges: $e');
     }
   }
