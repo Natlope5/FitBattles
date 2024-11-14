@@ -1,6 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:fitbattles/challenges/distance_workout_page.dart';
-import 'package:fitbattles/challenges/earned_points_page.dart';
+import 'package:fitbattles/pages/points/earned_points_page.dart';
 import 'package:fitbattles/pages/goals/add_goal_page.dart';
 import 'package:fitbattles/pages/challenges/time_based_challenges_page.dart';
 import 'package:fitbattles/pages/challenges/community_challenge.dart';
@@ -10,7 +9,6 @@ import 'package:fitbattles/pages/goals/goals_completion_page.dart';
 import 'package:fitbattles/pages/badges_and_rewards_page.dart';
 import 'package:fitbattles/pages/health_report_page.dart';
 import 'package:fitbattles/pages/workouts/workout_tracking_page.dart';
-import 'package:fitbattles/pages/workouts/strength_workout_page.dart';
 import 'package:fitbattles/pages/friends_list_page.dart';
 import 'package:fitbattles/pages/home_page.dart';
 import 'package:fitbattles/pages/my_history_page.dart';
@@ -23,7 +21,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:fitbattles/pages/challenges/create_challenge_page.dart';
-import 'package:fitbattles/challenges/leaderboard_page.dart';
+import 'package:fitbattles/pages/points/leaderboard_page.dart';
 import 'package:fitbattles/auth/login_page.dart';
 import 'package:fitbattles/pages/challenges/user_challenges_page.dart';
 import 'package:fitbattles/pages/workouts/workout_history_page.dart';
@@ -54,9 +52,7 @@ class MyApp extends StatelessWidget {
             '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
-            '/pointsInfo': (context) => EarnedPointsPage(userId: ''), // Updated line
-            '/distanceWorkout': (context) => const DistanceWorkoutPage(),
-            '/strengthWorkout': (context) => const StrengthWorkoutPage(),
+            '/pointsInfo': (context) => EarnedPointsPage(userId: ''),
             '/leaderboard': (context) => const LeaderboardPage(),
             '/settings': (context) => const SettingsPage(heading: 'Settings',),
             '/create_challenge': (context) => CreateChallengePage(),

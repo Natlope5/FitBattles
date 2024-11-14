@@ -444,20 +444,7 @@ class AppStrings {
   static const String passwordPlaceholder = 'Enter your password';
 
   // Notifications
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  static const String friendRequestSent = 'Friend request sent!';
 }
 
 
