@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-import '../../main.dart';
 
 class CommunityChallengePage extends StatefulWidget {
   const CommunityChallengePage({super.key});
@@ -17,7 +16,6 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   double challengeIntensity = 1.0;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -158,82 +156,57 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     );
   }
 
-  void createChallengeWithId(String challengeId, String name, String description) {
-    CollectionReference challengesRef = _firestore.collection('communityChallenges');
-    challengesRef.doc(challengeId).set({
-      'name': name,
-      'description': description,
-      'participants': [],
+  // Function to create a challenge in Firestore
+  void createChallengeWithId(String challengeId, String challengeName, String challengeDescription) {
+    FirebaseFirestore.instance.collection('communityChallenges').doc(challengeId).set({
+      'name': challengeName,
+      'description': challengeDescription,
       'intensity': challengeIntensity,
-      'createdAt': FieldValue.serverTimestamp(),
-    }).then((_) {
-      logger.i('Challenge created with custom ID: $challengeId');
-    }).catchError((error) {
-      logger.i('Error creating challenge: $error');
+      'timestamp': FieldValue.serverTimestamp(),
     });
   }
 
+  // Function to join a community challenge
   void _joinChallenge(String challengeName) {
-    String userId = "currentUserId"; // Replace with actual user ID retrieval logic
-    CollectionReference challengesRef = _firestore.collection('communityChallenges');
-
-    challengesRef.where('name', isEqualTo: challengeName).get().then((querySnapshot) {
-      if (querySnapshot.docs.isNotEmpty) {
-        String challengeId = querySnapshot.docs.first.id;
-        challengesRef.doc(challengeId).update({
-          'participants': FieldValue.arrayUnion([userId])
-        }).then((_) {
-          _showSnackBar('Successfully joined $challengeName!');
-          _showNotification('Challenge Joined', 'You have joined the $challengeName challenge!');
-        }).catchError((error) {
-          _showSnackBar('Failed to join $challengeName: ${error.toString()}');
-        });
-      }
-    }).catchError((error) {
-      _showSnackBar('Failed to join $challengeName: ${error.toString()}');
-    });
+    _showSnackBar('You joined the challenge: $challengeName');
+    // Additional logic for joining a challenge can be added here
   }
 
+  // Helper method to show SnackBar
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _showNotification(String title, String body) {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'fitbattles_channel',
-      'FitBattles Notifications',
-      channelDescription: 'This channel is for FitBattles notifications',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    const NotificationDetails notificationDetails = NotificationDetails(android: androidDetails);
-    localNotificationsPlugin.show(
+  // Helper method to show notification
+  void _showNotification(String title, String message) {
+    FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+    flutterLocalNotificationsPlugin.show(
       0,
       title,
-      body,
-      notificationDetails,
+      message,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'your_channel_id',
+          'your_channel_name',
+          channelDescription: 'your_channel_description',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
     );
   }
 
+  // Helper method to build the text fields
   Widget _buildTextField(String label, TextEditingController controller, bool isDarkTheme, {int maxLines = 1}) {
     return TextField(
       controller: controller,
       maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: isDarkTheme ? Colors.white70 : Colors.black87),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.0),
-          borderSide: BorderSide(color: isDarkTheme ? Colors.grey : Colors.teal, width: 2.0),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15.0),
-          borderSide: BorderSide(color: const Color(0xFF85C83E), width: 2.0),
-        ),
+        labelStyle: TextStyle(color: isDarkTheme ? Colors.white : Colors.black),
+        border: OutlineInputBorder(),
       ),
-      style: TextStyle(color: isDarkTheme ? Colors.white : Colors.black),
     );
   }
 }

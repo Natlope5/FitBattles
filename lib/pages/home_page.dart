@@ -241,79 +241,78 @@ class _HomePageState extends State<HomePage> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/user_challenges');
-                },
-                style: ElevatedButton.styleFrom(
-                    foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
-                child: const Text('Challenges'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/timeBasedChallenges');
-                },
-                style: ElevatedButton.styleFrom(
-                    foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
-                child: const Text('Time-Based Challenges'),
-              ),
-            ],
+
+          // First Row: Align buttons horizontally
+          _buildButtonRow(
+            context,
+            themeProvider,
+            '/user_challenges',
+            'Challenges',
+            '/timeBasedChallenges',
+            'Time-Based Challenges',
           ),
 
           const SizedBox(height: 10),
 
-          // Row for aligning two buttons horizontally
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/scheduleChallenge');
-                },
-                style: ElevatedButton.styleFrom(
-                    foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
-                child: const Text('Community Challenges'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/create_challenge');
-                },
-                style: ElevatedButton.styleFrom(
-                    foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
-                child: const Text('New Challenge'),
-              ),
-            ],
+          // Second Row: Align buttons horizontally
+          _buildButtonRow(
+            context,
+            themeProvider,
+            '/scheduleChallenge',
+            'Community Challenges',
+            '/create_challenge',
+            'New Challenge',
           ),
 
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/rewards');
-                },
-                style: ElevatedButton.styleFrom(
-                    foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
-                child: const Text('View Badges & Rewards'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/leaderboard');
-                },
-                style: ElevatedButton.styleFrom(
-                    foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black),
-                child: const Text('Leaderboard'),
-              ),
-            ],
+
+          // Third Row: Align buttons horizontally
+          _buildButtonRow(
+            context,
+            themeProvider,
+            '/rewards',
+            'View Badges & Rewards',
+            '/leaderboard',
+            'Leaderboard',
           ),
         ],
       ),
     );
   }
+
+// Helper method to create a row of buttons
+  Widget _buildButtonRow(BuildContext context, ThemeProvider themeProvider, String route1, String text1, String route2, String text2) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, route1);
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
+            ),
+            child: Text(text1),
+          ),
+        ),
+        const SizedBox(width: 8), // Add spacing between buttons
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.pushNamed(context, route2);
+            },
+            style: ElevatedButton.styleFrom(
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
+            ),
+            child: Text(text2),
+          ),
+        ),
+      ],
+    );
+  }
+
+
 
   Widget _buildWorkoutContainer(BuildContext context, ThemeProvider themeProvider) {
     return Container(
