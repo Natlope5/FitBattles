@@ -60,10 +60,40 @@ class MyHistoryPageState extends State<MyHistoryPage> {
   }
 
   Future<void> _saveTotalCaloriesAsPoints(double totalCalories) async {
-    String uid = FirebaseAuth.instance.currentUser!.uid;
-    await FirebaseFirestore.instance.collection('users').doc(uid).update({
-      'points': totalCalories,
-    });
+    try {
+      String uid = FirebaseAuth.instance.currentUser!.uid;
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'points': totalCalories,
+      });
+    } catch (e) {
+      logger.i('Error saving points: $e');
+    }
+  }
+
+  // Fetch water intake from the user's water_log sub-collection
+  Future<double> _fetchWaterIntake() async {
+    try {
+      String uid = FirebaseAuth.instance.currentUser!.uid;
+
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('water_log')
+          .get();
+
+      double totalWaterIntake = 0.0;
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        double intake = data['amount'] != null ? (data['amount'] as num).toDouble() : 0.0;
+        totalWaterIntake += intake;
+      }
+
+      return totalWaterIntake;
+    } catch (e) {
+      logger.i('Error fetching water intake: $e');
+      return 0.0;
+    }
   }
 
   // Fetch data for a specific category
@@ -121,19 +151,6 @@ class MyHistoryPageState extends State<MyHistoryPage> {
         );
       },
     );
-  }
-
-  // Fetch and display water intake data
-  Future<double> _fetchWaterIntake() async {
-    final documentSnapshot = await FirebaseFirestore.instance
-        .collection('history')
-        .doc('waterIntake')
-        .get();
-
-    if (documentSnapshot.exists) {
-      return documentSnapshot.data()?['intake'] ?? 0.0; // Default to 0.0 if not found
-    }
-    return 0.0;
   }
 
   // Build the main UI of the History Page
@@ -231,7 +248,6 @@ class MyHistoryPageState extends State<MyHistoryPage> {
           ),
           onTap: () async {
             if (entry.key == 'Water Intake (liters)') {
-              // Navigate to the HydrationPage
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -242,7 +258,6 @@ class MyHistoryPageState extends State<MyHistoryPage> {
               final friendsList = await _fetchFriendsData();
               _showDialog('Friends Involved', friendsList.join(', '));
             } else if (entry.key == 'Goals & Achievements') {
-              // Navigate to the GoalCompletionPage
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -250,7 +265,6 @@ class MyHistoryPageState extends State<MyHistoryPage> {
                 ),
               );
             } else if (entry.key == 'Workout Sessions') {
-              // Navigate to the WorkoutTrackingPage
               Navigator.push(
                 context,
                 MaterialPageRoute(
