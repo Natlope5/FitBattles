@@ -117,48 +117,115 @@ class _UserChallengesPageState extends State<UserChallengesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Your Challenges')),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('users')
-            .doc(_auth.currentUser!.uid)
-            .collection('challenges')
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No challenges found.'));
-          }
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Section for user-specific challenges
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Your Challenges',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore
+                  .collection('users')
+                  .doc(_auth.currentUser!.uid)
+                  .collection('challenges')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No personal challenges found.'));
+                }
 
-          final challenges = snapshot.data!.docs;
+                final userChallenges = snapshot.data!.docs;
 
-          return ListView.builder(
-            itemCount: challenges.length,
-            itemBuilder: (context, index) {
-              final challengeData = challenges[index];
-              final data = challengeData.data() as Map<String, dynamic>?;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: userChallenges.length,
+                  itemBuilder: (context, index) {
+                    final challengeData = userChallenges[index];
+                    final data = challengeData.data() as Map<String, dynamic>?;
 
-              // Safely check if 'challengeCompleted' exists and set default to false if missing
-              final bool isCompleted = data != null && data.containsKey('challengeCompleted')
-                  ? data['challengeCompleted']
-                  : false;
+                    final bool isCompleted = data != null && data.containsKey('challengeCompleted')
+                        ? data['challengeCompleted']
+                        : false;
 
-              return ListTile(
-                title: Text(data?['challengeName'] ?? 'Unnamed Challenge'),
-                subtitle: Text('Status: ${isCompleted ? "Completed" : "Pending"}'),
-                trailing: isCompleted
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : IconButton(
-                  icon: const Icon(Icons.check_box_outline_blank),
-                  onPressed: () {
-                    markChallengeAsCompleted(challengeData.id);
+                    return ListTile(
+                      title: Text(data?['challengeName'] ?? 'Unnamed Challenge'),
+                      subtitle: Text('Status: ${isCompleted ? "Completed" : "Pending"}'),
+                      trailing: isCompleted
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : IconButton(
+                        icon: const Icon(Icons.check_box_outline_blank),
+                        onPressed: () {
+                          markChallengeAsCompleted(challengeData.id);
+                        },
+                      ),
+                    );
                   },
-                ),
-              );
-            },
-          );
-        },
+                );
+              },
+            ),
+
+            // Divider between sections
+            const Divider(),
+
+            // Section for community challenges
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                'Community Challenges',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('communityChallenges').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Center(child: Text('No community challenges found.'));
+                }
+
+                final communityChallenges = snapshot.data!.docs;
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: communityChallenges.length,
+                  itemBuilder: (context, index) {
+                    final challengeData = communityChallenges[index];
+                    final data = challengeData.data() as Map<String, dynamic>?;
+
+                    final bool isCompleted = data != null && data.containsKey('challengeCompleted')
+                        ? data['challengeCompleted']
+                        : false;
+
+                    return ListTile(
+                      title: Text(data?['challengeName'] ?? 'Unnamed Challenge'),
+                      subtitle: Text('Status: ${isCompleted ? "Completed" : "Pending"}'),
+                      trailing: isCompleted
+                          ? const Icon(Icons.check, color: Colors.green)
+                          : IconButton(
+                        icon: const Icon(Icons.check_box_outline_blank),
+                        onPressed: () {
+                          markChallengeAsCompleted(challengeData.id);
+                        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
