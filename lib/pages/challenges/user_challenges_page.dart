@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:permission_handler/permission_handler.dart'; // For permission handling
 
+import '../../main.dart';
 import '../../settings/badge_service.dart';
 
 class UserChallengesPage extends StatefulWidget {
@@ -14,6 +19,72 @@ class UserChallengesPage extends StatefulWidget {
 class _UserChallengesPageState extends State<UserChallengesPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  // Initialize notification plugin
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize the time zone database
+    tz.initializeTimeZones();
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+    final InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+    );
+    _flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+    // Request permission for notifications
+    _requestNotificationPermission();
+  }
+
+  // Request notification permissions
+  Future<void> _requestNotificationPermission() async {
+    final permissionStatus = await Permission.notification.request();
+    if (permissionStatus.isGranted) {
+      logger.i("Notification permission granted.");
+    } else {
+      logger.i("Notification permission denied.");
+    }
+  }
+
+  // Schedule a notification
+  Future<void> _scheduleNotification(DateTime dateTime, String message) async {
+    final scheduledTime = tz.TZDateTime.from(dateTime, tz.local);
+
+    const AndroidNotificationDetails androidNotificationDetails =
+    AndroidNotificationDetails(
+      'challenge_channel',
+      'Challenge Notifications',
+      channelDescription: 'Notifications related to challenges',
+      importance: Importance.max,
+      priority: Priority.high,
+      ticker: 'ticker',
+    );
+
+    const NotificationDetails notificationDetails =
+    NotificationDetails(android: androidNotificationDetails);
+
+    try {
+      logger.i("Scheduling notification for: $scheduledTime");
+      await _flutterLocalNotificationsPlugin.zonedSchedule(
+        0, // notification ID
+        'Challenge Reminder', // notification title
+        message, // notification message
+        scheduledTime,
+        notificationDetails,
+        androidScheduleMode: AndroidScheduleMode.exact, // Use exact schedule mode
+        uiLocalNotificationDateInterpretation:
+        UILocalNotificationDateInterpretation.wallClockTime,
+        matchDateTimeComponents: DateTimeComponents.time, // Match only time for scheduling
+      );
+      logger.i("Notification scheduled successfully.");
+    } catch (e) {
+      logger.i("Error scheduling notification: $e");
+    }
+  }
 
   // Mark a challenge as completed
   Future<void> markChallengeAsCompleted(String challengeId) async {
@@ -28,6 +99,17 @@ class _UserChallengesPageState extends State<UserChallengesPage> {
 
       // Check for badge eligibility after marking challenge as completed
       await BadgeService().awardPointsAndCheckBadges(currentUser.uid, 0, 'challengeCompleted');
+
+      // Schedule a notification when the challenge is completed
+      DateTime completionDate = DateTime.now().add(Duration(seconds: 10)); // Example: notify after 10 seconds
+      await _scheduleNotification(completionDate, 'You have completed the challenge!');
+
+      // Optionally, you can show a confirmation SnackBar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Challenge completed!')),
+        );
+      }
     }
   }
 

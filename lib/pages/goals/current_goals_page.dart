@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class CurrentGoalsPage extends StatelessWidget {
   const CurrentGoalsPage({super.key});
+
+  // Notification plugin initialization
+  static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+
+  static Future<void> initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +72,7 @@ class CurrentGoalsPage extends StatelessWidget {
                     icon: const Icon(Icons.edit, color: Colors.blue),
                     onPressed: () {
                       _showUpdateProgressDialog(
-                          context, goalData.id, progress, goalAmount);
+                          context, goalData.id, progress, goalAmount, goalName);
                     },
                   ),
                 ),
@@ -71,7 +85,7 @@ class CurrentGoalsPage extends StatelessWidget {
   }
 
   void _showUpdateProgressDialog(
-      BuildContext context, String goalId, double currentProgress, double goalAmount) {
+      BuildContext context, String goalId, double currentProgress, double goalAmount, String goalName) {
     final TextEditingController progressController = TextEditingController(
       text: currentProgress.toInt().toString(),
     );
@@ -109,6 +123,14 @@ class CurrentGoalsPage extends StatelessWidget {
                     'currentProgress': newProgress,
                     'isCompleted': newProgress >= goalAmount,
                   });
+
+                  // Notify the user
+                  if (newProgress >= goalAmount) {
+                    _showNotification('Goal Completed', 'Congratulations! You completed the "$goalName" goal.');
+                  } else {
+                    _showNotification('Progress Updated', 'Your progress for "$goalName" has been updated.');
+                  }
+
                   navigator.pop();
                 }
               },
@@ -117,6 +139,25 @@ class CurrentGoalsPage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+
+  void _showNotification(String title, String body) async {
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+      'your_channel_id',
+      'Your Channel Name',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      0, // Notification ID
+      title,
+      body,
+      platformChannelSpecifics,
     );
   }
 }

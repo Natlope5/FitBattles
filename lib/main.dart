@@ -32,6 +32,37 @@ final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNot
 final Logger logger = Logger();
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
+// Firebase Messaging background handler
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  logger.i("Handling a background message: ${message.messageId}");
+}
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  await Firebase.initializeApp();
+
+  // Set up the background message handler for Firebase Messaging
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Initialize local notifications
+  const AndroidInitializationSettings initializationSettingsAndroid =
+  AndroidInitializationSettings('@mipmap/ic_launcher');
+  const InitializationSettings initializationSettings =
+  InitializationSettings(android: initializationSettingsAndroid);
+
+  await localNotificationsPlugin.initialize(initializationSettings);
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -55,7 +86,7 @@ class MyApp extends StatelessWidget {
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
             '/pointsInfo': (context) => EarnedPointsPage(userId: ''),
             '/leaderboard': (context) => const LeaderboardPage(),
-            '/settings': (context) => const SettingsPage(heading: 'Settings',),
+            '/settings': (context) => const SettingsPage(heading: 'Settings'),
             '/create_challenge': (context) => CreateChallengePage(),
             '/user_challenges': (context) => UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),
@@ -72,18 +103,4 @@ class MyApp extends StatelessWidget {
       },
     );
   }
-}
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Firebase
-  await Firebase.initializeApp();
-
-  runApp(
-    ChangeNotifierProvider(
-      create: (context) => ThemeProvider(),
-      child: const MyApp(),
-    ),
-  );
 }

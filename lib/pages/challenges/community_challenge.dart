@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import '../../main.dart';
 
@@ -84,12 +85,10 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
               ),
             ),
             const SizedBox(height: 20),
-            // Text fields for creating a custom challenge
             _buildTextField('Challenge Name', challengeNameController, isDarkTheme),
             const SizedBox(height: 16),
             _buildTextField('Challenge Description', challengeDescriptionController, isDarkTheme, maxLines: 3),
             const SizedBox(height: 16),
-
             const Text('Challenge Intensity:', style: TextStyle(fontSize: 18)),
             Slider(
               value: challengeIntensity,
@@ -106,10 +105,8 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
               inactiveColor: Colors.teal.withAlpha(76),
             ),
             const SizedBox(height: 16),
-
             const Text('Join a Community Challenge:', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-            // Display preloaded challenges
             Expanded(
               child: ListView.builder(
                 itemCount: communityChallenges.length,
@@ -136,8 +133,6 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
                 },
               ),
             ),
-
-            // Button to create a custom challenge
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF85C83E),
@@ -150,6 +145,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
                   String challengeId = DateTime.now().millisecondsSinceEpoch.toString(); // Unique ID
                   createChallengeWithId(challengeId, challengeName, challengeDescription);
                   _showSnackBar('Challenge Scheduled!');
+                  _showNotification('New Challenge Created', 'You have successfully created a new challenge: $challengeName');
                 } else {
                   _showSnackBar('Please enter both name and description.');
                 }
@@ -162,7 +158,6 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     );
   }
 
-  // Create challenge with custom ID
   void createChallengeWithId(String challengeId, String name, String description) {
     CollectionReference challengesRef = _firestore.collection('communityChallenges');
     challengesRef.doc(challengeId).set({
@@ -178,7 +173,6 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     });
   }
 
-  // Join a community challenge
   void _joinChallenge(String challengeName) {
     String userId = "currentUserId"; // Replace with actual user ID retrieval logic
     CollectionReference challengesRef = _firestore.collection('communityChallenges');
@@ -190,6 +184,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
           'participants': FieldValue.arrayUnion([userId])
         }).then((_) {
           _showSnackBar('Successfully joined $challengeName!');
+          _showNotification('Challenge Joined', 'You have joined the $challengeName challenge!');
         }).catchError((error) {
           _showSnackBar('Failed to join $challengeName: ${error.toString()}');
         });
@@ -199,14 +194,29 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     });
   }
 
-  // Show Snackbar message
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
 
-  // Build text fields for user input
+  void _showNotification(String title, String body) {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'fitbattles_channel',
+      'FitBattles Notifications',
+      channelDescription: 'This channel is for FitBattles notifications',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const NotificationDetails notificationDetails = NotificationDetails(android: androidDetails);
+    localNotificationsPlugin.show(
+      0,
+      title,
+      body,
+      notificationDetails,
+    );
+  }
+
   Widget _buildTextField(String label, TextEditingController controller, bool isDarkTheme, {int maxLines = 1}) {
     return TextField(
       controller: controller,
