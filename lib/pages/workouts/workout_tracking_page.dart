@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math';
 
 class WorkoutTrackingPage extends StatefulWidget {
   const WorkoutTrackingPage({super.key});
@@ -13,15 +14,22 @@ class WorkoutTrackingPage extends StatefulWidget {
 class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
   bool isWorkingOut = false;
   Duration workoutDuration = Duration.zero;
-  final TextEditingController _durationController = TextEditingController(); // Controller for manually inputting workout duration
-  final TextEditingController _calorieController = TextEditingController(); // Controller for calorie input
-  final _formKey = GlobalKey<FormState>(); // Key for form validation
+  final TextEditingController _durationController = TextEditingController();
+  final TextEditingController _calorieController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
-  String selectedWorkoutType = 'Weightlifting'; // Default workout type
-  String selectedIntensity = 'Moderate'; // Default workout intensity
-  double userWeight = 70.0; // Example weight in kg, replace with actual user data
+  String selectedWorkoutType = 'Weightlifting';
+  String selectedIntensity = 'Moderate';
+  double userWeight = 70.0;
 
-  // Dropdown options for workout types
+  final List<String> workoutTips = [
+    "Try increasing your reps to boost strength.",
+    "Add 5 minutes of cardio to improve stamina.",
+    "Focus on form for better results and avoid injuries.",
+    "Challenge yourself with a new HIIT workout!",
+    "Incorporate rest days for muscle recovery."
+  ];
+
   final List<String> workoutTypes = [
     'Running',
     'Weightlifting',
@@ -31,14 +39,17 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
     'Walking',
   ];
 
-  // Dropdown options for workout intensity
   final List<String> workoutIntensities = [
     'Light',
     'Moderate',
     'Vigorous',
   ];
 
-  // Function to estimate calories burned based on workout type, duration, intensity, and weight
+  String getRandomWorkoutTip() {
+    final random = Random();
+    return workoutTips[random.nextInt(workoutTips.length)];
+  }
+
   double estimateCaloriesBurned(String workoutType, String intensity,
       double durationInHours, double weightInKg) {
     Map<String, double> metValues = {
@@ -68,12 +79,10 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
     return caloriesBurned;
   }
 
-  // Function to calculate points from calories
   int calculatePoints(double calories) {
     return (calories / 10).round(); // 1 point per 10 calories burned
   }
 
-  // Function to show SnackBar safely
   void showSnackBar(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +91,6 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
     }
   }
 
-  // Function to save workout data to Firestore
   Future<void> _saveWorkoutData() async {
     try {
       String uid = FirebaseAuth.instance.currentUser!.uid;
@@ -280,6 +288,16 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                         ),
                         child: const Text('Save Workout', style: TextStyle(
                             fontSize: 18)),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    // Today's Workout Tip Card
+                    Card(
+                      color: Colors.lightBlue[50],
+                      child: ListTile(
+                        title: const Text('Today\'s Workout Tip'),
+                        subtitle: Text(getRandomWorkoutTip()),
+                        leading: const Icon(Icons.fitness_center, color: Colors.blue),
                       ),
                     ),
                   ],
