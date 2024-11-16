@@ -18,8 +18,8 @@ class HydrationPageState extends State<HydrationPage> {
 
   double _currentWaterIntake = 0.0;
   double _dailyGoal = 3.0; // Default daily water intake goal in liters
-  List<Map<String, dynamic>> _waterLog = [
-  ]; // List to store the log of water submissions
+  List<Map<String, dynamic>> _waterLog = []; // List to store the log of water submissions
+  bool _goalCompleted = false; // To track if the goal is completed
 
   @override
   void initState() {
@@ -42,7 +42,7 @@ class HydrationPageState extends State<HydrationPage> {
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: _setWaterGoal,
-          )
+          ),
         ],
       ),
       body: Padding(
@@ -73,6 +73,18 @@ class HydrationPageState extends State<HydrationPage> {
               ),
               child: const Text('Reset Water Intake'),
             ),
+            if (_goalCompleted) // Show a message when the goal is completed
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  'Congratulations! You have completed your goal!',
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -165,6 +177,7 @@ class HydrationPageState extends State<HydrationPage> {
   Future<void> _resetWaterIntake() async {
     setState(() {
       _currentWaterIntake = 0.0;
+      _goalCompleted = false; // Reset goal completion flag
     });
     await _saveWaterIntakeToFirestore();
     _showToast('Water intake reset!');
@@ -177,6 +190,9 @@ class HydrationPageState extends State<HydrationPage> {
     if (addedIntake != null && addedIntake > 0) {
       setState(() {
         _currentWaterIntake += addedIntake;
+        if (_currentWaterIntake >= _dailyGoal) {
+          _goalCompleted = true; // Goal is completed
+        }
       });
       await _saveWaterIntakeToFirestore();
       await _addToWaterLog(addedIntake);
@@ -260,9 +276,9 @@ class HydrationPageState extends State<HydrationPage> {
           .doc('user_settings')
           .get();
 
-      if (snapshot.exists && snapshot['daily_goal'] != null) {
+      if (snapshot.exists && snapshot['dailyGoal'] != null) {
         setState(() {
-          _dailyGoal = snapshot['daily_goal'];
+          _dailyGoal = snapshot['dailyGoal'];
         });
       }
     } catch (e) {
@@ -270,135 +286,132 @@ class HydrationPageState extends State<HydrationPage> {
     }
   }
 
-  // Set a custom water intake goal
+  // Set a custom water goal
   Future<void> _setWaterGoal() async {
     double? newGoal = await _showSetGoalDialog();
-    if (newGoal != null) {
+
+    if (newGoal != null && newGoal > 0) {
       setState(() {
         _dailyGoal = newGoal;
       });
-      await FirebaseFirestore.instance.collection('settings').doc(
-          'user_settings').set(
-        {'daily_goal': newGoal},
-        SetOptions(merge: true),
-      );
-      _showToast('Water goal updated!');
+      await FirebaseFirestore.instance
+          .collection('settings')
+          .doc('user_settings')
+          .set({'dailyGoal': newGoal}, SetOptions(merge: true));
+      _showToast('Daily goal set to $newGoal liters');
     }
   }
 
-  // Show a dialog to set a custom water intake goal
-  Future<double?> _showSetGoalDialog() async {
-    TextEditingController controller = TextEditingController();
+  // Show a dialog to set a custom goal
+  Future<double?> _showSetGoalDialog() {
+    TextEditingController goalController = TextEditingController();
+
     return showDialog<double>(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Set Your Daily Goal'),
-            content: TextField(
-              controller: controller,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                  hintText: 'Enter goal in liters'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(double.tryParse(controller.text));
-                },
-                child: const Text('Set Goal'),
-              ),
-            ],
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Set Water Intake Goal'),
+          content: TextField(
+            controller: goalController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Goal (liters)'),
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(double.tryParse(goalController.text));
+              },
+              child: const Text('Set Goal'),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  // Show a dialog to enter water intake amount
-  Future<double?> _showAddWaterDialog() async {
-    TextEditingController controller = TextEditingController();
+  // Show a dialog to add a water intake amount
+  Future<double?> _showAddWaterDialog() {
+    TextEditingController intakeController = TextEditingController();
+
     return showDialog<double>(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: const Text('Enter Water Intake'),
-            content: TextField(
-              controller: controller,
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                  hintText: 'Enter amount in liters'),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop(double.tryParse(controller.text));
-                },
-                child: const Text('Add'),
-              ),
-            ],
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Water Intake'),
+          content: TextField(
+            controller: intakeController,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(labelText: 'Amount (liters)'),
           ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(double.tryParse(intakeController.text));
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  // Clear the water intake log from Firestore
-  Future<void> _clearWaterLog() async {
-    try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('water_log')
-          .get();
+  // Schedule hourly reminder
+  void _scheduleHourlyReminder() async {
+    final now = DateTime.now();
+    final nextHour = DateTime(now.year, now.month, now.day, now.hour + 1);
 
-      for (var doc in snapshot.docs) {
-        await doc.reference.delete();
-      }
-
-      _loadWaterLogFromFirestore();
-      _showToast('Water log cleared!');
-    } catch (e) {
-      _showToast('Error clearing log: $e');
-    }
-  }
-
-  Future<void> _initializeNotifications() async {
-    const AndroidInitializationSettings androidSettings =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings settings =
-    InitializationSettings(android: androidSettings);
-
-    await _flutterLocalNotificationsPlugin.initialize(settings);
-  }
-
-// Schedule hourly reminder notifications
-  void _scheduleHourlyReminder() {
-    _flutterLocalNotificationsPlugin.zonedSchedule(
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
       0,
-      'Stay Hydrated!',
-      'It\'s time to drink water and stay healthy!',
-      _nextInstanceOfTheHour(),
+      'Hydration Reminder',
+      'Time to drink water!',
+      tz.TZDateTime.from(nextHour, tz.local),
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'hydration_channel',
           'Hydration Notifications',
-          channelDescription: 'Hourly hydration reminders',
-          importance: Importance.max,
+          importance: Importance.high,
           priority: Priority.high,
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.exact,
-      // Specify the scheduling mode
+      androidScheduleMode: AndroidScheduleMode.exact, // Fixed argument
       uiLocalNotificationDateInterpretation:
       UILocalNotificationDateInterpretation.wallClockTime,
+      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
-  tz.TZDateTime _nextInstanceOfTheHour() {
-    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
-    final int nextHour = now.hour + 1;
-    return tz.TZDateTime(tz.local, now.year, now.month, now.day, nextHour);
+  // Initialize local notifications
+  void _initializeNotifications() {
+    const androidInitializationSettings =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    final initializationSettings =
+    InitializationSettings(android: androidInitializationSettings);
+
+    _flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  // Clear water log
+  Future<void> _clearWaterLog() async {
+    await FirebaseFirestore.instance.collection('water_log').get().then((querySnapshot) {
+      for (var doc in querySnapshot.docs) {
+        doc.reference.delete();
+      }
+      _loadWaterLogFromFirestore();
+      _showToast('Water log cleared');
+    });
   }
 }

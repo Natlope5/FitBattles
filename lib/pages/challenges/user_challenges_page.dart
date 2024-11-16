@@ -87,15 +87,14 @@ class _UserChallengesPageState extends State<UserChallengesPage> {
   }
 
   // Mark a challenge as completed
-  Future<void> markChallengeAsCompleted(String challengeId) async {
+  Future<void> markChallengeAsCompleted(String challengeId, bool isCommunityChallenge) async {
     final currentUser = _auth.currentUser;
     if (currentUser != null) {
-      await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('challenges')
-          .doc(challengeId)
-          .update({'challengeCompleted': true});
+      final challengeCollection = isCommunityChallenge
+          ? _firestore.collection('communityChallenges')
+          : _firestore.collection('users').doc(currentUser.uid).collection('challenges');
+
+      await challengeCollection.doc(challengeId).update({'challengeCompleted': true});
 
       // Check for badge eligibility after marking challenge as completed
       await BadgeService().awardPointsAndCheckBadges(currentUser.uid, 0, 'challengeCompleted');
@@ -164,7 +163,7 @@ class _UserChallengesPageState extends State<UserChallengesPage> {
                           : IconButton(
                         icon: const Icon(Icons.check_box_outline_blank),
                         onPressed: () {
-                          markChallengeAsCompleted(challengeData.id);
+                          markChallengeAsCompleted(challengeData.id, false);
                         },
                       ),
                     );
@@ -216,7 +215,7 @@ class _UserChallengesPageState extends State<UserChallengesPage> {
                           : IconButton(
                         icon: const Icon(Icons.check_box_outline_blank),
                         onPressed: () {
-                          markChallengeAsCompleted(challengeData.id);
+                          markChallengeAsCompleted(challengeData.id, true);
                         },
                       ),
                     );
