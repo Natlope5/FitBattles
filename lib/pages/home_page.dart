@@ -432,7 +432,7 @@ class _HomePageState extends State<HomePage> {
                 backgroundColor: const Color(0xFF85C83E),
                 foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
             ),
-            child: const Text('View Health Report'),
+            child: const Text('Weekly Health Report'),
           ),
         ],
       ),
