@@ -1,4 +1,4 @@
-import 'package:fitbattles/pages/user_profile_page.dart'; // Importing UserProfilePage
+import 'package:fitbattles/pages/settings/user_profile_page.dart'; // Importing UserProfilePage
 import 'package:flutter/material.dart'; // Importing Flutter material package
 import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
 import 'package:logger/logger.dart'; // Importing Logger for error logging

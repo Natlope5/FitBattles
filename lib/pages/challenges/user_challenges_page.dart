@@ -7,7 +7,7 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:permission_handler/permission_handler.dart'; // For permission handling
 
 import '../../main.dart';
-import '../../settings/badge_service.dart';
+import '../../firebase/badge_service.dart';
 
 class UserChallengesPage extends StatefulWidget {
   const UserChallengesPage({super.key});

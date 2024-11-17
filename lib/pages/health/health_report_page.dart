@@ -143,10 +143,6 @@ class _HealthReportPageState extends State<HealthReportPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            _buildMetricDetail('Steps Taken', '10,000'), // Placeholder
-            const SizedBox(height: 10),
-            _buildMetricDetail('Heart Rate', '75 bpm'), // Placeholder
-            const SizedBox(height: 10),
             _buildMetricDetail('Water Intake', '${totalWaterIntake.toStringAsFixed(1)} L'),
           ],
         ),
