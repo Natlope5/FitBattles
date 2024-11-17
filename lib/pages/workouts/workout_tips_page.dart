@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
-class WorkoutSuggestionPage extends StatelessWidget {
+class WorkoutTipsPage extends StatelessWidget {
   final List<String> workoutTips = [
     "Try increasing your reps to boost strength.",
     "Add 5 minutes of cardio to improve stamina.",
@@ -14,7 +14,7 @@ class WorkoutSuggestionPage extends StatelessWidget {
   final int goalProgress = 75; // Assume this is a percentage of user's goal completion
   final bool nearMilestone = true;
 
-  WorkoutSuggestionPage({super.key});
+  WorkoutTipsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
