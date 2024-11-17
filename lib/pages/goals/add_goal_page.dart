@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddGoalPage extends StatefulWidget {
   const AddGoalPage({super.key});
@@ -17,41 +17,34 @@ class AddGoalPageState extends State<AddGoalPage> {
     final String goalName = _goalNameController.text;
     final double? goalAmount = double.tryParse(_goalAmountController.text);
 
-    String message;
-
     if (goalName.isNotEmpty && goalAmount != null) {
-      final SharedPreferences prefs = await SharedPreferences.getInstance();
-      List<String> goalHistory = prefs.getStringList('currentGoals') ?? [];
+      String uid = FirebaseAuth.instance.currentUser!.uid;
 
-      // Add new goal to the list
-      final newGoal = {
+      Map<String, dynamic> newGoal = {
         'name': goalName,
         'amount': goalAmount,
         'currentProgress': 0.0,
         'isCompleted': false,
       };
 
-      goalHistory.add(jsonEncode(newGoal));
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('goals')
+          .add(newGoal);
 
-      // Save back to SharedPreferences
-      await prefs.setStringList('currentGoals', goalHistory);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Goal added successfully!')),
+      );
 
-      message = 'Goal added successfully!';
-
-      // Clear inputs
       _goalNameController.clear();
       _goalAmountController.clear();
     } else {
-      message = 'Please enter valid goal name and amount.';
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter valid goal name and amount.')),
+      );
     }
-
-    // Ensure the widget is still mounted before accessing context
-    if (!mounted) return;
-
-    // Show the message in a snackbar after async operations are done
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
   }
 
   @override

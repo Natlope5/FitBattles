@@ -1,32 +1,32 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:fitbattles/challenges/distance_workout_page.dart';
-import 'package:fitbattles/challenges/earned_points_page.dart';
-import 'package:fitbattles/pages/add_goal_page.dart';
+import 'package:fitbattles/pages/points/earned_points_page.dart';
+import 'package:fitbattles/pages/goals/add_goal_page.dart';
 import 'package:fitbattles/pages/challenges/time_based_challenges_page.dart';
-import 'package:fitbattles/pages/community_challenge.dart';
-import 'package:fitbattles/pages/current_goals_page.dart';
-import 'package:fitbattles/workouts/custom_workout_page.dart';
-import 'package:fitbattles/pages/goals_completion_page.dart';
+import 'package:fitbattles/pages/challenges/community_challenge.dart';
+import 'package:fitbattles/pages/goals/current_goals_page.dart';
+import 'package:fitbattles/pages/workouts/custom_workout_page.dart';
+import 'package:fitbattles/pages/goals/goals_completion_page.dart';
 import 'package:fitbattles/pages/badges_and_rewards_page.dart';
 import 'package:fitbattles/pages/health_report_page.dart';
-import 'package:fitbattles/pages/workout_tracking_page.dart';
-import 'package:fitbattles/workouts/strength_workout_page.dart';
+import 'package:fitbattles/pages/workouts/workout_suggestions_page.dart';
+import 'package:fitbattles/pages/workouts/workout_tips_page.dart';
+import 'package:fitbattles/pages/workouts/workout_tracking_page.dart';
 import 'package:fitbattles/pages/friends_list_page.dart';
 import 'package:fitbattles/pages/home_page.dart';
 import 'package:fitbattles/pages/my_history_page.dart';
 import 'package:fitbattles/pages/settings_page.dart';
 import 'package:fitbattles/pages/user_profile_page.dart';
-import 'package:fitbattles/settings/theme_provider.dart';
+import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-import 'package:fitbattles/challenges/create_challenge_page.dart';
-import 'package:fitbattles/challenges/leaderboard_page.dart';
+import 'package:fitbattles/pages/challenges/create_challenge_page.dart';
+import 'package:fitbattles/pages/points/leaderboard_page.dart';
 import 'package:fitbattles/auth/login_page.dart';
-import 'package:fitbattles/challenges/user_challenges_page.dart';
-import 'package:fitbattles/pages/workout_history_page.dart';
+import 'package:fitbattles/pages/challenges/user_challenges_page.dart';
+import 'package:fitbattles/pages/workouts/workout_history_page.dart';
 
 final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
 final FlutterLocalNotificationsPlugin localNotificationsPlugin = FlutterLocalNotificationsPlugin();
@@ -54,19 +54,11 @@ class MyApp extends StatelessWidget {
             '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
-            '/pointsInfo': (context) => const EarnedPointsPage(
-              points: 1000,
-              streakDays: 360,
-              totalChallengesCompleted: 0,
-              pointsEarnedToday: 0,
-              bestDayPoints: 0, userId: '',
-            ),
-            '/distanceWorkout': (context) => const DistanceWorkoutPage(),
-            '/strengthWorkout': (context) => const StrengthWorkoutPage(),
+            '/pointsInfo': (context) => EarnedPointsPage(userId: ''),
             '/leaderboard': (context) => const LeaderboardPage(),
             '/settings': (context) => const SettingsPage(heading: 'Settings',),
             '/create_challenge': (context) => CreateChallengePage(),
-            '/user_challenges': (context) => const UserChallengesPage(),
+            '/user_challenges': (context) => UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),
             '/currentGoals': (context) => CurrentGoalsPage(),
             '/goalHistory': (context) => GoalCompletionPage(),
@@ -75,6 +67,8 @@ class MyApp extends StatelessWidget {
             '/scheduleChallenge': (context) => const CommunityChallengePage(),
             '/customWorkout': (context) => CustomWorkoutPlanPage(),
             '/timeBasedChallenges': (context) => TimeBasedChallengesPage(),
+            '/workoutTips': (context) => WorkoutTipsPage(),
+            '/workoutSuggestions': (context) => WorkoutSuggestionsPage(),
           },
         );
       },

@@ -1,8 +1,102 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
-class HealthReportPage extends StatelessWidget {
+class HealthReportPage extends StatefulWidget {
   const HealthReportPage({super.key});
+
+  @override
+  State<HealthReportPage> createState() => _HealthReportPageState();
+}
+
+class _HealthReportPageState extends State<HealthReportPage> {
+  int totalCalories = 0;
+  int totalWorkoutTime = 0; // in minutes
+  double totalWaterIntake = 0.0;
+  Map<String, double> dailyCalories = {
+    'Mon': 0,
+    'Tue': 0,
+    'Wed': 0,
+    'Thu': 0,
+    'Fri': 0,
+    'Sat': 0,
+    'Sun': 0,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWeeklyWorkoutData();
+  }
+
+  Future<void> _fetchWeeklyWorkoutData() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final startOfWeek = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+    final workoutsSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .collection('workouts')
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek))
+        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfWeek))
+        .get();
+
+    int caloriesSum = 0;
+    int durationSum = 0;
+    Map<String, double> caloriesByDay = {
+      'Mon': 0,
+      'Tue': 0,
+      'Wed': 0,
+      'Thu': 0,
+      'Fri': 0,
+      'Sat': 0,
+      'Sun': 0,
+    };
+
+    for (var doc in workoutsSnapshot.docs) {
+      final data = doc.data();
+      final calories = (data['calories'] as num).toDouble();
+      final duration = (data['duration'] as num).toInt();
+      final timestamp = (data['timestamp'] as Timestamp).toDate();
+      final day = DateFormat.E().format(timestamp); // Get day abbreviation
+
+      caloriesSum += calories.toInt();
+      durationSum += duration;
+      if (caloriesByDay.containsKey(day)) {
+        caloriesByDay[day] = (caloriesByDay[day] ?? 0) + calories;
+      }
+    }
+
+    setState(() {
+      totalCalories = caloriesSum;
+      totalWorkoutTime = durationSum;
+      dailyCalories = caloriesByDay;
+    });
+
+    await _fetchWaterIntakeData();
+  }
+
+  // Fetch water intake data
+  Future<void> _fetchWaterIntakeData() async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+    QuerySnapshot waterSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('water_log')
+        .get();
+    double waterIntake = 0.0;
+    for (var doc in waterSnapshot.docs) {
+      final data = doc.data() as Map<String, dynamic>;
+      waterIntake += data['amount'] ?? 0.0;
+    }
+    setState(() {
+      totalWaterIntake = waterIntake;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,22 +112,22 @@ class HealthReportPage extends StatelessWidget {
           children: [
             // Summary Section
             const Text(
-              'Summary',
+              'Weekly Summary',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildMetricCard('Calories Burned', '1200 kcal'),
-                _buildMetricCard('Workout Time', '1h 30m'),
+                _buildMetricCard('Calories Burned', '$totalCalories kcal'),
+                _buildMetricCard('Workout Time', _formatDuration(totalWorkoutTime)),
               ],
             ),
             const SizedBox(height: 20),
 
             // Graph Section
             const Text(
-              'Calories Burned Over Time',
+              'Calories Burned Each Day',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
@@ -49,11 +143,11 @@ class HealthReportPage extends StatelessWidget {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            _buildMetricDetail('Steps Taken', '10,000'),
+            _buildMetricDetail('Steps Taken', '10,000'), // Placeholder
             const SizedBox(height: 10),
-            _buildMetricDetail('Heart Rate', '75 bpm'),
+            _buildMetricDetail('Heart Rate', '75 bpm'), // Placeholder
             const SizedBox(height: 10),
-            _buildMetricDetail('Water Intake', '2.5L'),
+            _buildMetricDetail('Water Intake', '${totalWaterIntake.toStringAsFixed(1)} L'),
           ],
         ),
       ),
@@ -84,6 +178,13 @@ class HealthReportPage extends StatelessWidget {
     );
   }
 
+  // Helper method to format duration in hours and minutes
+  String _formatDuration(int minutes) {
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    return '${hours}h ${mins}m';
+  }
+
   // Helper method to build detailed metrics
   Widget _buildMetricDetail(String title, String value) {
     return Row(
@@ -101,29 +202,46 @@ class HealthReportPage extends StatelessWidget {
     );
   }
 
-  // fl_chart bar chart for calories burned over time
   Widget _buildCaloriesChart() {
     return BarChart(
       BarChartData(
-        barGroups: [
-          BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 300)]),
-          BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 500)]),
-          BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 400)]),
-          BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 700)]),
-          BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 600)]),
-          BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 800)]),
-          BarChartGroupData(x: 6, barRods: [BarChartRodData(toY: 1000)]),
-        ],
-        borderData: FlBorderData(show: false),
+        barGroups: dailyCalories.entries.map((entry) {
+          final dayIndex = _dayToIndex(entry.key);
+          return BarChartGroupData(
+            x: dayIndex,
+            barRods: [BarChartRodData(toY: entry.value)],
+          );
+        }).toList(),
+        borderData: FlBorderData(
+          show: false, // Hide all borders around the graph
+        ),
         titlesData: FlTitlesData(
+          topTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false), // Hide the top titles
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(showTitles: false), // Hide the left titles
+          ),
+          rightTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true, // Show numbers on the right side
+              interval: 100, // Set intervals to increments of 100
+              getTitlesWidget: (value, meta) {
+                if (value % 100 == 0) {
+                  return Text(
+                    '${value.toInt()}',
+                    style: const TextStyle(color: Colors.black, fontSize: 12),
+                  );
+                }
+                return const SizedBox.shrink(); // Hide other values
+              },
+            ),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
-              showTitles: true,
+              showTitles: true, // Show days of the week on the bottom
               getTitlesWidget: (double value, TitleMeta meta) {
-                const style = TextStyle(
-                  color: Colors.black,
-                  fontSize: 14,
-                );
+                const style = TextStyle(color: Colors.black, fontSize: 14);
                 switch (value.toInt()) {
                   case 0:
                     return Text('Mon', style: style);
@@ -145,11 +263,23 @@ class HealthReportPage extends StatelessWidget {
               },
             ),
           ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(showTitles: false), // Hides the left axis titles
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawHorizontalLine: true,
+          drawVerticalLine: false,
+          horizontalInterval: 100, // Align horizontal lines with increments of 100
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.grey.withOpacity(0.5), // Customize horizontal line color
+            strokeWidth: 1, // Customize horizontal line thickness
           ),
         ),
       ),
     );
+  }
+
+  int _dayToIndex(String day) {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.indexOf(day);
   }
 }

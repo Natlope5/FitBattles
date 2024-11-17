@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, required String heading});
@@ -12,6 +15,10 @@ class SettingsPage extends StatefulWidget {
 class SettingsPageState extends State<SettingsPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ImagePicker _picker = ImagePicker();
+  File? _image;  // Make _image nullable
+
+  String _avatarUrl = '';
 
   String _name = '';
   String _bio = '';
@@ -23,6 +30,8 @@ class SettingsPageState extends State<SettingsPage> {
   bool _receiveNotifications = false;
   String _visibility = 'public';
 
+  String _message = ''; // Initialize the _message variable properly
+
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -31,55 +40,52 @@ class SettingsPageState extends State<SettingsPage> {
     _loadUserSettings();
   }
 
-  // Load user settings from Firestore
   Future<void> _loadUserSettings() async {
     User? user = _auth.currentUser;
     if (user != null) {
       DocumentSnapshot userDoc = await _firestore.collection('users').doc(user.uid).get();
       if (userDoc.exists) {
-        setState(() {
-          _name = userDoc['name'] ?? '';
-          _bio = userDoc['bio'] ?? '';
-          _age = userDoc['age'] ?? 0;
-          _weight = userDoc['weight'] ?? 0.0;
-          int totalHeightInInches = userDoc['height_inches'] ?? 0;
-          _heightFeet = (totalHeightInInches ~/ 12).toString(); // Feet
-          _heightInches = (totalHeightInInches % 12).toString(); // Remaining Inches
-          _shareData = userDoc['share_data'] ?? false;
-          _receiveNotifications = userDoc['receive_notifications'] ?? false;
-          _visibility = userDoc['visibility'] ?? 'public';
-        });
+        if (mounted) {
+          setState(() {
+            _name = userDoc['name'] ?? '';
+            _bio = userDoc['bio'] ?? '';
+            _age = userDoc['age'] ?? 0;
+            _weight = userDoc['weight'] ?? 0.0;
+            int totalHeightInInches = userDoc['height_inches'] ?? 0;
+            _heightFeet = (totalHeightInInches ~/ 12).toString();
+            _heightInches = (totalHeightInInches % 12).toString();
+            _shareData = userDoc['share_data'] ?? false;
+            _receiveNotifications = userDoc['receive_notifications'] ?? false;
+            _visibility = userDoc['visibility'] ?? 'public';
+            _avatarUrl = userDoc['avatar'] ?? '';
+          });
+        }
       }
     }
   }
 
-  // Save user settings to Firestore
   Future<String> _saveSettings() async {
     User? user = _auth.currentUser;
     if (user != null && _formKey.currentState!.validate()) {
       try {
-        // Convert height to total inches
         int totalHeightInInches = (int.parse(_heightFeet) * 12) + int.parse(_heightInches);
 
         DocumentReference userDoc = _firestore.collection('users').doc(user.uid);
-
-        // Check if the document exists
         bool docExists = (await userDoc.get()).exists;
 
         if (docExists) {
-          // Update the document
           await userDoc.update({
             'name': _name,
             'bio': _bio,
             'age': _age,
-            'weight': _weight, // in lbs
+            'weight': _weight,
             'height_inches': totalHeightInInches,
             'share_data': _shareData,
             'receive_notifications': _receiveNotifications,
             'visibility': _visibility,
+            'avatar': _avatarUrl,
           });
         } else {
-          // Create the document if it does not exist
           await userDoc.set({
             'name': _name,
             'bio': _bio,
@@ -89,30 +95,83 @@ class SettingsPageState extends State<SettingsPage> {
             'share_data': _shareData,
             'receive_notifications': _receiveNotifications,
             'visibility': _visibility,
+            'avatar': _avatarUrl,
           });
         }
 
-        // Reload the user settings after saving
         await _loadUserSettings();
-
-        return 'Settings updated successfully!';
+        setState(() {
+          _message = 'Settings updated successfully!';
+        });
+        return _message; // Return the success message
       } catch (e) {
-        return 'Failed to update settings: ${e.toString()}';
+        setState(() {
+          _message = 'Failed to update settings: ${e.toString()}';
+        });
+        return _message; // Return the failure message
       }
     }
-    return 'Failed to update settings: Form validation error';
+    setState(() {
+      _message = 'Failed to update settings: Form validation error';
+    });
+    return _message; // Return error message
   }
 
-  // Logout the user
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);  // Assign the picked image to _image
+      });
+      _uploadImage();
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_image != null) {
+      try {
+        final storageRef = FirebaseStorage.instance.ref().child('avatars/${DateTime.now().millisecondsSinceEpoch}.png');
+        await storageRef.putFile(_image!);  // Use _image! to access the non-nullable _image
+
+        String imageUrl = await storageRef.getDownloadURL();
+
+        if (mounted) {
+          setState(() {
+            _avatarUrl = imageUrl;
+          });
+        }
+
+        User? user = _auth.currentUser;
+        if (user != null) {
+          await _firestore.collection('users').doc(user.uid).update({
+            'avatar': _avatarUrl,
+          });
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Avatar updated successfully')));
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to upload image: ${e.toString()}')));
+        }
+      }
+    }
+  }
+
   Future<void> _logout() async {
     await _auth.signOut();
-    _navigateToLogin();
+    if (mounted) {
+      _navigateToLogin();
+    }
   }
 
   void _navigateToLogin() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.of(context).pushReplacementNamed('/login');
-    });
+    if (mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      });
+    }
   }
 
   @override
@@ -171,7 +230,7 @@ class SettingsPageState extends State<SettingsPage> {
                           validator: (value) => value!.isEmpty ? 'Please enter feet' : null,
                         ),
                       ),
-                      SizedBox(width: 10),
+                      SizedBox(width: 8),
                       Expanded(
                         child: TextFormField(
                           initialValue: _heightInches,
@@ -186,44 +245,49 @@ class SettingsPageState extends State<SettingsPage> {
                   SwitchListTile(
                     title: Text('Share Data'),
                     value: _shareData,
-                    onChanged: (value) => setState(() => _shareData = value),
+                    onChanged: (bool value) {
+                      setState(() {
+                        _shareData = value;
+                      });
+                    },
                   ),
                   SwitchListTile(
                     title: Text('Receive Notifications'),
                     value: _receiveNotifications,
-                    onChanged: (value) => setState(() => _receiveNotifications = value),
+                    onChanged: (bool value) {
+                      setState(() {
+                        _receiveNotifications = value;
+                      });
+                    },
                   ),
-
-                  // Privacy Settings label
-                  SizedBox(height: 20), // Space before the title
-                  Text(
-                    'Privacy Settings',
-                    style: TextStyle(
-                      fontSize: 18, // You can adjust the size as needed
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 10), // Space after the title
-
                   DropdownButtonFormField<String>(
                     value: _visibility,
-                    decoration: InputDecoration(labelText: 'Profile Visibility'),
-                    items: ['public', 'friendsOnly', 'private'].map((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    onChanged: (value) => setState(() => _visibility = value!),
+                    decoration: InputDecoration(labelText: 'Visibility'),
+                    items: ['public', 'private']
+                        .map((visibility) => DropdownMenuItem<String>(
+                      value: visibility,
+                      child: Text(visibility),
+                    ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _visibility = value ?? 'public';
+                      });
+                    },
                   ),
-
                   SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: () async {
-                      String message = await _saveSettings();
-                      _showSnackbar(message);
-                    },
-                    child: Text('Save Changes'),
+                    onPressed: _saveSettings,
+                    child: Text('Save Settings'),
+                  ),
+                  SizedBox(height: 20),
+                  Text(
+                    _message,
+                    style: TextStyle(color: Colors.green),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.camera_alt),
+                    onPressed: _pickImage,  // Use _pickImage here
                   ),
                 ],
               ),
@@ -232,10 +296,5 @@ class SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
-  }
-
-  void _showSnackbar(String message) {
-    // Show the snackbar message
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 }

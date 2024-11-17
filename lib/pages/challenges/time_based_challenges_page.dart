@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fitbattles/firebase/challenge_service.dart';
+import 'package:fitbattles/challenges/time_based_challenge_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TimeBasedChallengesPage extends StatefulWidget {
@@ -10,7 +10,7 @@ class TimeBasedChallengesPage extends StatefulWidget {
 }
 
 class TimeBasedChallengesPageState extends State<TimeBasedChallengesPage> {
-  final ChallengeService _challengeService = ChallengeService();
+  final TimeBasedChallengeService _challengeService = TimeBasedChallengeService();
   Map<String, dynamic>? _currentWeeklyChallenge;
   Map<String, dynamic>? _nextWeeklyChallenge;
   Map<String, dynamic>? _currentMonthlyChallenge;

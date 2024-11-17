@@ -2,9 +2,8 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:fitbattles/challenges/challenge.dart';
-import 'package:fitbattles/challenges/earned_points_page.dart';
-import 'package:fitbattles/settings/theme_provider.dart';
+import 'package:fitbattles/pages/points/earned_points_page.dart';
+import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
@@ -204,28 +203,22 @@ class _HomePageState extends State<HomePage> {
             style: const TextStyle(fontSize: 16, color: Colors.black),
           ),
           const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                  const EarnedPointsPage(
-                    points: 1000,
-                    streakDays: 350,
-                    totalChallengesCompleted: 0,
-                    pointsEarnedToday: 0,
-                    bestDayPoints: 0,
-                    userId: '',
-                  ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => EarnedPointsPage(
+                  userId: widget.id, // Only pass userId, as EarnedPointsPage fetches other data from Firebase
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white, // Set text color to white
-              backgroundColor: const Color(0xFF85C83E),
-            ),
-            child: const Text('View Earned Points'),
+              ),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            foregroundColor: Colors.white,
+            backgroundColor: const Color(0xFF85C83E),
+          ),
+          child: const Text('View Earned Points'),
           ),
         ],
       ),
@@ -439,7 +432,7 @@ class _HomePageState extends State<HomePage> {
                 backgroundColor: const Color(0xFF85C83E),
                 foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
             ),
-            child: const Text('View Health Report'),
+            child: const Text('Weekly Health Report'),
           ),
         ],
       ),
@@ -586,34 +579,4 @@ Widget _buildWorkoutTrackingButton(BuildContext context, ThemeProvider themeProv
     ),
     child: const Text('Workout Tracking'), // Button text
   );
-}
-
-class DetailsScreen extends StatelessWidget {
-  const DetailsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final Challenge challenge = ModalRoute.of(context)!.settings.arguments as Challenge;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(challenge.name), // Display challenge name in the app bar
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Type: ${challenge.type}', style: const TextStyle(fontSize: 20)),
-            const SizedBox(height: 10),
-            Text('Start Date: ${challenge.startDate.toLocal()}'),
-            const SizedBox(height: 5),
-            Text('End Date: ${challenge.endDate.toLocal()}'),
-            const SizedBox(height: 20),
-            // Add any additional information you want to show
-          ],
-        ),
-      ),
-    );
-  }
 }

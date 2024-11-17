@@ -1,4 +1,4 @@
-import 'package:fitbattles/settings/app_theme.dart';
+import 'package:fitbattles/settings/ui/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'app_strings.dart'; // Import the strings file
 

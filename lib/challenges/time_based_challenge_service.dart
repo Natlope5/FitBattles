@@ -1,6 +1,6 @@
 import 'package:intl/intl.dart';
 
-class ChallengeService {
+class TimeBasedChallengeService {
   // Define two sample challenges for even and odd weeks
   final List<Map<String, dynamic>> timeBasedChallenges = [
     {

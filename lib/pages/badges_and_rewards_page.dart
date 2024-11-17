@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fitbattles/settings/badge_service.dart'; // Ensure this path is correct based on your project structure
+import 'package:fitbattles/settings/badge_service.dart';
+import 'package:intl/intl.dart'; // Import for date formatting
 
 class RewardsPage extends StatefulWidget {
   const RewardsPage({super.key});
@@ -11,17 +12,32 @@ class RewardsPage extends StatefulWidget {
 
 class RewardsPageState extends State<RewardsPage> {
   final BadgeService badgeService = BadgeService();
+  late Future<int> userPoints;
   late Future<List<Map<String, String>>> badges;
+  bool _isLoading = true; // Add a loading state
 
   @override
   void initState() {
     super.initState();
-    User? currentUser = FirebaseAuth.instance.currentUser; // Get the current user
+    _loadData();
+  }
+
+  // Load points and badges, and check for badge eligibility
+  Future<void> _loadData() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser != null) {
-      badges = badgeService.fetchBadges(currentUser.uid); // Use the actual user ID
+      await badgeService.awardPointsAndCheckBadges(currentUser.uid, 0, 'challengeCompleted'); // Check for badge eligibility
+      setState(() {
+        userPoints = badgeService.fetchUserPoints(currentUser.uid);
+        badges = badgeService.fetchBadges(currentUser.uid);
+      });
     } else {
-      badges = Future.value([]); // Handle the case where there's no logged-in user
+      userPoints = Future.value(0);
+      badges = Future.value([]);
     }
+    setState(() {
+      _isLoading = false; // Set loading to false once data is fetched
+    });
   }
 
   @override
@@ -31,17 +47,41 @@ class RewardsPageState extends State<RewardsPage> {
         title: const Text('Badges & Rewards'),
         backgroundColor: const Color(0xFF5D6C8A),
       ),
-      body: Padding(
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator()) // Show loading spinner while loading
+          : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Your Badges',
+              'Your Badges & Points',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(height: 20),
+            FutureBuilder<int>(
+              future: userPoints,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                } else if (!snapshot.hasData) {
+                  return const Center(child: Text('No points available.'));
+                }
+
+                final points = snapshot.data ?? 0;
+                return Text(
+                  'Points: $points',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -53,50 +93,20 @@ class RewardsPageState extends State<RewardsPage> {
                   } else if (snapshot.hasError) {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No badges earned yet.'));
+                    return const Center(child: Text('No badges earned.'));
                   }
 
-                  final badgeList = snapshot.data!;
-
-                  return GridView.builder(
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                    ),
+                  final badgeList = snapshot.data ?? [];
+                  return ListView.builder(
                     itemCount: badgeList.length,
-                    itemBuilder: (BuildContext context, int index) {
+                    itemBuilder: (context, index) {
                       final badge = badgeList[index];
-                      return Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        elevation: 4,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.star, // Placeholder icon for badges
-                              size: 50,
-                              color: Colors.orange,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              badge['name'] ?? 'Badge Name',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              'Earned: ${badge['dateEarned'] ?? 'N/A'}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
+                      final formattedDate = DateFormat('dd MMM yyyy').format(DateTime.parse(badge['date'] ?? ''));
+
+                      return ListTile(
+                        leading: const Icon(Icons.emoji_events, color: Colors.amber), // Badge icon
+                        title: Text(badge['name'] ?? 'Unknown Badge'),
+                        subtitle: Text(formattedDate), // Formatted date
                       );
                     },
                   );

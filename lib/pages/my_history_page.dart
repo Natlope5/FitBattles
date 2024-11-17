@@ -1,9 +1,9 @@
-import 'package:fitbattles/pages/workout_history_page.dart';
+import 'package:fitbattles/pages/workouts/workout_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../main.dart';
 import 'hydration_page.dart';
-import 'package:fitbattles/pages/goals_completion_page.dart';
+import 'package:fitbattles/pages/goals/goals_completion_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class MyHistoryPage extends StatefulWidget {
@@ -22,7 +22,6 @@ class HistoryData {
 }
 
 class MyHistoryPageState extends State<MyHistoryPage> {
-
   // Fetch total calories burned
   Future<double> _fetchTotalCaloriesBurned() async {
     try {
@@ -61,10 +60,40 @@ class MyHistoryPageState extends State<MyHistoryPage> {
   }
 
   Future<void> _saveTotalCaloriesAsPoints(double totalCalories) async {
-    String uid = FirebaseAuth.instance.currentUser!.uid;
-    await FirebaseFirestore.instance.collection('users').doc(uid).update({
-      'points': totalCalories,
-    });
+    try {
+      String uid = FirebaseAuth.instance.currentUser!.uid;
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'points': totalCalories,
+      });
+    } catch (e) {
+      logger.i('Error saving points: $e');
+    }
+  }
+
+  // Fetch water intake from the user's water_log sub-collection
+  Future<double> _fetchWaterIntake() async {
+    try {
+      String uid = FirebaseAuth.instance.currentUser!.uid;
+
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('water_log')
+          .get();
+
+      double totalWaterIntake = 0.0;
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        double intake = data['amount'] != null ? (data['amount'] as num).toDouble() : 0.0;
+        totalWaterIntake += intake;
+      }
+
+      return totalWaterIntake;
+    } catch (e) {
+      logger.i('Error fetching water intake: $e');
+      return 0.0;
+    }
   }
 
   // Fetch data for a specific category
@@ -124,22 +153,11 @@ class MyHistoryPageState extends State<MyHistoryPage> {
     );
   }
 
-  // Fetch and display water intake data
-  Future<double> _fetchWaterIntake() async {
-    final documentSnapshot = await FirebaseFirestore.instance
-        .collection('history')
-        .doc('waterIntake')
-        .get();
-
-    if (documentSnapshot.exists) {
-      return documentSnapshot.data()?['intake'] ?? 0.0; // Default to 0.0 if not found
-    }
-    return 0.0;
-  }
-
   // Build the main UI of the History Page
   @override
   Widget build(BuildContext context) {
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My History'),
@@ -150,12 +168,12 @@ class MyHistoryPageState extends State<MyHistoryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Summary',
               style: TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF5D6C8A),
+                color: isDarkMode ? Colors.white : const Color(0xFF5D6C8A),
               ),
             ),
             const SizedBox(height: 20),
@@ -170,7 +188,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
                   } else if (snapshot.hasData) {
                     final data = snapshot.data!;
                     return ListView(
-                      children: _buildHistoryCards(data.waterIntake, data.totalCaloriesBurned),
+                      children: _buildHistoryCards(data.waterIntake, data.totalCaloriesBurned, isDarkMode),
                     );
                   } else {
                     return const Center(child: Text('No data available.'));
@@ -185,7 +203,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
   }
 
   // Build the history cards dynamically
-  List<Widget> _buildHistoryCards(double waterIntake, double totalCaloriesBurned) {
+  List<Widget> _buildHistoryCards(double waterIntake, double totalCaloriesBurned, bool isDarkMode) {
     final historyData = {
       'Points Won': 150,
       'Calories Lost': totalCaloriesBurned,
@@ -209,19 +227,19 @@ class MyHistoryPageState extends State<MyHistoryPage> {
           leading: _getIconForCategory(entry.key),
           title: Text(
             entry.key,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           subtitle: Text(
             entry.key == 'Friends Involved' || entry.key == 'Goals & Achievements'
                 ? 'Tap to view'
                 : '${entry.value}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           trailing: const Icon(
@@ -230,7 +248,6 @@ class MyHistoryPageState extends State<MyHistoryPage> {
           ),
           onTap: () async {
             if (entry.key == 'Water Intake (liters)') {
-              // Navigate to the HydrationPage
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -241,7 +258,6 @@ class MyHistoryPageState extends State<MyHistoryPage> {
               final friendsList = await _fetchFriendsData();
               _showDialog('Friends Involved', friendsList.join(', '));
             } else if (entry.key == 'Goals & Achievements') {
-              // Navigate to the GoalCompletionPage
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -249,7 +265,6 @@ class MyHistoryPageState extends State<MyHistoryPage> {
                 ),
               );
             } else if (entry.key == 'Workout Sessions') {
-              // Navigate to the WorkoutTrackingPage
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -274,19 +289,21 @@ class MyHistoryPageState extends State<MyHistoryPage> {
       case 'Calories Lost':
         return const Icon(Icons.local_fire_department, color: Colors.redAccent);
       case 'Water Intake (liters)':
-        return const Icon(Icons.local_drink, color: Colors.lightBlueAccent);
+        return const Icon(Icons.local_drink, color: Colors.blue);
       case 'Workout Sessions':
         return const Icon(Icons.fitness_center, color: Colors.green);
       case 'Challenges Won':
-        return const Icon(Icons.emoji_events, color: Colors.orangeAccent);
+        return const Icon(Icons.check_circle, color: Colors.green);
       case 'Challenges Lost':
-        return const Icon(Icons.sentiment_dissatisfied, color: Colors.grey);
+        return const Icon(Icons.cancel, color: Colors.red);
       case 'Challenges Tied':
-        return const Icon(Icons.thumbs_up_down, color: Colors.blueGrey);
+        return const Icon(Icons.exposure, color: Colors.grey);
+      case 'Friends Involved':
+        return const Icon(Icons.people, color: Colors.teal);
       case 'Goals & Achievements':
-        return const Icon(Icons.flag, color: Colors.blueAccent); // Icon for Goals
+        return const Icon(Icons.emoji_events, color: Colors.orange);
       default:
-        return const Icon(Icons.help_outline, color: Colors.teal);
+        return const Icon(Icons.help, color: Colors.black);
     }
   }
 }

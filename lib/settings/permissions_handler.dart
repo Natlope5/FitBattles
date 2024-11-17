@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart'; // Required for Flutter widgets
 import 'package:logger/logger.dart'; // For logging
 import 'package:permission_handler/permission_handler.dart'; // For managing permissions
-import 'app_strings.dart'; // Import your strings file
+import 'ui/app_strings.dart'; // Import your strings file
 
 final Logger logger = Logger(); // Initialize the logger
 

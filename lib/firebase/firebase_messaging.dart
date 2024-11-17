@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth package
 import 'package:firebase_messaging/firebase_messaging.dart'; // Firebase Messaging package
 import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore package
 import 'package:logger/logger.dart'; // Logger for logging messages
-import 'package:fitbattles/settings/app_strings.dart'; // Import your strings file
+import 'package:fitbattles/settings/ui/app_strings.dart'; // Import your strings file
 
 final Logger logger = Logger();
 

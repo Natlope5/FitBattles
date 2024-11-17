@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../settings/app_strings.dart';
-import '../settings/app_dimens.dart';
+import '../settings/ui/app_strings.dart';
+import '../settings/ui/app_dimens.dart';
 
 class ViewUserProfile extends StatelessWidget {
   final String currentUid;
