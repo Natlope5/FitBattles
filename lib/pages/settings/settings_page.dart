@@ -23,7 +23,7 @@ class SettingsPageState extends State<SettingsPage> {
   String _avatarUrl = '';
 
   String _name = '';
-  String _bio = '';
+  String _email = '';
   int _age = 0;
   double _weight = 0.0;
   String _heightFeet = '0';
@@ -50,7 +50,7 @@ class SettingsPageState extends State<SettingsPage> {
         if (mounted) {
           setState(() {
             _name = userDoc['name'] ?? '';
-            _bio = userDoc['bio'] ?? '';
+            _email = userDoc['email'] ?? '';
             _age = userDoc['age'] ?? 0;
             _weight = userDoc['weight'] ?? 0.0;
             int totalHeightInInches = userDoc['height_inches'] ?? 0;
@@ -78,7 +78,7 @@ class SettingsPageState extends State<SettingsPage> {
         if (docExists) {
           await userDoc.update({
             'name': _name,
-            'bio': _bio,
+            'email': _email,
             'age': _age,
             'weight': _weight,
             'height_inches': totalHeightInInches,
@@ -90,7 +90,7 @@ class SettingsPageState extends State<SettingsPage> {
         } else {
           await userDoc.set({
             'name': _name,
-            'bio': _bio,
+            'email': _email,
             'age': _age,
             'weight': _weight,
             'height_inches': totalHeightInInches,
@@ -223,9 +223,9 @@ class SettingsPageState extends State<SettingsPage> {
                     validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
                   ),
                   TextFormField(
-                    initialValue: _bio,
-                    decoration: InputDecoration(labelText: 'Bio'),
-                    onChanged: (value) => setState(() => _bio = value),
+                    initialValue: _email,
+                    decoration: InputDecoration(labelText: 'Email'),
+                    onChanged: (value) => setState(() => _email = value),
                   ),
                   TextFormField(
                     initialValue: _age.toString(),

@@ -116,10 +116,12 @@ class _FriendsListPageState extends State<FriendsListPage> {
         final friend = friends[index];
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: NetworkImage(friend['image']),
+            backgroundImage: friend['image'] != null && friend['image'].isNotEmpty
+                ? NetworkImage(friend['image'])
+                : const AssetImage('assets/placeholder_avatar.png') as ImageProvider, // Use default image
           ),
-          title: Text(friend['name']),
-          subtitle: Text(friend['email']),
+          title: Text(friend['name'] ?? 'Unknown'), // Add null check for name
+          subtitle: Text(friend['email'] ?? 'No email provided'), // Add null check for email
         );
       },
     )
