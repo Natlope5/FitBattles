@@ -106,3 +106,37 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+void setupFirebaseMessagingListeners() {
+  // Handle notifications when the app is in the foreground
+  FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    if (message.notification != null) {
+      localNotificationsPlugin.show(
+        0,
+        message.notification!.title,
+        message.notification!.body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'friend_request_channel',
+            'Friend Requests',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+        ),
+      );
+    }
+  });
+
+  // Handle notifications when the app is in the background but not terminated
+  FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+    final String? routeFromMessage = message.data['route'];
+    if (routeFromMessage != null) {
+      navigatorKey.currentState?.pushNamed(routeFromMessage);
+    }
+  });
+}
+
+// Call this function in initState of any widget that needs notifications
+void initializeNotifications() {
+  setupFirebaseMessagingListeners();
+}

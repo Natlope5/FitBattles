@@ -220,7 +220,7 @@ class CreateChallengePageState extends State<CreateChallengePage> {
           .collection('challenges')
           .add(challengeData);
 
-      if (!mounted) return; // Check if the widget is still mounted
+      if (!mounted) return;
 
       // Show success message
       showSnackBar(successMessage);
@@ -228,7 +228,7 @@ class CreateChallengePageState extends State<CreateChallengePage> {
       // Optionally, navigate back or clear fields
       Navigator.pop(context); // Navigate back to the previous screen
     } catch (e) {
-      if (!mounted) return; // Check if the widget is still mounted
+      if (!mounted) return;
 
       // Handle errors
       showSnackBar('Error creating challenge: $e');

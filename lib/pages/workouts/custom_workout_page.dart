@@ -85,6 +85,22 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     );
   }
 
+  // Function to trigger a rest notification after adding an exercise
+  // Function to trigger a rest and hydration notification after adding an exercise
+  Future<void> _triggerRestNotification() async {
+    // Set a rest time (e.g., 5 seconds after adding the exercise)
+    const restTime = Duration(seconds: 5);
+
+    // Wait for the rest period and trigger the rest notification
+    await Future.delayed(restTime, () async {
+      await _showNotification(
+          "Rest Reminder",
+          "It's time to rest, recover, and hydrate! Drink some water for optimal performance."
+      );
+    });
+  }
+
+
   // Function to add exercises
   void _addExercise() {
     if (_exerciseNameController.text.isEmpty ||
@@ -119,6 +135,9 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
 
     // Call _showNotification to notify the user
     _showNotification("Exercise Added", "You have added a new exercise: ${_exerciseNameController.text}");
+
+    // Trigger rest notification after adding the exercise
+    _triggerRestNotification();
 
     // Clear text fields after adding an exercise
     _exerciseNameController.clear();
