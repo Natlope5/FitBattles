@@ -168,16 +168,20 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
   }
 
   // Function to trigger rest notification after workout
+  // Function to trigger a rest and hydration notification after adding an exercise
   Future<void> _triggerRestNotification() async {
-    // Set a rest time (e.g., 5 seconds for this example, change as needed)
+    // Set a rest time (e.g., 5 seconds after adding the exercise)
     const restTime = Duration(seconds: 5);
 
     // Wait for the rest period and trigger the rest notification
     await Future.delayed(restTime, () async {
       await _showNotification(
-          "Rest Reminder", "It's time to rest and recover!");
+          "Rest Reminder",
+          "It's time to rest, recover, and hydrate! Drink some water for optimal performance."
+      );
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
