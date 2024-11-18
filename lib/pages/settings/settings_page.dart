@@ -274,13 +274,30 @@ class SettingsPageState extends State<SettingsPage> {
                   SwitchListTile(
                     title: Text('Receive Notifications'),
                     value: _receiveNotifications,
-                    onChanged: (bool value) {
-                      if(value){
-                        _requestNotificationPermission();
-                      }else {
+                    onChanged: (bool value) async {
+                      if (value) {
+                        // Enable notifications
+                        await _requestNotificationPermission();
+                      } else {
+                        // Disable notifications
                         setState(() {
                           _receiveNotifications = false;
                         });
+
+                        // Updates user Preferences in Firestore
+                        User? user = _auth.currentUser;
+                        if (user != null) {
+                          await _firestore.collection('users').doc(user.uid).update({
+                            'receive_notifications': false,
+                          });
+                        }
+
+                        // Informs user that they need to disable notifications in settings
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Notifications disabled. To fully stop notifications, disable them in your device settings.'),
+                          ),
+                        );
                       }
                     },
                   ),
