@@ -182,6 +182,7 @@ class SettingsPageState extends State<SettingsPage> {
       setState(() {
         _receiveNotifications = true;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Notifications enabled!')),
       );
@@ -189,6 +190,7 @@ class SettingsPageState extends State<SettingsPage> {
       setState(() {
         _receiveNotifications = false;
       });
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Notification permission denied.')),
       );

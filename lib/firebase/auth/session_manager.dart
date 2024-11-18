@@ -8,7 +8,7 @@ class SessionManager {
   final String _sessionExpirationKey = "session_expiration"; // Key for session expiration
   final Logger logger = Logger(); // Logger instance for error handling and info logging
 
-  /// Save user email to SharedPreferences after successful login
+  // Save user email to SharedPreferences after successful login
   Future<void> saveUserEmail(String userEmail) async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -19,7 +19,6 @@ class SessionManager {
     }
   }
 
-  /// Fetch user email from SharedPreferences
   Future<String?> getUserEmail() async {
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -30,7 +29,6 @@ class SessionManager {
     }
   }
 
-  /// Save user session data (email and ID) to SharedPreferences after successful login
   Future<void> saveUserSession(User? user) async {
     try {
       if (user != null) {
@@ -49,7 +47,6 @@ class SessionManager {
     }
   }
 
-  /// Firebase login method
   Future<User?> loginWithFirebase(String email, String password) async {
     try {
       // Use Firebase to sign in with email and password
@@ -63,7 +60,6 @@ class SessionManager {
       await saveUserSession(userCredential.user);
       logger.i("User logged in with email: $email");
 
-      // Return the logged-in user
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       // Handle specific FirebaseAuthExceptions
@@ -75,7 +71,6 @@ class SessionManager {
     }
   }
 
-  /// Check if the user is logged in by checking FirebaseAuth and SharedPreferences
   Future<bool> isUserLoggedIn() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString(_userIdKey);
@@ -96,10 +91,8 @@ class SessionManager {
     return false;
   }
 
-  /// Firebase sign-out method
   Future<void> logoutUser() async {
     try {
-      // Sign out from Firebase
       await FirebaseAuth.instance.signOut();
 
       // Clear locally stored user data after signing out
@@ -114,7 +107,6 @@ class SessionManager {
     }
   }
 
-  /// Register a new user in Firebase
   Future<User?> signUpWithFirebase(String email, String password) async {
     try {
       // Sign up a new user with email and password
@@ -128,7 +120,6 @@ class SessionManager {
       await saveUserSession(userCredential.user);
       logger.i("User signed up with email: $email");
 
-      // Return the new user
       return userCredential.user;
     } on FirebaseAuthException catch (e) {
       // Handle specific FirebaseAuthExceptions during sign up
