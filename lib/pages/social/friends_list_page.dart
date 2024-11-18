@@ -151,14 +151,17 @@ class _FriendsListPageState extends State<FriendsListPage> {
                         request['requestId'],
                         request['email'],
                       );
-                      _loadFriendRequests();
+                      _loadFriendRequests(); // Refresh the friend requests list
+                      _loadFriends(); // Refresh the friends list
                     },
                   ),
                   IconButton(
                     icon: const Icon(Icons.clear, color: Colors.red),
                     onPressed: () async {
-                      await _firebaseService.declineFriendRequest(request['requestId']);
-                      _loadFriendRequests();
+                      await _firebaseService.declineFriendRequest(
+                        request['requestId'],
+                      );
+                      _loadFriendRequests(); // Refresh the friend requests list
                     },
                   ),
                 ],

@@ -133,7 +133,6 @@ class FriendsService {
     return null;
   }
 
-  // Accepts a friend request.
   Future<void> acceptFriendRequest(String requestId, String email) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return;
@@ -169,21 +168,21 @@ class FriendsService {
         'email': currentUser.email,
       });
 
-      // Update the friend request status to accepted.
+      // Delete the friend request after accepting it.
       await _firestore
           .collection('users')
           .doc(currentUser.uid)
           .collection('friendRequests')
           .doc(requestId)
-          .update({'status': 'accepted'});
+          .delete();
     }
   }
 
-  // Declines a friend request.
   Future<void> declineFriendRequest(String requestId) async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return;
 
+    // Delete the friend request after declining it.
     await _firestore
         .collection('users')
         .doc(currentUser.uid)
@@ -192,7 +191,6 @@ class FriendsService {
         .delete();
   }
 
-  // Schedules a local notification.
   Future<void> scheduleNotification(String title, String body) async {
     const androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'friend_requests_channel',
