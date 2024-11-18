@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
+import 'package:permission_handler/permission_handler.dart';
+
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, required String heading});
 
@@ -174,6 +176,24 @@ class SettingsPageState extends State<SettingsPage> {
     }
   }
 
+  Future<void> _requestNotificationPermission() async {
+    PermissionStatus status = await Permission.notification.request();
+    if (status.isGranted) {
+      setState(() {
+        _receiveNotifications = true;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Notifications enabled!')),
+      );
+    } else {
+      setState(() {
+        _receiveNotifications = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Notification permission denied.')),
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -255,9 +275,13 @@ class SettingsPageState extends State<SettingsPage> {
                     title: Text('Receive Notifications'),
                     value: _receiveNotifications,
                     onChanged: (bool value) {
-                      setState(() {
-                        _receiveNotifications = value;
-                      });
+                      if(value){
+                        _requestNotificationPermission();
+                      }else {
+                        setState(() {
+                          _receiveNotifications = false;
+                        });
+                      }
                     },
                   ),
                   DropdownButtonFormField<String>(
