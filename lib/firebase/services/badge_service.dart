@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../main.dart';
+import 'package:fitbattles/main.dart';
 
 class BadgeService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
