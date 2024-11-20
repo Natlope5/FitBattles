@@ -65,7 +65,7 @@ class EarnedPointsStatsSection extends StatelessWidget {
         // Encouragement to maintain the streak
         const Text(
           AppStrings.maintainStreakMessage,
-          style: TextStyle(fontSize: AppDimens.maintainStreakTextSize, color: Colors.grey),
+          style: TextStyle(fontSize: AppDimens.maintainStreakTextSize, color: Colors.transparent),
         ),
       ],
     );
