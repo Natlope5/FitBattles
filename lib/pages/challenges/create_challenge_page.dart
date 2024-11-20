@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// This widget represents the page for creating a new challenge.
 class CreateChallengePage extends StatefulWidget {
   const CreateChallengePage({super.key});
 
@@ -10,29 +9,45 @@ class CreateChallengePage extends StatefulWidget {
   CreateChallengePageState createState() => CreateChallengePageState();
 }
 
-// This is the state class for CreateChallengePage. It holds the state of the page.
 class CreateChallengePageState extends State<CreateChallengePage> {
-  // Controller for the challenge name text field
   final TextEditingController _challengeNameController = TextEditingController();
-
-  // Default type of challenge (e.g., Steps, Time, Distance)
   String _challengeType = 'Steps';
-
-  // Variables to hold the start and end dates for the challenge
   DateTime? _startDate;
   DateTime? _endDate;
-
-  // Controllers for start and end date TextFields
   final TextEditingController _startDateController = TextEditingController();
   final TextEditingController _endDateController = TextEditingController();
+  final List<String> _selectedFriends = [];
+  List<Map<String, dynamic>> _friendsList = [];
 
-  // List to hold the participants' names
-  final List<String> _participants = [];
+  @override
+  void initState() {
+    super.initState();
+    _fetchFriends(); // Fetch friends when the page loads
+  }
 
-  // Controller for the participant text field
-  final TextEditingController _participantController = TextEditingController();
+  Future<void> _fetchFriends() async {
+    String uid = FirebaseAuth.instance.currentUser!.uid;
+    try {
+      QuerySnapshot friendsSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('friends')
+          .get();
 
-  // Function to show SnackBar safely
+      setState(() {
+        _friendsList = friendsSnapshot.docs.map((doc) {
+          return {
+            'id': doc.id,
+            'name': doc['name'] as String? ?? '',
+            'email': doc['email'] as String? ?? '',
+          };
+        }).toList();
+      });
+    } catch (e) {
+      showSnackBar('Error fetching friends: $e');
+    }
+  }
+
   void showSnackBar(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -44,34 +59,28 @@ class CreateChallengePageState extends State<CreateChallengePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // App bar for the page
       appBar: AppBar(
         title: const Text('Create a Challenge'),
       ),
-      // Padding for the body content
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              // Text field for the challenge name
               TextField(
                 controller: _challengeNameController,
                 decoration: const InputDecoration(labelText: 'Challenge Name'),
               ),
               const SizedBox(height: 16),
-
-              // Dropdown for selecting challenge type
               DropdownButtonFormField<String>(
                 value: _challengeType,
-                items: <String>['Steps', 'Time', 'Distance'] // Challenge types
+                items: <String>['Steps', 'Time', 'Distance']
                     .map((String value) => DropdownMenuItem<String>(
                   value: value,
                   child: Text(value),
                 ))
                     .toList(),
                 onChanged: (String? newValue) {
-                  // Update the challenge type when a new value is selected
                   setState(() {
                     _challengeType = newValue!;
                   });
@@ -79,8 +88,6 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                 decoration: const InputDecoration(labelText: 'Challenge Type'),
               ),
               const SizedBox(height: 16),
-
-              // Row for selecting start and end dates
               Row(
                 children: [
                   Expanded(
@@ -100,7 +107,8 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                         if (pickedDate != null) {
                           setState(() {
                             _startDate = pickedDate;
-                            _startDateController.text = '${pickedDate.toLocal()}'.split(' ')[0];
+                            _startDateController.text =
+                            '${pickedDate.toLocal()}'.split(' ')[0];
                           });
                         }
                       },
@@ -124,7 +132,8 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                         if (pickedDate != null) {
                           setState(() {
                             _endDate = pickedDate;
-                            _endDateController.text = '${pickedDate.toLocal()}'.split(' ')[0];
+                            _endDateController.text =
+                            '${pickedDate.toLocal()}'.split(' ')[0];
                           });
                         }
                       },
@@ -133,45 +142,32 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                 ],
               ),
               const SizedBox(height: 16),
-
-              // Text field for adding participants
-              TextField(
-                controller: _participantController,
-                decoration: const InputDecoration(labelText: 'Add Participant'),
-              ),
-              // Button to add participant to the list
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    if (_participantController.text.isNotEmpty) {
-                      _participants.add(_participantController.text); // Add participant
-                      _participantController.clear(); // Clear the text field
-                    }
-                  });
-                },
-                child: const Text('Add Participant'),
-              ),
-              const SizedBox(height: 16),
-
-              // Display the list of participants as Chips
-              Wrap(
-                children: _participants.map((participant) {
-                  return Chip(
-                    label: Text(participant), // Display participant name
-                    onDeleted: () {
+              const Text('Select Friends to Invite:'),
+              const SizedBox(height: 8),
+              _friendsList.isEmpty
+                  ? const Text('No friends found.')
+                  : ListView(
+                shrinkWrap: true,
+                children: _friendsList.map((friend) {
+                  return CheckboxListTile(
+                    title: Text(friend['name']!),
+                    subtitle: Text(friend['email']!),
+                    value: _selectedFriends.contains(friend['id']),
+                    onChanged: (bool? value) {
                       setState(() {
-                        _participants.remove(participant); // Remove participant from the list
+                        if (value == true) {
+                          _selectedFriends.add(friend['id']!);
+                        } else {
+                          _selectedFriends.remove(friend['id']!);
+                        }
                       });
                     },
                   );
                 }).toList(),
               ),
               const SizedBox(height: 16),
-
-              // Button to create the challenge
               ElevatedButton(
                 onPressed: () {
-                  // Handle the logic to create the challenge here
                   _createChallenge();
                 },
                 child: const Text('Create Challenge'),
@@ -183,24 +179,20 @@ class CreateChallengePageState extends State<CreateChallengePage> {
     );
   }
 
-// Function to create the challenge and save it to Firestore
   Future<void> _createChallenge() async {
-    String challengeName = _challengeNameController.text; // Get the challenge name from the text field
+    String challengeName = _challengeNameController.text;
 
-    // Validate that all required fields are filled
-    if (challengeName.isEmpty || _startDate == null || _endDate == null || _participants.isEmpty) {
+    if (challengeName.isEmpty ||
+        _startDate == null ||
+        _endDate == null ||
+        _selectedFriends.isEmpty) {
       showSnackBar('Please fill all fields.');
-      return; // Exit if validation fails
+      return;
     }
 
-    // Show a loading indicator
     showSnackBar('Creating challenge...');
 
-    // Prepare the success message beforehand
-    String successMessage = 'Challenge "$challengeName" created! Participants: ${_participants.join(', ')}';
-
     try {
-      // Get the current user ID
       String uid = FirebaseAuth.instance.currentUser!.uid;
 
       // Prepare the challenge data
@@ -209,28 +201,33 @@ class CreateChallengePageState extends State<CreateChallengePage> {
         'challengeType': _challengeType,
         'startDate': _startDate,
         'endDate': _endDate,
-        'participants': _participants,
+        'participants': _selectedFriends,
         'timestamp': Timestamp.now(),
+        'createdBy': uid, // Add creator ID for reference
+        'challengeCompleted': false,
       };
 
-      // Save the challenge data to Firestore under the user's 'challenges' collection
+      // Write the challenge to the current user's challenges collection
       await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('challenges')
           .add(challengeData);
 
-      if (!mounted) return; // Check if the widget is still mounted
+      // Also write the challenge to each selected friend's challenges collection
+      for (String friendId in _selectedFriends) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(friendId)
+            .collection('challenges')
+            .add(challengeData);
+      }
 
-      // Show success message
-      showSnackBar(successMessage);
-
-      // Optionally, navigate back or clear fields
-      Navigator.pop(context); // Navigate back to the previous screen
+      if (!mounted) return;
+      showSnackBar('Challenge "$challengeName" created and sent to friends!');
+      Navigator.pop(context); // Navigate back after creation
     } catch (e) {
-      if (!mounted) return; // Check if the widget is still mounted
-
-      // Handle errors
+      if (!mounted) return;
       showSnackBar('Error creating challenge: $e');
     }
   }

@@ -143,10 +143,6 @@ class _HealthReportPageState extends State<HealthReportPage> {
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            _buildMetricDetail('Steps Taken', '10,000'), // Placeholder
-            const SizedBox(height: 10),
-            _buildMetricDetail('Heart Rate', '75 bpm'), // Placeholder
-            const SizedBox(height: 10),
             _buildMetricDetail('Water Intake', '${totalWaterIntake.toStringAsFixed(1)} L'),
           ],
         ),
@@ -225,12 +221,14 @@ class _HealthReportPageState extends State<HealthReportPage> {
           rightTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true, // Show numbers on the right side
-              interval: 100, // Set intervals to increments of 100
+              interval: 100, // Set the interval for Y-axis labels
+              reservedSize: 50, // Increase reserved space for Y-axis labels
               getTitlesWidget: (value, meta) {
                 if (value % 100 == 0) {
                   return Text(
                     '${value.toInt()}',
-                    style: const TextStyle(color: Colors.black, fontSize: 12),
+                    style: const TextStyle(color: Colors.black, fontSize: 12), // Adjust font size
+                    textAlign: TextAlign.center,
                   );
                 }
                 return const SizedBox.shrink(); // Hide other values

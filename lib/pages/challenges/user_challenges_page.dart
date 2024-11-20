@@ -1,28 +1,26 @@
+import 'package:fitbattles/firebase/services/badge_service.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import '../../settings/badge_service.dart';
 
 class UserChallengesPage extends StatefulWidget {
   const UserChallengesPage({super.key});
 
   @override
-  State<UserChallengesPage> createState() => _UserChallengesPageState();
+  UserChallengesPageState createState() => UserChallengesPageState();
 }
 
-class _UserChallengesPageState extends State<UserChallengesPage> {
+class UserChallengesPageState extends State<UserChallengesPage> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Mark a challenge as completed
-  Future<void> markChallengeAsCompleted(String challengeId) async {
+  Future<void> markChallengeAsCompleted(String challengeId, String collection) async {
     final currentUser = _auth.currentUser;
     if (currentUser != null) {
       await _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .collection('challenges')
+          .collection(collection)
           .doc(challengeId)
           .update({'challengeCompleted': true});
 
@@ -41,38 +39,85 @@ class _UserChallengesPageState extends State<UserChallengesPage> {
             .doc(_auth.currentUser!.uid)
             .collection('challenges')
             .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, userSnapshot) {
+          if (userSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No challenges found.'));
-          }
 
-          final challenges = snapshot.data!.docs;
+          return FutureBuilder<QuerySnapshot>(
+            future: _firestore.collection('communityChallenges').get(),
+            builder: (context, communitySnapshot) {
+              if (communitySnapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          return ListView.builder(
-            itemCount: challenges.length,
-            itemBuilder: (context, index) {
-              final challengeData = challenges[index];
-              final data = challengeData.data() as Map<String, dynamic>?;
+              if (!userSnapshot.hasData && !communitySnapshot.hasData) {
+                return const Center(child: Text('No challenges found.'));
+              }
 
-              // Safely check if 'challengeCompleted' exists and set default to false if missing
-              final bool isCompleted = data != null && data.containsKey('challengeCompleted')
-                  ? data['challengeCompleted']
-                  : false;
+              final userChallenges = userSnapshot.data?.docs ?? [];
+              final communityChallenges = communitySnapshot.data?.docs ?? [];
 
-              return ListTile(
-                title: Text(data?['challengeName'] ?? 'Unnamed Challenge'),
-                subtitle: Text('Status: ${isCompleted ? "Completed" : "Pending"}'),
-                trailing: isCompleted
-                    ? const Icon(Icons.check, color: Colors.green)
-                    : IconButton(
-                  icon: const Icon(Icons.check_box_outline_blank),
-                  onPressed: () {
-                    markChallengeAsCompleted(challengeData.id);
-                  },
-                ),
+              return ListView(
+                children: [
+                  // Section for user-specific challenges
+                  if (userChallenges.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'Your Challenges',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        ...userChallenges.map((challengeData) {
+                          final data = challengeData.data() as Map<String, dynamic>?;
+                          final bool isCompleted = data != null && data['challengeCompleted'] == true;
+
+                          return _buildChallengeTile(
+                            challengeData.id,
+                            data?['challengeName'] ?? 'Unnamed Challenge',
+                            isCompleted,
+                            'users/${_auth.currentUser!.uid}/challenges',
+                          );
+                        }),
+                      ],
+                    ),
+
+                  // Section for community challenges
+                  if (communityChallenges.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text(
+                            'Community Challenges',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        ...communityChallenges.map((challengeData) {
+                          final data = challengeData.data() as Map<String, dynamic>?;
+                          final bool isCompleted = data != null && data['challengeCompleted'] == true;
+
+                          return _buildChallengeTile(
+                            challengeData.id,
+                            data?['name'] ?? 'Community Challenge',
+                            isCompleted,
+                            'communityChallenges',
+                          );
+                        })
+                      ],
+                    ),
+                ],
               );
             },
           );
@@ -80,4 +125,20 @@ class _UserChallengesPageState extends State<UserChallengesPage> {
       ),
     );
   }
+
+  Widget _buildChallengeTile(String id, String name, bool isCompleted, String collection) {
+    return ListTile(
+      title: Text(name),
+      subtitle: Text('Status: ${isCompleted ? "Completed" : "Pending"}'),
+      trailing: isCompleted
+          ? const Icon(Icons.check, color: Colors.green)
+          : IconButton(
+        icon: const Icon(Icons.check_box_outline_blank),
+        onPressed: () {
+          markChallengeAsCompleted(id, collection);
+        },
+      ),
+    );
+  }
 }
+

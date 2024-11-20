@@ -1,9 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class CurrentGoalsPage extends StatelessWidget {
   const CurrentGoalsPage({super.key});
+
+  // Notification plugin initialization
+  static final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+
+  static Future<void> initializeNotifications() async {
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  // ValueNotifier to track notification toggle state
+  static final ValueNotifier<bool> notificationsEnabled = ValueNotifier<bool>(true);
 
   Stream<double> _calculateOverallProgress(String uid) {
     return FirebaseFirestore.instance
@@ -34,7 +51,24 @@ class CurrentGoalsPage extends StatelessWidget {
     final String uid = FirebaseAuth.instance.currentUser!.uid;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Current Goals')),
+      appBar: AppBar(
+        title: const Text('Current Goals'),
+        actions: [
+          ValueListenableBuilder<bool>(
+            valueListenable: notificationsEnabled,
+            builder: (context, value, child) {
+              return Switch(
+                value: value,
+                onChanged: (newValue) {
+                  notificationsEnabled.value = newValue;
+                },
+                activeColor: Colors.green,
+                inactiveThumbColor: Colors.grey,
+              );
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Expanded(
@@ -87,7 +121,7 @@ class CurrentGoalsPage extends StatelessWidget {
                           icon: const Icon(Icons.edit, color: Colors.blue),
                           onPressed: () {
                             _showUpdateProgressDialog(
-                                context, goalData.id, progress, goalAmount);
+                                context, goalData.id, progress, goalAmount, goalName);
                           },
                         ),
                       ),
@@ -129,11 +163,19 @@ class CurrentGoalsPage extends StatelessWidget {
     );
   }
 
-  void _showUpdateProgressDialog(BuildContext context, String goalId,
-      double currentProgress, double goalAmount) {
+  void _showUpdateProgressDialog(
+      BuildContext context,
+      String goalId,
+      double currentProgress,
+      double goalAmount,
+      String goalName,
+      ) {
     final TextEditingController progressController = TextEditingController(
       text: currentProgress.toInt().toString(),
     );
+
+    // Capture the navigator instance before the async operation
+    final navigator = Navigator.of(context);
 
     showDialog(
       context: context,
@@ -147,7 +189,7 @@ class CurrentGoalsPage extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => navigator.pop(), // Use captured navigator instance
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -156,9 +198,7 @@ class CurrentGoalsPage extends StatelessWidget {
                 if (newProgress != null) {
                   final uid = FirebaseAuth.instance.currentUser!.uid;
 
-                  // Store the navigator context before async operation
-                  final navigator = Navigator.of(context);
-
+                  // Perform the async operation
                   await FirebaseFirestore.instance
                       .collection('users')
                       .doc(uid)
@@ -168,6 +208,21 @@ class CurrentGoalsPage extends StatelessWidget {
                     'currentProgress': newProgress,
                     'isCompleted': newProgress >= goalAmount,
                   });
+
+                  // Notify the user
+                  if (newProgress >= goalAmount) {
+                    _showNotification(
+                      'Goal Completed',
+                      'Congratulations! You completed the "$goalName" goal.',
+                    );
+                  } else {
+                    _showNotification(
+                      'Progress Updated',
+                      'Your progress for "$goalName" has been updated.',
+                    );
+                  }
+
+                  // Close the dialog after the async operation
                   navigator.pop();
                 }
               },
@@ -177,5 +232,26 @@ class CurrentGoalsPage extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _showNotification(String title, String body) async {
+    if (notificationsEnabled.value) {
+      const AndroidNotificationDetails androidPlatformChannelSpecifics =
+      AndroidNotificationDetails(
+        'your_channel_id',
+        'Your Channel Name',
+        importance: Importance.max,
+        priority: Priority.high,
+      );
+      const NotificationDetails platformChannelSpecifics =
+      NotificationDetails(android: androidPlatformChannelSpecifics);
+
+      await flutterLocalNotificationsPlugin.show(
+        0, // Notification ID
+        title,
+        body,
+        platformChannelSpecifics,
+      );
+    }
   }
 }

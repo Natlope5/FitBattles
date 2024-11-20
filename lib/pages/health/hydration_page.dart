@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:timezone/timezone.dart' as tz;
+import 'package:timezone/data/latest.dart' as tz;
 
 class HydrationPage extends StatefulWidget {
   const HydrationPage({super.key});
@@ -11,6 +14,9 @@ class HydrationPage extends StatefulWidget {
 }
 
 class HydrationPageState extends State<HydrationPage> {
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+
   double _currentWaterIntake = 0.0;
   final double _dailyGoal = 3.0;
   List<Map<String, dynamic>> _waterLog = [];
@@ -18,6 +24,9 @@ class HydrationPageState extends State<HydrationPage> {
   @override
   void initState() {
     super.initState();
+    tz.initializeTimeZones(); // Initialize time zone data
+    _initializeNotifications();
+    _scheduleHourlyReminder();
     _loadWaterIntakeFromFirestore();
     _loadWaterLogFromFirestore();
   }
@@ -64,7 +73,9 @@ class HydrationPageState extends State<HydrationPage> {
           value: _currentWaterIntake / _dailyGoal,
           minHeight: 20,
           backgroundColor: Colors.grey[300],
-          color: Colors.lightBlueAccent,
+          color: _currentWaterIntake >= _dailyGoal
+              ? Colors.green
+              : Colors.lightBlueAccent,
         ),
       ],
     );
@@ -227,6 +238,40 @@ class HydrationPageState extends State<HydrationPage> {
     }
   }
 
+  void _initializeNotifications() {
+    const androidInitializationSettings =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    final initializationSettings =
+    InitializationSettings(android: androidInitializationSettings);
+
+    _flutterLocalNotificationsPlugin.initialize(initializationSettings);
+  }
+
+  void _scheduleHourlyReminder() async {
+    final now = DateTime.now();
+    final nextHour = DateTime(now.year, now.month, now.day, now.hour + 1);
+
+    await _flutterLocalNotificationsPlugin.zonedSchedule(
+      0,
+      'Hydration Reminder',
+      'Time to drink water!',
+      tz.TZDateTime.from(nextHour, tz.local),
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'hydration_channel',
+          'Hydration Notifications',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exact,
+      uiLocalNotificationDateInterpretation:
+      UILocalNotificationDateInterpretation.wallClockTime,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
   Future<void> _clearWaterLog() async {
     try {
       String uid = FirebaseAuth.instance.currentUser!.uid;
@@ -252,7 +297,6 @@ class HydrationPageState extends State<HydrationPage> {
   Future<void> _loadWaterIntakeFromFirestore() async {
     try {
       String uid = FirebaseAuth.instance.currentUser!.uid;
-
       DocumentSnapshot snapshot = await FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
@@ -263,6 +307,7 @@ class HydrationPageState extends State<HydrationPage> {
           _currentWaterIntake =
               (snapshot.data() as Map<String, dynamic>)['currentWaterIntake']?.toDouble() ?? 0.0;
         });
+
       } else {
         setState(() {
           _currentWaterIntake = 0.0;

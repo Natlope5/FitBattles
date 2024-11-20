@@ -1,9 +1,9 @@
-import 'package:fitbattles/pages/user_profile_page.dart'; // Importing UserProfilePage
+import 'package:fitbattles/pages/settings/user_profile_page.dart'; // Importing UserProfilePage
 import 'package:flutter/material.dart'; // Importing Flutter material package
 import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
 import 'package:logger/logger.dart'; // Importing Logger for error logging
 import 'package:fitbattles/pages/home_page.dart'; // Importing the home page to navigate after login
-import 'package:fitbattles/auth/session_manager.dart'; // Import your SessionManager
+import 'package:fitbattles/firebase/auth/session_manager.dart'; // Import your SessionManager
 
 // Login page widget
 class LoginPage extends StatefulWidget {
