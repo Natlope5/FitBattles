@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fitbattles/firebase/services/friends_service.dart';
+import 'package:fitbattles/services/firebase/friends_service.dart';
 
 class FriendsListPage extends StatefulWidget {
   const FriendsListPage({super.key});
@@ -108,6 +108,102 @@ class _FriendsListPageState extends State<FriendsListPage> {
     }
   }
 
+  Future<void> _showFriendStatsDialog(Map<String, dynamic> friend) async {
+    final friendId = friend['id'];
+    final nameController = TextEditingController(text: friend['name']);
+    bool isEditing = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      friend['name'] ?? 'Unknown',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () {
+                      setState(() {
+                        isEditing = !isEditing;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Weekly Stats',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      FutureBuilder<int>(
+                        future: _firebaseService.getFriendWeeklyCalories(friendId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return const Text('Failed to fetch stats.');
+                          }
+                          final weeklyCalories = snapshot.data ?? 0;
+                          return Text('Calories Burned: $weeklyCalories kcal');
+                        },
+                      ),
+                      if (isEditing)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20.0),
+                          child: TextField(
+                            controller: nameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Edit Friend\'s Name',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                if (isEditing)
+                  ElevatedButton(
+                    onPressed: () async {
+                      await _firebaseService.editFriendName(friendId, nameController.text);
+                      Navigator.pop(context);
+                      _loadFriends(); // Refresh friends list
+                    },
+                    child: const Text('Save'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildFriendsList() {
     return friends.isNotEmpty
         ? ListView.builder(
@@ -118,10 +214,13 @@ class _FriendsListPageState extends State<FriendsListPage> {
           leading: CircleAvatar(
             backgroundImage: friend['image'] != null && friend['image'].isNotEmpty
                 ? NetworkImage(friend['image'])
-                : const AssetImage('assets/placeholder_avatar.png') as ImageProvider, // Use default image
+                : const AssetImage('assets/placeholder_avatar.png') as ImageProvider,
           ),
-          title: Text(friend['name'] ?? 'Unknown'), // Add null check for name
-          subtitle: Text(friend['email'] ?? 'No email provided'), // Add null check for email
+          title: Text(friend['name'] ?? 'Unknown'),
+          subtitle: Text(friend['email'] ?? 'No email provided'),
+          onTap: () {
+            _showFriendStatsDialog(friend);
+          },
         );
       },
     )
@@ -151,8 +250,8 @@ class _FriendsListPageState extends State<FriendsListPage> {
                         request['requestId'],
                         request['email'],
                       );
-                      _loadFriendRequests(); // Refresh the friend requests list
-                      _loadFriends(); // Refresh the friends list
+                      _loadFriendRequests();
+                      _loadFriends();
                     },
                   ),
                   IconButton(
@@ -161,7 +260,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
                       await _firebaseService.declineFriendRequest(
                         request['requestId'],
                       );
-                      _loadFriendRequests(); // Refresh the friend requests list
+                      _loadFriendRequests();
                     },
                   ),
                 ],

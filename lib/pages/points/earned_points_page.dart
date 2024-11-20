@@ -4,7 +4,7 @@ import 'package:fitbattles/settings/ui/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:fitbattles/points/earned_points_awards_section.dart';
 import 'package:fitbattles/points/earned_points_stats_section.dart';
-import 'package:fitbattles/firebase/services/points_service.dart';
+import 'package:fitbattles/services/firebase/points_service.dart';
 
 class EarnedPointsPage extends StatelessWidget {
   final String userId;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fitbattles/firebase/services/badge_service.dart';
+import 'package:fitbattles/services/firebase/badge_service.dart';
 import 'package:intl/intl.dart'; // Import for date formatting
 
 class RewardsPage extends StatefulWidget {
