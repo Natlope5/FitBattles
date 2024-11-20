@@ -56,6 +56,9 @@ void main() async {
 
   await localNotificationsPlugin.initialize(initializationSettings);
 
+  // Call to initialize notifications (setup Firebase Messaging listeners)
+  initializeNotifications();
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
@@ -138,5 +141,5 @@ void setupFirebaseMessagingListeners() {
 
 // Call this function in initState of any widget that needs notifications
 void initializeNotifications() {
-  setupFirebaseMessagingListeners();
+  setupFirebaseMessagingListeners(); // Set up listeners for Firebase Messaging
 }
