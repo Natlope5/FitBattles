@@ -5,8 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
 
-import 'package:permission_handler/permission_handler.dart';
-
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key, required String heading});
 
@@ -18,22 +16,18 @@ class SettingsPageState extends State<SettingsPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _picker = ImagePicker();
-  File? _image;  // Make _image nullable
+  File? _image;
 
   String _avatarUrl = '';
-
   String _name = '';
   String _email = '';
   int _age = 0;
   double _weight = 0.0;
   String _heightFeet = '0';
   String _heightInches = '0';
-  bool _shareData = false;
-  bool _receiveNotifications = false;
   String _visibility = 'public';
 
-  String _message = ''; // Initialize the _message variable properly
-
+  String _message = '';
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -56,8 +50,6 @@ class SettingsPageState extends State<SettingsPage> {
             int totalHeightInInches = userDoc['height_inches'] ?? 0;
             _heightFeet = (totalHeightInInches ~/ 12).toString();
             _heightInches = (totalHeightInInches % 12).toString();
-            _shareData = userDoc['share_data'] ?? false;
-            _receiveNotifications = userDoc['receive_notifications'] ?? false;
             _visibility = userDoc['visibility'] ?? 'public';
             _avatarUrl = userDoc['avatar'] ?? '';
           });
@@ -82,8 +74,6 @@ class SettingsPageState extends State<SettingsPage> {
             'age': _age,
             'weight': _weight,
             'height_inches': totalHeightInInches,
-            'share_data': _shareData,
-            'receive_notifications': _receiveNotifications,
             'visibility': _visibility,
             'avatar': _avatarUrl,
           });
@@ -94,8 +84,6 @@ class SettingsPageState extends State<SettingsPage> {
             'age': _age,
             'weight': _weight,
             'height_inches': totalHeightInInches,
-            'share_data': _shareData,
-            'receive_notifications': _receiveNotifications,
             'visibility': _visibility,
             'avatar': _avatarUrl,
           });
@@ -105,25 +93,25 @@ class SettingsPageState extends State<SettingsPage> {
         setState(() {
           _message = 'Settings updated successfully!';
         });
-        return _message; // Return the success message
+        return _message;
       } catch (e) {
         setState(() {
           _message = 'Failed to update settings: ${e.toString()}';
         });
-        return _message; // Return the failure message
+        return _message;
       }
     }
     setState(() {
       _message = 'Failed to update settings: Form validation error';
     });
-    return _message; // Return error message
+    return _message;
   }
 
   Future<void> _pickImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
-        _image = File(pickedFile.path);  // Assign the picked image to _image
+        _image = File(pickedFile.path);
       });
       _uploadImage();
     }
@@ -132,8 +120,10 @@ class SettingsPageState extends State<SettingsPage> {
   Future<void> _uploadImage() async {
     if (_image != null) {
       try {
-        final storageRef = FirebaseStorage.instance.ref().child('avatars/${DateTime.now().millisecondsSinceEpoch}.png');
-        await storageRef.putFile(_image!);  // Use _image! to access the non-nullable _image
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('avatars/${DateTime.now().millisecondsSinceEpoch}.png');
+        await storageRef.putFile(_image!);
 
         String imageUrl = await storageRef.getDownloadURL();
 
@@ -151,11 +141,13 @@ class SettingsPageState extends State<SettingsPage> {
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Avatar updated successfully')));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Avatar updated successfully')));
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to upload image: ${e.toString()}')));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to upload image: ${e.toString()}')));
         }
       }
     }
@@ -164,38 +156,10 @@ class SettingsPageState extends State<SettingsPage> {
   Future<void> _logout() async {
     await _auth.signOut();
     if (mounted) {
-      _navigateToLogin();
+      Navigator.of(context).pushReplacementNamed('/login');
     }
   }
 
-  void _navigateToLogin() {
-    if (mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      });
-    }
-  }
-
-  Future<void> _requestNotificationPermission() async {
-    PermissionStatus status = await Permission.notification.request();
-    if (status.isGranted) {
-      setState(() {
-        _receiveNotifications = true;
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Notifications enabled!')),
-      );
-    } else {
-      setState(() {
-        _receiveNotifications = false;
-      });
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Notification permission denied.')),
-      );
-    }
-  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -220,7 +184,8 @@ class SettingsPageState extends State<SettingsPage> {
                     initialValue: _name,
                     decoration: InputDecoration(labelText: 'Name'),
                     onChanged: (value) => setState(() => _name = value),
-                    validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
+                    validator: (value) =>
+                    value!.isEmpty ? 'Please enter your name' : null,
                   ),
                   TextFormField(
                     initialValue: _email,
@@ -231,15 +196,19 @@ class SettingsPageState extends State<SettingsPage> {
                     initialValue: _age.toString(),
                     decoration: InputDecoration(labelText: 'Age'),
                     keyboardType: TextInputType.number,
-                    onChanged: (value) => setState(() => _age = int.tryParse(value) ?? 0),
-                    validator: (value) => value!.isEmpty ? 'Please enter your age' : null,
+                    onChanged: (value) =>
+                        setState(() => _age = int.tryParse(value) ?? 0),
+                    validator: (value) =>
+                    value!.isEmpty ? 'Please enter your age' : null,
                   ),
                   TextFormField(
                     initialValue: _weight.toString(),
                     decoration: InputDecoration(labelText: 'Weight (lbs)'),
                     keyboardType: TextInputType.number,
-                    onChanged: (value) => setState(() => _weight = double.tryParse(value) ?? 0.0),
-                    validator: (value) => value!.isEmpty ? 'Please enter your weight' : null,
+                    onChanged: (value) =>
+                        setState(() => _weight = double.tryParse(value) ?? 0.0),
+                    validator: (value) =>
+                    value!.isEmpty ? 'Please enter your weight' : null,
                   ),
                   Row(
                     children: [
@@ -249,7 +218,8 @@ class SettingsPageState extends State<SettingsPage> {
                           decoration: InputDecoration(labelText: 'Height (feet)'),
                           keyboardType: TextInputType.number,
                           onChanged: (value) => setState(() => _heightFeet = value),
-                          validator: (value) => value!.isEmpty ? 'Please enter feet' : null,
+                          validator: (value) =>
+                          value!.isEmpty ? 'Please enter feet' : null,
                         ),
                       ),
                       SizedBox(width: 8),
@@ -259,49 +229,11 @@ class SettingsPageState extends State<SettingsPage> {
                           decoration: InputDecoration(labelText: 'Height (inches)'),
                           keyboardType: TextInputType.number,
                           onChanged: (value) => setState(() => _heightInches = value),
-                          validator: (value) => value!.isEmpty ? 'Please enter inches' : null,
+                          validator: (value) =>
+                          value!.isEmpty ? 'Please enter inches' : null,
                         ),
                       ),
                     ],
-                  ),
-                  SwitchListTile(
-                    title: Text('Share Data'),
-                    value: _shareData,
-                    onChanged: (bool value) {
-                      setState(() {
-                        _shareData = value;
-                      });
-                    },
-                  ),
-                  SwitchListTile(
-                    title: Text('Receive Notifications'),
-                    value: _receiveNotifications,
-                    onChanged: (bool value) async {
-                      if (value) {
-                        // Enable notifications
-                        await _requestNotificationPermission();
-                      } else {
-                        // Disable notifications
-                        setState(() {
-                          _receiveNotifications = false;
-                        });
-
-                        // Updates user Preferences in Firestore
-                        User? user = _auth.currentUser;
-                        if (user != null) {
-                          await _firestore.collection('users').doc(user.uid).update({
-                            'receive_notifications': false,
-                          });
-                        }
-
-                        // Informs user that they need to disable notifications in settings
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Notifications disabled. To fully stop notifications, disable them in your device settings.'),
-                          ),
-                        );
-                      }
-                    },
                   ),
                   DropdownButtonFormField<String>(
                     value: _visibility,
@@ -330,7 +262,7 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                   IconButton(
                     icon: Icon(Icons.camera_alt),
-                    onPressed: _pickImage,  // Use _pickImage here
+                    onPressed: _pickImage,
                   ),
                 ],
               ),

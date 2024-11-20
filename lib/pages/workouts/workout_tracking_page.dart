@@ -48,6 +48,8 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
     'Vigorous',
   ];
 
+  bool notificationsEnabled = true;
+
   @override
   void initState() {
     super.initState();
@@ -135,11 +137,11 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
       await prefs.setDouble('lastCalories', caloriesBurned);
       await prefs.setInt('lastPoints', points);
 
-      // Trigger local notification
-      _showNotification('Workout Data Saved', 'You earned $points points!');
-
-      // Trigger Rest Notification after a short delay (5 seconds)
-      _triggerRestNotification();
+      // Trigger notifications only if enabled
+      if (notificationsEnabled) {
+        _showNotification('Workout Data Saved', 'You earned $points points!');
+        _triggerRestNotification();
+      }
 
       _durationController.clear();
       _calorieController.clear();
@@ -148,6 +150,7 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
       logger.e('Error saving workout data: $e');
     }
   }
+
 
   // Function to show a notification
   Future<void> _showNotification(String title, String body) async {
@@ -167,19 +170,30 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
     );
   }
 
-  // Function to trigger rest notification after workout
+  // Function to trigger a rest and hydration notification after adding an exercise
   // Function to trigger a rest and hydration notification after adding an exercise
   Future<void> _triggerRestNotification() async {
+    if (!notificationsEnabled) return; // Skip if notifications are disabled
+
     // Set a rest time (e.g., 5 seconds after adding the exercise)
     const restTime = Duration(seconds: 5);
 
     // Wait for the rest period and trigger the rest notification
     await Future.delayed(restTime, () async {
       await _showNotification(
-          "Rest Reminder",
-          "It's time to rest, recover, and hydrate! Drink some water for optimal performance."
+        "Rest Reminder",
+        "It's time to rest, recover, and hydrate! Drink some water for optimal performance.",
       );
     });
+  }
+// Function to toggle notifications on/off
+  void _toggleNotifications() {
+    setState(() {
+      notificationsEnabled = !notificationsEnabled;
+    });
+    showSnackBar(notificationsEnabled
+        ? "Notifications enabled."
+        : "Notifications disabled.");
   }
 
 
@@ -189,6 +203,17 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
       appBar: AppBar(
         title: const Text('Workout Tracker'),
         backgroundColor: const Color(0xFF5D6C8A),
+        actions: [
+          // Notification toggle button
+          IconButton(
+            icon: Icon(
+              notificationsEnabled
+                  ? Icons.notifications_active
+                  : Icons.notifications_off,
+            ),
+            onPressed: _toggleNotifications,
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

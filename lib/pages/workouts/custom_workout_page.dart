@@ -24,6 +24,7 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
   bool _showAddExercise = false;
   final logger = Logger();
   List<String> logMessages = [];
+  bool _notificationsEnabled = true;
 
   FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -31,7 +32,7 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
   void initState() {
     super.initState();
     _loadExercises(); // Load exercises when the page is first opened
-
+    _loadNotificationPreference();
     // Initialize the notification plugin
     var initializationSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
@@ -67,7 +68,16 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     String exercisesString = jsonEncode(_exercises);
     prefs.setString('exercises', exercisesString);
   }
-
+  Future<void> _loadNotificationPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
+    });
+  }
+  Future<void> _saveNotificationPreference(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('notificationsEnabled', enabled);
+  }
   // Function to show a notification
   Future<void> _showNotification(String title, String body) async {
     var androidDetails = AndroidNotificationDetails(
@@ -85,17 +95,16 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     );
   }
 
-  // Function to trigger a rest notification after adding an exercise
   // Function to trigger a rest and hydration notification after adding an exercise
   Future<void> _triggerRestNotification() async {
-    // Set a rest time (e.g., 5 seconds after adding the exercise)
+    if (!_notificationsEnabled) return; // Check if notifications are enabled
+
     const restTime = Duration(seconds: 5);
 
-    // Wait for the rest period and trigger the rest notification
     await Future.delayed(restTime, () async {
       await _showNotification(
-          "Rest Reminder",
-          "It's time to rest, recover, and hydrate! Drink some water for optimal performance."
+        "Rest Reminder",
+        "It's time to rest, recover, and hydrate! Drink some water for optimal performance.",
       );
     });
   }
@@ -133,11 +142,9 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     _saveExercises();
     logger.i("Exercise added: ${_exerciseNameController.text}");
 
-    // Call _showNotification to notify the user
     _showNotification("Exercise Added", "You have added a new exercise: ${_exerciseNameController.text}");
-
-    // Trigger rest notification after adding the exercise
     _triggerRestNotification();
+
 
     // Clear text fields after adding an exercise
     _exerciseNameController.clear();
@@ -186,26 +193,37 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
-          children: [
-            DropdownButtonFormField<String>(
-              value: _selectedDay,
-              hint: const Text("Select a day"),
-              items: _daysOfWeek.map((String day) {
-                return DropdownMenuItem<String>(value: day, child: Text(day));
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedDay = value;
-                });
-              },
-              decoration: const InputDecoration(border: OutlineInputBorder()),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _exerciseNameController,
-              decoration: const InputDecoration(
-                labelText: "Exercise Name",
-                border: OutlineInputBorder(),
+            children: [
+        SwitchListTile(
+        title: const Text("Enable Notifications"),
+        value: _notificationsEnabled,
+        onChanged: (value) {
+          setState(() {
+            _notificationsEnabled = value;
+          });
+          _saveNotificationPreference(value);
+        },
+      ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _selectedDay,
+                hint: const Text("Select a day"),
+                items: _daysOfWeek.map((String day) {
+                  return DropdownMenuItem<String>(value: day, child: Text(day));
+                }).toList(),
+                onChanged: (value) {
+                  setState(() {
+                    _selectedDay = value;
+                  });
+                },
+                decoration: const InputDecoration(border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _exerciseNameController,
+                decoration: const InputDecoration(
+                  labelText: "Exercise Name",
+                  border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 10),
