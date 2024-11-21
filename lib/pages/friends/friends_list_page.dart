@@ -113,6 +113,17 @@ class _FriendsListPageState extends State<FriendsListPage> {
     final nameController = TextEditingController(text: friend['name']);
     bool isEditing = false;
 
+    // Fetch friend's privacy setting
+    final privacySetting = await _firebaseService.getFriendPrivacy(friendId);
+
+    // Determine visibility based on privacy setting
+    bool canViewStats = false;
+    if (privacySetting == 'public') {
+      canViewStats = true;
+    } else if (privacySetting == 'friends') {
+      canViewStats = true;
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -154,19 +165,30 @@ class _FriendsListPageState extends State<FriendsListPage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      FutureBuilder<int>(
-                        future: _firebaseService.getFriendWeeklyCalories(friendId),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (snapshot.hasError) {
-                            return const Text('Failed to fetch stats.');
-                          }
-                          final weeklyCalories = snapshot.data ?? 0;
-                          return Text('Calories Burned: $weeklyCalories kcal');
-                        },
-                      ),
+                      if (canViewStats)
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: _firebaseService.getFriendWeeklyStats(friendId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+                            if (snapshot.hasError) {
+                              return const Text('Failed to fetch stats.');
+                            }
+                            final stats = snapshot.data ?? {};
+                            final weeklyCalories = stats['calories'] ?? 0;
+                            final workoutsCount = stats['workouts'] ?? 0;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Calories Burned: $weeklyCalories kcal'),
+                                Text('Workouts Completed: $workoutsCount'),
+                              ],
+                            );
+                          },
+                        )
+                      else
+                        const Text('This user\'s stats are private.'),
                       if (isEditing)
                         Padding(
                           padding: const EdgeInsets.only(top: 20.0),

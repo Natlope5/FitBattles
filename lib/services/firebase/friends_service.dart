@@ -50,8 +50,7 @@ class FriendsService {
   // Generates a random alphanumeric code.
   String _generateRandomCode(int length) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    return List.generate(length, (_) => characters[_randomIndex(characters.length)])
-        .join();
+    return List.generate(length, (_) => characters[_randomIndex(characters.length)]).join();
   }
 
   // Returns a random index for character generation.
@@ -78,6 +77,22 @@ class FriendsService {
         .get();
 
     return snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+  }
+
+  // Fetches the privacy setting of a friend.
+  Future<String> getFriendPrivacy(String friendId) async {
+    final profileDoc = await _firestore
+        .collection('users')
+        .doc(friendId)
+        .collection('settings')
+        .doc('profile')
+        .get();
+
+    if (profileDoc.exists) {
+      return profileDoc.data()?['privacy'] ?? 'public';
+    }
+
+    return 'public';
   }
 
   // Fetches the current user's friend requests.
@@ -249,5 +264,29 @@ class FriendsService {
     }
 
     return caloriesSum;
+  }
+
+  Future<Map<String, dynamic>> getFriendWeeklyStats(String friendId) async {
+    final startOfWeek = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+    final workoutsSnapshot = await _firestore
+        .collection('users')
+        .doc(friendId)
+        .collection('workouts')
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek))
+        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfWeek))
+        .get();
+
+    int caloriesSum = 0;
+    int workoutsCount = workoutsSnapshot.docs.length;
+
+    for (var doc in workoutsSnapshot.docs) {
+      final data = doc.data();
+      final calories = (data['calories'] as num?)?.toInt() ?? 0;
+      caloriesSum += calories;
+    }
+
+    return {'calories': caloriesSum, 'workouts': workoutsCount};
   }
 }

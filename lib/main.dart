@@ -11,7 +11,7 @@ import 'package:fitbattles/pages/health/health_report_page.dart';
 import 'package:fitbattles/pages/workouts/workout_suggestions_page.dart';
 import 'package:fitbattles/pages/workouts/workout_tips_page.dart';
 import 'package:fitbattles/pages/workouts/workout_tracking_page.dart';
-import 'package:fitbattles/pages/social/friends_list_page.dart';
+import 'package:fitbattles/pages/friends/friends_list_page.dart';
 import 'package:fitbattles/pages/home_page.dart';
 import 'package:fitbattles/pages/health/history_page.dart';
 import 'package:fitbattles/pages/settings/settings_page.dart';
@@ -87,7 +87,7 @@ class MyApp extends StatelessWidget {
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
             '/pointsInfo': (context) => EarnedPointsPage(userId: ''),
             '/leaderboard': (context) => const LeaderboardPage(),
-            '/settings': (context) => const SettingsPage(heading: 'Settings'),
+            '/settings': (context) => const SettingsPage(),
             '/create_challenge': (context) => CreateChallengePage(),
             '/user_challenges': (context) => UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),
