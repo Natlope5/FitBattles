@@ -560,7 +560,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color(0xFF85C83E),
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
       ),
-      child: const Text('Explore friends'),
+      child: const Text('Friends'),
     );
   }
 }
