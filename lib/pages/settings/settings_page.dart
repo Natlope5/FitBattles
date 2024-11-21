@@ -85,7 +85,6 @@ class SettingsPageState extends State<SettingsPage> {
 
     // Clean up the original fields from the user document
     await _firestore.collection('users').doc(uid).update({
-      'name': FieldValue.delete(),
       'email': FieldValue.delete(),
       'age': FieldValue.delete(),
       'weight': FieldValue.delete(),
