@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fitbattles/services/firebase/friends_service.dart';
 import 'package:fitbattles/pages/social/messages_page.dart';
+import 'package:fitbattles/pages/social/group_chat_page.dart';
 
 class FriendsListPage extends StatefulWidget {
   const FriendsListPage({super.key});
@@ -186,6 +187,19 @@ class _FriendsListPageState extends State<FriendsListPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) => MessagesPage(friendId: friendId, friendName: friend['name']),
+                            ),
+                          );
+                        },
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.group),
+                        label: const Text('Group Chat'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GroupChatPage(),
                             ),
                           );
                         },

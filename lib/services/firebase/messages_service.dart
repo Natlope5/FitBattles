@@ -8,6 +8,7 @@ class MessagesService {
     return (userId.compareTo(recipientId) < 0) ? '${userId}_$recipientId' : '${recipientId}_$userId';
   }
 
+  // Individual chat
   Stream<QuerySnapshot> getMessages(String recipientId) {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return const Stream.empty();
@@ -29,5 +30,28 @@ class MessagesService {
     };
 
     await _firestore.collection('messages').doc(chatId).collection('chat').add(messageData);
+  }
+
+  // Group chat
+  Stream<QuerySnapshot> getGroupMessages(String groupId) {
+    return _firestore
+        .collection('groupChats')
+        .doc(groupId)
+        .collection('messages')
+        .orderBy('timestamp')
+        .snapshots();
+  }
+
+  Future<void> sendGroupMessage(String groupId, String message) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final messageData = {
+      'senderId': currentUser.uid,
+      'message': message,
+      'timestamp': FieldValue.serverTimestamp(),
+    };
+
+    await _firestore.collection('groupChats').doc(groupId).collection('messages').add(messageData);
   }
 }
