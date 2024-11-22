@@ -33,7 +33,7 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
   List<Map<String, dynamic>> friends = [];
   String? selectedFriendId;
 
-  bool _notificationsEnabled = true; // Variable to track notification state
+  bool _notificationsEnabled = true;
 
   @override
   void initState() {
@@ -82,6 +82,59 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     }
   }
 
+  void _joinChallenge(String challengeName) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        final challengeQuery = await FirebaseFirestore.instance
+            .collection('communityChallenges')
+            .where('name', isEqualTo: challengeName)
+            .get();
+
+        if (challengeQuery.docs.isNotEmpty) {
+          final challengeDoc = challengeQuery.docs.first;
+
+          // Update communityChallenge in user's challenge list
+          final userChallengeRef = FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser.uid)
+              .collection('challenges')
+              .doc(challengeDoc.id);
+
+          await userChallengeRef.set({
+            'challengeName': challengeName,
+            'challengeCompleted': false,
+            'communityChallenge': true,
+          }, SetOptions(merge: true));
+
+          _showSnackBar('You joined the community challenge: $challengeName');
+        } else {
+          _showSnackBar('Challenge not found.');
+        }
+      } catch (e) {
+        _showSnackBar('Error joining challenge: $e');
+      }
+    }
+  }
+
+  void _initializeCommunityChallenges() async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance.collection('communityChallenges').get();
+
+      for (var doc in querySnapshot.docs) {
+        setState(() {
+          communityChallenges.add(doc['name'] as String);
+        });
+      }
+    } catch (e) {
+      _showSnackBar('Failed to initialize challenges: $e');
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
@@ -98,11 +151,9 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
                 _notificationsEnabled = value;
               });
 
-              // Enable or disable notifications
               if (_notificationsEnabled) {
                 _showNotification('Notifications Enabled', 'You will now receive notifications.');
               } else {
-                // If notifications are disabled, you can add functionality to cancel any active notifications.
                 _cancelNotifications();
               }
             },
@@ -268,21 +319,6 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     }
   }
 
-  // Method to initialize community challenges
-  void _initializeCommunityChallenges() async {
-    try {
-      final querySnapshot = await FirebaseFirestore.instance.collection('communityChallenges').get();
-
-      for (var doc in querySnapshot.docs) {
-        setState(() {
-          communityChallenges.add(doc['name'] as String);
-        });
-      }
-    } catch (e) {
-      _showSnackBar('Failed to initialize challenges: $e');
-    }
-  }
-
   // Function to create a challenge in Firestore with user tracking
   void createChallengeWithId(String challengeId, String challengeName, String challengeDescription) {
     User? currentUser = FirebaseAuth.instance.currentUser;
@@ -306,42 +342,6 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
     } else {
       _showSnackBar('You must be logged in to create a challenge.');
     }
-  }
-
-  // Function to join a community challenge with user tracking
-  void _joinChallenge(String challengeName) async {
-    try {
-      String sanitizedChallengeName = challengeName.replaceAll('/', '_');
-      final collectionRef = FirebaseFirestore.instance.collection('communityChallenges');
-
-      final challengeDoc = await collectionRef.doc(sanitizedChallengeName).get();
-
-      if (!challengeDoc.exists) {
-        await collectionRef.doc(sanitizedChallengeName).set({
-          'name': challengeName,
-          'description': 'This is a community challenge: $challengeName',
-          'intensity': 1.0,
-          'participants': [],
-        });
-      }
-
-      final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        final userId = currentUser.uid;
-        await collectionRef.doc(sanitizedChallengeName).update({
-          'participants': FieldValue.arrayUnion([userId]),
-        });
-
-        _showSnackBar('You have joined the challenge: $challengeName');
-      }
-    } catch (e) {
-      _showSnackBar('Failed to join the challenge: $e');
-    }
-  }
-
-  // Display SnackBar
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   // Function to display notification for new challenges

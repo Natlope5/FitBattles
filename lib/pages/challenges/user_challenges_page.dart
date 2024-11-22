@@ -36,14 +36,16 @@ class UserChallengesPageState extends State<UserChallengesPage> {
 
   // Show local notification
   Future<void> _showLocalNotification(String title, String body) async {
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+    const AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails(
       'challenge_notifications_channel',
       'Challenge Notifications',
       importance: Importance.high,
       priority: Priority.high,
     );
 
-    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
+    const NotificationDetails platformDetails =
+    NotificationDetails(android: androidDetails);
 
     await _localNotificationsPlugin.show(
       0,
@@ -107,92 +109,78 @@ class UserChallengesPageState extends State<UserChallengesPage> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return FutureBuilder<QuerySnapshot>(
-            future: _firestore.collection('communityChallenges').get(),
-            builder: (context, communitySnapshot) {
-              if (communitySnapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          final userChallenges = userSnapshot.data?.docs ?? [];
 
-              if (!userSnapshot.hasData && !communitySnapshot.hasData) {
-                return const Center(child: Text('No challenges found.'));
-              }
+          final communityChallenges = userChallenges
+              .where((doc) =>
+          (doc.data() as Map<String, dynamic>?)?['communityChallenge'] == true)
+              .toList();
 
-              final userChallenges = userSnapshot.data?.docs ?? [];
-              final communityChallenges = communitySnapshot.data?.docs ?? [];
+          final normalChallenges = userChallenges
+              .where((doc) =>
+          (doc.data() as Map<String, dynamic>?)?['communityChallenge'] != true)
+              .toList();
 
-              return ListView(
-                children: [
-                  // Section for user-specific challenges
-                  if (userChallenges.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Your Challenges',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        ...userChallenges.map((challengeData) {
-                          final data = challengeData.data() as Map<String, dynamic>?;
-                          final bool isCompleted = data != null && data['challengeCompleted'] == true;
-
-                          return _buildChallengeTile(
-                            challengeData.id,
-                            data?['challengeName'] ?? 'Unnamed Challenge',
-                            isCompleted,
-                            'users/${_auth.currentUser!.uid}/challenges',
-                          );
-                        }),
-                      ],
-                    ),
-
-                  // Section for community challenges
-                  if (communityChallenges.isNotEmpty)
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text(
-                            'Community Challenges',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        ...communityChallenges.map((challengeData) {
-                          final data = challengeData.data() as Map<String, dynamic>?;
-                          final bool isCompleted = data != null && data['challengeCompleted'] == true;
-
-                          return _buildChallengeTile(
-                            challengeData.id,
-                            data?['name'] ?? 'Community Challenge',
-                            isCompleted,
-                            'communityChallenges',
-                          );
-                        })
-                      ],
-                    ),
-                ],
-              );
-            },
+          return ListView(
+            children: [
+              if (normalChallenges.isNotEmpty)
+                _buildChallengeSection('Your Challenges', normalChallenges),
+              if (communityChallenges.isNotEmpty)
+                _buildChallengeSection('Community Challenges', communityChallenges),
+            ],
           );
         },
       ),
     );
   }
 
-  Widget _buildChallengeTile(String id, String name, bool isCompleted, String collection) {
+  Widget _buildChallengeSection(String title, List<QueryDocumentSnapshot> challenges) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+        ...challenges.map((challengeData) {
+          final data = challengeData.data() as Map<String, dynamic>?;
+          final bool isCompleted = data != null && data['challengeCompleted'] == true;
+
+          return _buildChallengeTile(
+            challengeData.id,
+            data?['challengeName'] ?? 'Unnamed Challenge',
+            isCompleted,
+            data?['startDate'] != null
+                ? (data!['startDate'] as Timestamp).toDate()
+                : null,
+            data?['endDate'] != null
+                ? (data!['endDate'] as Timestamp).toDate()
+                : null,
+            'users/${_auth.currentUser!.uid}/challenges',
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildChallengeTile(
+      String id,
+      String name,
+      bool isCompleted,
+      DateTime? startDate,
+      DateTime? endDate,
+      String collection) {
+    final dateText = startDate != null && endDate != null
+        ? 'From: ${_formatDate(startDate)} To: ${_formatDate(endDate)}'
+        : 'Dates: Not specified';
+
     return ListTile(
       title: Text(name),
-      subtitle: Text('Status: ${isCompleted ? "Completed" : "Pending"}'),
+      subtitle: Text(
+          'Status: ${isCompleted ? "Completed" : "Pending"}\n$dateText'),
       trailing: isCompleted
           ? const Icon(Icons.check, color: Colors.green)
           : IconButton(
@@ -202,5 +190,9 @@ class UserChallengesPageState extends State<UserChallengesPage> {
         },
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.month}/${date.day}/${date.year}';
   }
 }

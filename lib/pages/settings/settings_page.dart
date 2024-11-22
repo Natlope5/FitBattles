@@ -392,7 +392,7 @@ class SettingsPageState extends State<SettingsPage> {
               ),
             ),
             const SizedBox(height: 50),
-            FilledButton(
+            ElevatedButton(
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
               onPressed: _showLogoutDialog,
               child: const Text("Logout"),

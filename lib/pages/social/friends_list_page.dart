@@ -43,62 +43,119 @@ class _FriendsListPageState extends State<FriendsListPage> {
   }
 
   void _sendFriendRequest() async {
+
     final emailController = TextEditingController();
+
     final friendCodeController = TextEditingController();
+
     await showDialog(
+
       context: context,
+
       builder: (context) {
+
         return AlertDialog(
+
           title: const Text('Send Friend Request'),
+
           content: Column(
+
             mainAxisSize: MainAxisSize.min,
+
             children: [
+
               TextField(
+
                 controller: emailController,
+
                 decoration: const InputDecoration(
+
                   labelText: 'Friend\'s Email',
+
                   border: OutlineInputBorder(),
+
                 ),
+
               ),
+
               const SizedBox(height: 10),
+
               TextField(
+
                 controller: friendCodeController,
+
                 decoration: const InputDecoration(
+
                   labelText: 'Friend\'s Code',
+
                   border: OutlineInputBorder(),
+
                 ),
+
               ),
+
             ],
+
           ),
+
           actions: [
+
             TextButton(
+
               onPressed: () => Navigator.pop(context),
+
               child: const Text('Cancel'),
+
             ),
+
             ElevatedButton(
+
               onPressed: () async {
+
                 if (emailController.text.isNotEmpty) {
+
                   final friendData = await _firebaseService.sendFriendRequest(
+
                     email: emailController.text,
+
                   );
+
                   _handleFriendRequestResponse(friendData);
+
                 } else if (friendCodeController.text.isNotEmpty) {
+
                   final friendData = await _firebaseService.sendFriendRequest(
+
                     friendCode: friendCodeController.text,
+
                   );
+
                   _handleFriendRequestResponse(friendData);
+
                 }
+
                 Navigator.pop(context);
+
               },
+
               child: const Text('Send'),
+
             ),
+
           ],
+
         );
+
       },
+
     );
+
   }
 
+
+
   void _handleFriendRequestResponse(Map<String, dynamic>? friendData) {
+
     if (friendData != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Friend request sent to ${friendData['name']}!')),
@@ -114,6 +171,12 @@ class _FriendsListPageState extends State<FriendsListPage> {
     final friendId = friend['id'];
     final nameController = TextEditingController(text: friend['name']);
     bool isEditing = false;
+
+    // Fetch friend's privacy setting
+    final privacySetting = await _firebaseService.getFriendPrivacy(friendId);
+
+    // Determine visibility based on privacy setting
+    bool canViewStats = privacySetting == 'public' || privacySetting == 'friends';
 
     showDialog(
       context: context,
@@ -156,27 +219,30 @@ class _FriendsListPageState extends State<FriendsListPage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      FutureBuilder<Map<String, dynamic>>(
-                        future: _firebaseService.getFriendWeeklyStats(friendId),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
-                          }
-                          if (snapshot.hasError) {
-                            return const Text('Failed to fetch stats.');
-                          }
-                          final stats = snapshot.data ?? {};
-                          final weeklyCalories = stats['calories'] ?? 0;
-                          final workoutsCount = stats['workouts'] ?? 0;
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Calories Burned: $weeklyCalories kcal'),
-                              Text('Workouts Completed: $workoutsCount'),
-                            ],
-                          );
-                        },
-                      ),
+                      if (canViewStats)
+                        FutureBuilder<Map<String, dynamic>>(
+                          future: _firebaseService.getFriendWeeklyStats(friendId),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            }
+                            if (snapshot.hasError) {
+                              return const Text('Failed to fetch stats.');
+                            }
+                            final stats = snapshot.data ?? {};
+                            final weeklyCalories = stats['calories'] ?? 0;
+                            final workoutsCount = stats['workouts'] ?? 0;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Calories Burned: $weeklyCalories kcal'),
+                                Text('Workouts Completed: $workoutsCount'),
+                              ],
+                            );
+                          },
+                        )
+                      else
+                        const Text('This user\'s stats are private.'),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.message),
@@ -266,38 +332,46 @@ class _FriendsListPageState extends State<FriendsListPage> {
 
   Widget _buildFriendRequestsList() {
     return friendRequests.isNotEmpty
-        ? ListView.builder(
-      itemCount: friendRequests.length,
-      itemBuilder: (context, index) {
-        final request = friendRequests[index];
-        return ListTile(
-          title: Text(request['name']),
-          subtitle: Text('Status: ${request['status']}'),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.check, color: Colors.green),
-                onPressed: () async {
-                  await _firebaseService.acceptFriendRequest(
-                    request['requestId'],
-                    request['email'],
-                  );
-                  _loadFriendRequests();
-                  _loadFriends();
-                },
+        ? Column(
+      children: [
+        const Text('Friend Requests'),
+        ListView.builder(
+          shrinkWrap: true,
+          itemCount: friendRequests.length,
+          itemBuilder: (context, index) {
+            final request = friendRequests[index];
+            return ListTile(
+              title: Text(request['name']),
+              subtitle: Text('Status: ${request['status']}'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.check, color: Colors.green),
+                    onPressed: () async {
+                      await _firebaseService.acceptFriendRequest(
+                        request['requestId'],
+                        request['email'],
+                      );
+                      _loadFriendRequests();
+                      _loadFriends();
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.clear, color: Colors.red),
+                    onPressed: () async {
+                      await _firebaseService.declineFriendRequest(
+                        request['requestId'],
+                      );
+                      _loadFriendRequests();
+                    },
+                  ),
+                ],
               ),
-              IconButton(
-                icon: const Icon(Icons.clear, color: Colors.red),
-                onPressed: () async {
-                  await _firebaseService.declineFriendRequest(request['requestId']);
-                  _loadFriendRequests();
-                },
-              ),
-            ],
-          ),
-        );
-      },
+            );
+          },
+        ),
+      ],
     )
         : const Center(child: Text('No friend requests available.'));
   }

@@ -123,10 +123,14 @@ class CreateChallengePageState extends State<CreateChallengePage> {
                         labelText: 'End Date',
                       ),
                       onTap: () async {
+                        if (_startDate == null) {
+                          showSnackBar('Please select a start date first.');
+                          return;
+                        }
                         DateTime? pickedDate = await showDatePicker(
                           context: context,
-                          initialDate: _endDate ?? DateTime.now(),
-                          firstDate: _startDate ?? DateTime.now(),
+                          initialDate: _endDate ?? _startDate!.add(const Duration(days: 1)),
+                          firstDate: _startDate!,
                           lastDate: DateTime(2100),
                         );
                         if (pickedDate != null) {
@@ -167,9 +171,7 @@ class CreateChallengePageState extends State<CreateChallengePage> {
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {
-                  _createChallenge();
-                },
+                onPressed: _createChallenge,
                 child: const Text('Create Challenge'),
               ),
             ],
