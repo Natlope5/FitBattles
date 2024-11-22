@@ -102,7 +102,10 @@ class _HomePageState extends State<HomePage> {
         .listen((snapshot) {
       int unreadCount = 0;
       for (var doc in snapshot.docs) {
-        if ((doc['lastRead'] ?? Timestamp.now()).compareTo(doc['lastUpdated'] ?? Timestamp.now()) < 0) {
+        final lastRead = doc.data().containsKey('lastRead') ? doc['lastRead'] as Timestamp? : null;
+        final lastUpdated = doc.data().containsKey('lastUpdated') ? doc['lastUpdated'] as Timestamp? : null;
+
+        if (lastUpdated != null && (lastRead == null || lastRead.compareTo(lastUpdated) < 0)) {
           unreadCount++;
         }
       }
@@ -111,6 +114,7 @@ class _HomePageState extends State<HomePage> {
       });
     });
   }
+
 
   @override
   Widget build(BuildContext context) {
