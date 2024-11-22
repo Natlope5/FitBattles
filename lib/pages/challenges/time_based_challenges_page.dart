@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fitbattles/services/time_based_challenge_service.dart';
+import 'package:fitbattles/services/local/time_based_challenge_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TimeBasedChallengesPage extends StatefulWidget {
