@@ -50,8 +50,7 @@ class FriendsService {
   // Generates a random alphanumeric code.
   String _generateRandomCode(int length) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    return List.generate(length, (_) => characters[_randomIndex(characters.length)])
-        .join();
+    return List.generate(length, (_) => characters[_randomIndex(characters.length)]).join();
   }
 
   // Returns a random index for character generation.
@@ -77,7 +76,23 @@ class FriendsService {
         .collection('friends')
         .get();
 
-    return snapshot.docs.map((doc) => doc.data()).toList();
+    return snapshot.docs.map((doc) => {'id': doc.id, ...doc.data()}).toList();
+  }
+
+  // Fetches the privacy setting of a friend.
+  Future<String> getFriendPrivacy(String friendId) async {
+    final profileDoc = await _firestore
+        .collection('users')
+        .doc(friendId)
+        .collection('settings')
+        .doc('profile')
+        .get();
+
+    if (profileDoc.exists) {
+      return profileDoc.data()?['privacy'] ?? 'public';
+    }
+
+    return 'public';
   }
 
   // Fetches the current user's friend requests.
@@ -110,7 +125,8 @@ class FriendsService {
     QuerySnapshot userSnapshot;
 
     if (email != null) {
-      userSnapshot = await _firestore.collection('users').where('email', isEqualTo: email).get();
+      userSnapshot =
+      await _firestore.collection('users').where('email', isEqualTo: email).get();
     } else if (friendCode != null) {
       userSnapshot = await _firestore
           .collection('users')
@@ -124,7 +140,12 @@ class FriendsService {
       final friendId = userSnapshot.docs[0].id;
 
       await _firestore.collection('users').doc(friendId).collection('friendRequests').add({
-        'name': (await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get()).data()?['name'] ?? 'Unknown',
+        'name': (await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUser.uid)
+            .get())
+            .data()?['name'] ??
+            'Unknown',
         'email': currentUser.email,
         'status': 'pending',
       });
@@ -153,6 +174,7 @@ class FriendsService {
           .collection('friends')
           .doc(friendId)
           .set({
+        'id': friendId,
         'name': friendData['name'],
         'email': friendData['email'],
       });
@@ -164,6 +186,7 @@ class FriendsService {
           .collection('friends')
           .doc(currentUser.uid)
           .set({
+        'id': currentUser.uid,
         'name': currentUser.displayName,
         'email': currentUser.email,
       });
@@ -191,6 +214,19 @@ class FriendsService {
         .delete();
   }
 
+  Future<void> editFriendName(String friendId, String newName) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return;
+
+    // Update the friend's name in the current user's friends list.
+    await _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('friends')
+        .doc(friendId)
+        .update({'name': newName});
+  }
+
   Future<void> scheduleNotification(String title, String body) async {
     const androidPlatformChannelSpecifics = AndroidNotificationDetails(
       'friend_requests_channel',
@@ -207,4 +243,69 @@ class FriendsService {
       platformChannelSpecifics,
     );
   }
+
+  Future<int> getFriendWeeklyCalories(String friendId) async {
+    final startOfWeek = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+    final workoutsSnapshot = await _firestore
+        .collection('users')
+        .doc(friendId)
+        .collection('workouts')
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek))
+        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfWeek))
+        .get();
+
+    int caloriesSum = 0;
+    for (var doc in workoutsSnapshot.docs) {
+      final data = doc.data();
+      final calories = (data['calories'] as num?)?.toInt() ?? 0;
+      caloriesSum += calories;
+    }
+
+    return caloriesSum;
+  }
+
+  Future<Map<String, dynamic>> getFriendWeeklyStats(String friendId) async {
+    final startOfWeek = DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 6));
+
+    final workoutsSnapshot = await _firestore
+        .collection('users')
+        .doc(friendId)
+        .collection('workouts')
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek))
+        .where('timestamp', isLessThanOrEqualTo: Timestamp.fromDate(endOfWeek))
+        .get();
+
+    int caloriesSum = 0;
+    int workoutsCount = workoutsSnapshot.docs.length;
+
+    for (var doc in workoutsSnapshot.docs) {
+      final data = doc.data();
+      final calories = (data['calories'] as num?)?.toInt() ?? 0;
+      caloriesSum += calories;
+    }
+
+    return {'calories': caloriesSum, 'workouts': workoutsCount};
+  }
+
+  Future<Map<String, dynamic>?> fetchFriendById(String userId) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return null;
+
+    final friendDoc = await _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('friends')
+        .doc(userId)
+        .get();
+
+    if (friendDoc.exists) {
+      return {'id': friendDoc.id, ...friendDoc.data()!};
+    }
+
+    return null;
+  }
+
 }

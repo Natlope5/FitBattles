@@ -56,6 +56,9 @@ void main() async {
 
   await localNotificationsPlugin.initialize(initializationSettings);
 
+  // Call to initialize notifications (setup Firebase Messaging listeners)
+  initializeNotifications();
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
@@ -87,7 +90,7 @@ class MyApp extends StatelessWidget {
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
             '/pointsInfo': (context) => EarnedPointsPage(userId: ''),
             '/leaderboard': (context) => const LeaderboardPage(),
-            '/settings': (context) => const SettingsPage(heading: 'Settings'),
+            '/settings': (context) => const SettingsPage(),
             '/create_challenge': (context) => CreateChallengePage(),
             '/user_challenges': (context) => UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),
@@ -138,5 +141,5 @@ void setupFirebaseMessagingListeners() {
 
 // Call this function in initState of any widget that needs notifications
 void initializeNotifications() {
-  setupFirebaseMessagingListeners();
+  setupFirebaseMessagingListeners(); // Set up listeners for Firebase Messaging
 }

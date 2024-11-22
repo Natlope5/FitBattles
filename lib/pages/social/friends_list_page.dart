@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fitbattles/firebase/services/friends_service.dart';
+import 'package:fitbattles/services/firebase/friends_service.dart';
+import 'package:fitbattles/pages/social/chat_page.dart';
+import 'package:fitbattles/pages/social/group_chat_page.dart';
 
 class FriendsListPage extends StatefulWidget {
   const FriendsListPage({super.key});
@@ -108,6 +110,137 @@ class _FriendsListPageState extends State<FriendsListPage> {
     }
   }
 
+  Future<void> _showFriendStatsDialog(Map<String, dynamic> friend) async {
+    final friendId = friend['id'];
+    final nameController = TextEditingController(text: friend['name']);
+    bool isEditing = false;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      friend['name'] ?? 'Unknown',
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () {
+                      setState(() {
+                        isEditing = !isEditing;
+                      });
+                    },
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 300),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Weekly Stats',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      FutureBuilder<Map<String, dynamic>>(
+                        future: _firebaseService.getFriendWeeklyStats(friendId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (snapshot.hasError) {
+                            return const Text('Failed to fetch stats.');
+                          }
+                          final stats = snapshot.data ?? {};
+                          final weeklyCalories = stats['calories'] ?? 0;
+                          final workoutsCount = stats['workouts'] ?? 0;
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Calories Burned: $weeklyCalories kcal'),
+                              Text('Workouts Completed: $workoutsCount'),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.message),
+                        label: const Text('Message'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatPage(friendId: friendId, friendName: friend['name']),
+                            ),
+                          );
+                        },
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.group),
+                        label: const Text('Group Chat'),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GroupChatPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      if (isEditing)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20.0),
+                          child: TextField(
+                            controller: nameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Edit Friend\'s Name',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                if (isEditing)
+                  ElevatedButton(
+                    onPressed: () async {
+                      await _firebaseService.editFriendName(friendId, nameController.text);
+                      Navigator.pop(context);
+                      _loadFriends();
+                    },
+                    child: const Text('Save'),
+                  ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   Widget _buildFriendsList() {
     return friends.isNotEmpty
         ? ListView.builder(
@@ -118,10 +251,13 @@ class _FriendsListPageState extends State<FriendsListPage> {
           leading: CircleAvatar(
             backgroundImage: friend['image'] != null && friend['image'].isNotEmpty
                 ? NetworkImage(friend['image'])
-                : const AssetImage('assets/placeholder_avatar.png') as ImageProvider, // Use default image
+                : const AssetImage('assets/placeholder_avatar.png') as ImageProvider,
           ),
-          title: Text(friend['name'] ?? 'Unknown'), // Add null check for name
-          subtitle: Text(friend['email'] ?? 'No email provided'), // Add null check for email
+          title: Text(friend['name'] ?? 'Unknown'),
+          subtitle: Text(friend['email'] ?? 'No email provided'),
+          onTap: () {
+            _showFriendStatsDialog(friend);
+          },
         );
       },
     )
@@ -130,46 +266,38 @@ class _FriendsListPageState extends State<FriendsListPage> {
 
   Widget _buildFriendRequestsList() {
     return friendRequests.isNotEmpty
-        ? Column(
-      children: [
-        const Text('Friend Requests'),
-        ListView.builder(
-          shrinkWrap: true,
-          itemCount: friendRequests.length,
-          itemBuilder: (context, index) {
-            final request = friendRequests[index];
-            return ListTile(
-              title: Text(request['name']),
-              subtitle: Text('Status: ${request['status']}'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.check, color: Colors.green),
-                    onPressed: () async {
-                      await _firebaseService.acceptFriendRequest(
-                        request['requestId'],
-                        request['email'],
-                      );
-                      _loadFriendRequests(); // Refresh the friend requests list
-                      _loadFriends(); // Refresh the friends list
-                    },
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.clear, color: Colors.red),
-                    onPressed: () async {
-                      await _firebaseService.declineFriendRequest(
-                        request['requestId'],
-                      );
-                      _loadFriendRequests(); // Refresh the friend requests list
-                    },
-                  ),
-                ],
+        ? ListView.builder(
+      itemCount: friendRequests.length,
+      itemBuilder: (context, index) {
+        final request = friendRequests[index];
+        return ListTile(
+          title: Text(request['name']),
+          subtitle: Text('Status: ${request['status']}'),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.check, color: Colors.green),
+                onPressed: () async {
+                  await _firebaseService.acceptFriendRequest(
+                    request['requestId'],
+                    request['email'],
+                  );
+                  _loadFriendRequests();
+                  _loadFriends();
+                },
               ),
-            );
-          },
-        ),
-      ],
+              IconButton(
+                icon: const Icon(Icons.clear, color: Colors.red),
+                onPressed: () async {
+                  await _firebaseService.declineFriendRequest(request['requestId']);
+                  _loadFriendRequests();
+                },
+              ),
+            ],
+          ),
+        );
+      },
     )
         : const Center(child: Text('No friend requests available.'));
   }

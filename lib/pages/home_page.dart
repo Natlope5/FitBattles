@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fitbattles/pages/points/earned_points_page.dart';
+import 'package:fitbattles/pages/social/conversations_overview_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,8 +13,8 @@ import 'package:provider/provider.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
 
-  final String id; // User ID
-  final String email; // User email
+  final String id;
+  final String email;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -27,12 +28,14 @@ class _HomePageState extends State<HomePage> {
   bool showPreloadedChallenges = false;
   int pointsEarned = 500;
   int pointsGoal = 1000;
-
+  int unreadMessages = 0;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _checkUnreadMessages();
+    _setupRealtimeUpdates();
   }
 
   Future<void> _pickAndUploadImage() async {
@@ -47,15 +50,13 @@ class _HomePageState extends State<HomePage> {
         final userId = FirebaseAuth.instance.currentUser!.uid;
         final imageRef = storageRef.child('profile_images/$userId.jpg');
 
-        await imageRef.putFile(_image!); // Upload the image
-        String downloadURL = await imageRef
-            .getDownloadURL(); // Get download URL
+        await imageRef.putFile(_image!);
+        String downloadURL = await imageRef.getDownloadURL();
 
         // Save download URL to Firestore
         await FirebaseFirestore.instance.collection('users').doc(userId).update(
-            {
-              'photoURL': downloadURL,
-            });
+          {'photoURL': downloadURL},
+        );
       } catch (e) {
         logger.e("Error uploading image: $e");
       }
@@ -64,8 +65,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadUserProfile() async {
     try {
-      DocumentSnapshot userProfile = await FirebaseFirestore.instance
-          .collection('users').doc(widget.id).get();
+      DocumentSnapshot userProfile = await FirebaseFirestore.instance.collection('users').doc(widget.id).get();
       setState(() {
         _photoURL = userProfile['photoURL'];
       });
@@ -74,40 +74,136 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _checkUnreadMessages() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final query = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('conversations')
+        .where('lastRead', isLessThan: FieldValue.serverTimestamp())
+        .get();
+
+    setState(() {
+      unreadMessages = query.docs.length;
+    });
+  }
+
+  void _setupRealtimeUpdates() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('conversations')
+        .snapshots()
+        .listen((snapshot) {
+      int unreadCount = 0;
+      for (var doc in snapshot.docs) {
+        final lastRead = doc.data().containsKey('lastRead') ? doc['lastRead'] as Timestamp? : null;
+        final lastUpdated = doc.data().containsKey('lastUpdated') ? doc['lastUpdated'] as Timestamp? : null;
+
+        if (lastUpdated != null && (lastRead == null || lastRead.compareTo(lastUpdated) < 0)) {
+          unreadCount++;
+        }
+      }
+      setState(() {
+        unreadMessages = unreadCount;
+      });
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.uid)
+          .collection('settings')
+          .doc('notifications')
+          .get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          // Default values if settings don't exist
+          return _buildScaffold(themeProvider, unreadMessages, true, true);
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final receiveNotifications = data['receiveNotifications'] ?? true;
+        final messageNotifications = data['messageNotifications'] ?? true;
+
+        return _buildScaffold(
+            themeProvider, unreadMessages, receiveNotifications, messageNotifications);
+      },
+    );
+  }
+
+  Widget _buildScaffold(ThemeProvider themeProvider, int unreadMessages,
+      bool receiveNotifications, bool messageNotifications) {
     return Scaffold(
       backgroundColor: const Color(0xFF5D6C8A), // Blue background
       appBar: AppBar(
         backgroundColor: Colors.transparent, // Gray AppBar
         automaticallyImplyLeading: false,
         title: const Text(
-          "Home Page",
+          "Home",
           style: TextStyle(color: Colors.white),
         ),
         actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.message),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ConversationsOverviewPage()),
+                  );
+                },
+              ),
+              if (unreadMessages > 0
+                  && receiveNotifications == true
+                  && messageNotifications == true)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: CircleAvatar(
+                    radius: 8,
+                    backgroundColor: Colors.red,
+                    child: Text(
+                      '$unreadMessages',
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           IconButton(
-            icon: Icon(
-                themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
+            icon: Icon(themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
             onPressed: () {
-              themeProvider.toggleTheme(); // Toggle the theme
+              themeProvider.toggleTheme();
             },
           ),
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
-              Navigator.pushNamed(
-                  context, '/settings'); // Navigate to Settings page
+              Navigator.pushNamed(context, '/settings');
             },
           ),
         ],
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-              vertical: 100.0, horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 100.0, horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
@@ -158,9 +254,7 @@ class _HomePageState extends State<HomePage> {
             onTap: _pickAndUploadImage,
             child: CircleAvatar(
               radius: 60,
-              backgroundColor: themeProvider.isDarkMode
-                  ? Colors.grey[700]
-                  : Colors.grey[300],
+              backgroundColor: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[300],
               backgroundImage: _image != null
                   ? FileImage(_image!)
                   : (_photoURL != null ? NetworkImage(_photoURL!) : null),
@@ -560,7 +654,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: const Color(0xFF85C83E),
         padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
       ),
-      child: const Text('Explore friends'),
+      child: const Text('Friends'),
     );
   }
 }
