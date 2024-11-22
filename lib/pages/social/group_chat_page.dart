@@ -15,7 +15,6 @@ class _GroupChatPageState extends State<GroupChatPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? _groupChatId;
-  bool _isCreatingGroup = false;
 
   Future<void> _createGroup() async {
     final user = _auth.currentUser;
@@ -33,7 +32,6 @@ class _GroupChatPageState extends State<GroupChatPage> {
 
     setState(() {
       _groupChatId = groupDoc.id;
-      _isCreatingGroup = false;
     });
 
     _groupNameController.clear();

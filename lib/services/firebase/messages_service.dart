@@ -4,24 +4,24 @@ import 'package:firebase_auth/firebase_auth.dart';
 class MessagesService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  String _generateChatId(String userId, String recipientId) {
-    return (userId.compareTo(recipientId) < 0) ? '${userId}_$recipientId' : '${recipientId}_$userId';
+  // Generate the conversation document path
+  String _getConversationPath(String userId, String otherUserId) {
+    return 'users/$userId/conversations/$otherUserId/messages';
   }
 
-  // Individual chat
-  Stream<QuerySnapshot> getMessages(String recipientId) {
+  // Fetch messages between the current user and a specific friend
+  Stream<QuerySnapshot> getMessages(String friendId) {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return const Stream.empty();
 
-    final chatId = _generateChatId(currentUser.uid, recipientId);
-    return _firestore.collection('messages').doc(chatId).collection('chat').orderBy('timestamp').snapshots();
+    final path = _getConversationPath(currentUser.uid, friendId);
+    return _firestore.collection(path).orderBy('timestamp').snapshots();
   }
 
-  Future<void> sendMessage(String recipientId, String message) async {
+  // Send a message to a specific friend
+  Future<void> sendMessage(String friendId, String message) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
-
-    final chatId = _generateChatId(currentUser.uid, recipientId);
 
     final messageData = {
       'senderId': currentUser.uid,
@@ -29,29 +29,62 @@ class MessagesService {
       'timestamp': FieldValue.serverTimestamp(),
     };
 
-    await _firestore.collection('messages').doc(chatId).collection('chat').add(messageData);
+    // Add the message to the sender's conversation
+    await _firestore
+        .collection(_getConversationPath(currentUser.uid, friendId))
+        .add(messageData);
+
+    // Add the message to the recipient's conversation
+    await _firestore
+        .collection(_getConversationPath(friendId, currentUser.uid))
+        .add(messageData);
+
+    // Update the last message and timestamp in the conversation metadata
+    final updateData = {
+      'lastMessage': message,
+      'lastUpdated': FieldValue.serverTimestamp(),
+    };
+
+    await _firestore
+        .doc('users/${currentUser.uid}/conversations/$friendId')
+        .set(updateData, SetOptions(merge: true));
+
+    await _firestore
+        .doc('users/$friendId/conversations/${currentUser.uid}')
+        .set(updateData, SetOptions(merge: true));
   }
 
-  // Group chat
-  Stream<QuerySnapshot> getGroupMessages(String groupId) {
+  // Fetch conversations for the current user
+  Stream<QuerySnapshot> getConversations() {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return const Stream.empty();
+
     return _firestore
-        .collection('groupChats')
-        .doc(groupId)
-        .collection('messages')
-        .orderBy('timestamp')
+        .collection('users/${currentUser.uid}/conversations')
+        .orderBy('lastUpdated', descending: true)
         .snapshots();
   }
 
-  Future<void> sendGroupMessage(String groupId, String message) async {
+  // Mark a conversation as read
+  Future<void> markAsRead(String conversationId) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
-    final messageData = {
-      'senderId': currentUser.uid,
-      'message': message,
-      'timestamp': FieldValue.serverTimestamp(),
-    };
+    await _firestore
+        .doc('users/${currentUser.uid}/conversations/$conversationId')
+        .update({
+      'lastRead': FieldValue.serverTimestamp(),
+    });
+  }
 
-    await _firestore.collection('groupChats').doc(groupId).collection('messages').add(messageData);
+  // Delete a conversation
+  Future<void> deleteConversation(String conversationId) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    await _firestore
+        .collection('users/${currentUser.uid}/conversations')
+        .doc(conversationId)
+        .delete();
   }
 }

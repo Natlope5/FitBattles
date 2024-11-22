@@ -289,4 +289,23 @@ class FriendsService {
 
     return {'calories': caloriesSum, 'workouts': workoutsCount};
   }
+
+  Future<Map<String, dynamic>?> fetchFriendById(String userId) async {
+    final currentUser = _auth.currentUser;
+    if (currentUser == null) return null;
+
+    final friendDoc = await _firestore
+        .collection('users')
+        .doc(currentUser.uid)
+        .collection('friends')
+        .doc(userId)
+        .get();
+
+    if (friendDoc.exists) {
+      return {'id': friendDoc.id, ...friendDoc.data()!};
+    }
+
+    return null;
+  }
+
 }
