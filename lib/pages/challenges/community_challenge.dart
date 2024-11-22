@@ -4,9 +4,8 @@ import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:fitbattles/firebase/services/friends_service.dart';
-
-import '../../main.dart';
+import 'package:fitbattles/services/firebase/friends_service.dart';
+import 'package:fitbattles/main.dart';
 
 class CommunityChallengePage extends StatefulWidget {
   const CommunityChallengePage({super.key});
@@ -279,8 +278,6 @@ class CommunityChallengePageState extends State<CommunityChallengePage> with Sin
           communityChallenges.add(doc['name'] as String);
         });
       }
-
-      _showSnackBar('Community challenges initialized.');
     } catch (e) {
       _showSnackBar('Failed to initialize challenges: $e');
     }
