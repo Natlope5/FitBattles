@@ -3,17 +3,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fitbattles/services/firebase/messages_service.dart';
 
-class MessagesPage extends StatefulWidget {
+class ChatPage extends StatefulWidget {
   final String friendId;
   final String friendName;
 
-  const MessagesPage({super.key, required this.friendId, required this.friendName});
+  const ChatPage({super.key, required this.friendId, required this.friendName});
 
   @override
-  State<MessagesPage> createState() => _MessagesPageState();
+  State<ChatPage> createState() => _ChatPageState();
 }
 
-class _MessagesPageState extends State<MessagesPage> {
+class _ChatPageState extends State<ChatPage> {
   final MessagesService _messagesService = MessagesService();
   final TextEditingController _messageController = TextEditingController();
 

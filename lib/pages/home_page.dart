@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fitbattles/pages/points/earned_points_page.dart';
-import 'package:fitbattles/pages/social/conversations_list_page.dart';
+import 'package:fitbattles/pages/social/conversations_overview_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -116,6 +116,35 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
 
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.uid)
+          .collection('settings')
+          .doc('notifications')
+          .get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          // Default values if settings don't exist
+          return _buildScaffold(themeProvider, unreadMessages, true, true);
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final receiveNotifications = data['receiveNotifications'] ?? true;
+        final messageNotifications = data['messageNotifications'] ?? true;
+
+        return _buildScaffold(
+            themeProvider, unreadMessages, receiveNotifications, messageNotifications);
+      },
+    );
+  }
+
+  Widget _buildScaffold(ThemeProvider themeProvider, int unreadMessages,
+      bool receiveNotifications, bool messageNotifications) {
     return Scaffold(
       backgroundColor: const Color(0xFF5D6C8A), // Blue background
       appBar: AppBar(
@@ -133,11 +162,13 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ConversationsListPage()),
+                    MaterialPageRoute(builder: (context) => ConversationsOverviewPage()),
                   );
                 },
               ),
-              if (unreadMessages > 0)
+              if (unreadMessages > 0
+                  && receiveNotifications == true
+                  && messageNotifications == true)
                 Positioned(
                   right: 8,
                   top: 8,

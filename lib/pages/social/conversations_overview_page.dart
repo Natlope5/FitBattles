@@ -1,17 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:fitbattles/pages/social/messages_page.dart';
+import 'package:fitbattles/pages/social/chat_page.dart';
 import 'package:fitbattles/services/firebase/messages_service.dart';
 import 'package:fitbattles/services/firebase/friends_service.dart';
 
-class ConversationsListPage extends StatefulWidget {
-  const ConversationsListPage({super.key});
+class ConversationsOverviewPage extends StatefulWidget {
+  const ConversationsOverviewPage({super.key});
 
   @override
-  State<ConversationsListPage> createState() => _ConversationsListPageState();
+  State<ConversationsOverviewPage> createState() => _ConversationsOverviewPageState();
 }
 
-class _ConversationsListPageState extends State<ConversationsListPage> {
+class _ConversationsOverviewPageState extends State<ConversationsOverviewPage> {
   final MessagesService _messagesService = MessagesService();
   final FriendsService _friendsService = FriendsService();
 
@@ -142,7 +142,7 @@ class _ConversationsListPageState extends State<ConversationsListPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => MessagesPage(
+                            builder: (context) => ChatPage(
                               friendId: otherUserId,
                               friendName: displayName,
                             ),

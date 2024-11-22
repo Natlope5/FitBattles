@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fitbattles/services/firebase/friends_service.dart';
-import 'package:fitbattles/pages/social/messages_page.dart';
+import 'package:fitbattles/pages/social/chat_page.dart';
 import 'package:fitbattles/pages/social/group_chat_page.dart';
 
 class FriendsListPage extends StatefulWidget {
@@ -186,7 +186,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => MessagesPage(friendId: friendId, friendName: friend['name']),
+                              builder: (context) => ChatPage(friendId: friendId, friendName: friend['name']),
                             ),
                           );
                         },
