@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import 'package:fitbattles/pages/settings/notifications_settings_page.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -98,9 +99,21 @@ class SettingsPageState extends State<SettingsPage> {
   Future<void> _loadUserSettings() async {
     User? user = _auth.currentUser;
     if (user != null) {
-      final profileRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('profile');
-      final appRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('app');
-      final notificationsRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('notifications');
+      final profileRef = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('settings')
+          .doc('profile');
+      final appRef = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('settings')
+          .doc('app');
+      final notificationsRef = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('settings')
+          .doc('notifications');
 
       DocumentSnapshot profileDoc = await profileRef.get();
       DocumentSnapshot appDoc = await appRef.get();
@@ -117,7 +130,8 @@ class SettingsPageState extends State<SettingsPage> {
       }
 
       if (profileDoc.exists) {
-        Map<String, dynamic> profileData = profileDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic> profileData =
+        profileDoc.data() as Map<String, dynamic>;
         setState(() {
           _nameController.text = profileData['name'] ?? '';
           _emailController.text = profileData['email'] ?? '';
@@ -125,7 +139,8 @@ class SettingsPageState extends State<SettingsPage> {
           _weightController.text = (profileData['weight'] ?? 0.0).toString();
           int totalHeightInInches = profileData['heightInches'] ?? 0;
           _heightFeetController.text = (totalHeightInInches ~/ 12).toString();
-          _heightInchesController.text = (totalHeightInInches % 12).toString();
+          _heightInchesController.text =
+              (totalHeightInInches % 12).toString();
           _privacy = profileData['privacy'] ?? 'public';
           _avatarUrl = profileData['avatar'] ?? '';
         });
@@ -139,51 +154,13 @@ class SettingsPageState extends State<SettingsPage> {
       }
 
       if (notificationsDoc.exists) {
-        Map<String, dynamic> notificationsData = notificationsDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic> notificationsData =
+        notificationsDoc.data() as Map<String, dynamic>;
         setState(() {
-          _receiveNotifications = notificationsData['receiveNotifications'] ?? true;
+          _receiveNotifications =
+              notificationsData['receiveNotifications'] ?? true;
         });
       }
-    }
-  }
-
-  Future<void> _uploadImage() async {
-    if (_image != null) {
-      try {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('avatars/${DateTime.now().millisecondsSinceEpoch}.png');
-        await storageRef.putFile(_image!);
-
-        String imageUrl = await storageRef.getDownloadURL();
-
-        setState(() {
-          _avatarUrl = imageUrl;
-        });
-
-        User? user = _auth.currentUser;
-        if (user != null) {
-          final profileRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('profile');
-          await profileRef.update({'avatar': _avatarUrl});
-        }
-
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Avatar updated successfully')));
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to upload image: ${e.toString()}')));
-      }
-    }
-  }
-
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
-      _uploadImage();
     }
   }
 
@@ -228,6 +205,77 @@ class SettingsPageState extends State<SettingsPage> {
     return _message;
   }
 
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _image = File(pickedFile.path);
+      });
+      _uploadImage();
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_image != null) {
+      try {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('avatars/${DateTime.now().millisecondsSinceEpoch}.png');
+        await storageRef.putFile(_image!);
+
+        String imageUrl = await storageRef.getDownloadURL();
+
+        setState(() {
+          _avatarUrl = imageUrl;
+        });
+
+        User? user = _auth.currentUser;
+        if (user != null) {
+          final profileRef = _firestore
+              .collection('users')
+              .doc(user.uid)
+              .collection('settings')
+              .doc('profile');
+          await profileRef.update({'avatar': _avatarUrl});
+        }
+
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Avatar updated successfully')));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to upload image: ${e.toString()}')));
+      }
+    }
+  }
+
+  Future<void> _showLogoutDialog() async {
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Confirm Logout"),
+          content: const Text("Are you sure you want to logout?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Logout"),
+            ),
+          ],
+        );
+      },
+    );
+    if (shouldLogout == true) {
+      await _auth.signOut();
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed('/login');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -235,10 +283,14 @@ class SettingsPageState extends State<SettingsPage> {
         title: const Text('Settings'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await _auth.signOut();
-                Navigator.of(context).pushReplacementNamed('/login');
+            icon: const Icon(Icons.notifications),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationSettingsPage(),
+                ),
+              );
             },
           ),
         ],
@@ -270,7 +322,8 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                   TextFormField(
                     controller: _weightController,
-                    decoration: const InputDecoration(labelText: 'Weight (lbs)'),
+                    decoration:
+                    const InputDecoration(labelText: 'Weight (lbs)'),
                     keyboardType: TextInputType.number,
                     validator: (value) =>
                     value!.isEmpty ? 'Please enter your weight' : null,
@@ -280,7 +333,8 @@ class SettingsPageState extends State<SettingsPage> {
                       Expanded(
                         child: TextFormField(
                           controller: _heightFeetController,
-                          decoration: const InputDecoration(labelText: 'Height (feet)'),
+                          decoration:
+                          const InputDecoration(labelText: 'Height (feet)'),
                           keyboardType: TextInputType.number,
                           validator: (value) =>
                           value!.isEmpty ? 'Please enter feet' : null,
@@ -290,7 +344,8 @@ class SettingsPageState extends State<SettingsPage> {
                       Expanded(
                         child: TextFormField(
                           controller: _heightInchesController,
-                          decoration: const InputDecoration(labelText: 'Height (inches)'),
+                          decoration: const InputDecoration(
+                              labelText: 'Height (inches)'),
                           keyboardType: TextInputType.number,
                           validator: (value) =>
                           value!.isEmpty ? 'Please enter inches' : null,
@@ -315,7 +370,13 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: _saveSettings,
+                    onPressed: () async {
+                      await _saveSettings();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('Settings updated successfully!')),
+                      );
+                    },
                     child: const Text('Save Settings'),
                   ),
                   const SizedBox(height: 20),
@@ -329,6 +390,12 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 50),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: _showLogoutDialog,
+              child: const Text("Logout"),
             ),
           ],
         ),

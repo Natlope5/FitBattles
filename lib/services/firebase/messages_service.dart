@@ -77,6 +77,32 @@ class MessagesService {
     });
   }
 
+  // Toggle mute status for a conversation
+  Future<void> toggleMute(String conversationId) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
+    final docRef =
+    _firestore.doc('users/${currentUser.uid}/conversations/$conversationId');
+
+    final doc = await docRef.get();
+    final isMuted = doc.exists && (doc.data()?['muted'] == true);
+
+    await docRef.update({'muted': !isMuted});
+  }
+
+  // Check if a conversation is muted
+  Future<bool> isMuted(String conversationId) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return false;
+
+    final doc = await _firestore
+        .doc('users/${currentUser.uid}/conversations/$conversationId')
+        .get();
+
+    return doc.exists && (doc.data()?['muted'] == true);
+  }
+
   // Delete a conversation
   Future<void> deleteConversation(String conversationId) async {
     final currentUser = FirebaseAuth.instance.currentUser;

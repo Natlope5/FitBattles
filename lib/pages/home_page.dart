@@ -142,11 +142,11 @@ class _HomePageState extends State<HomePage> {
                   right: 8,
                   top: 8,
                   child: CircleAvatar(
-                    radius: 10,
+                    radius: 8,
                     backgroundColor: Colors.red,
                     child: Text(
                       '$unreadMessages',
-                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
                     ),
                   ),
                 ),
