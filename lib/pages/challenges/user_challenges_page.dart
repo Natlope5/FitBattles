@@ -67,8 +67,9 @@ class UserChallengesPageState extends State<UserChallengesPage> {
           .get();
 
       final settingsData = settingsDoc.data();
-      if (settingsData != null &&
-          settingsData['challengeNotifications'] == true) {
+      if (settingsData != null
+          && settingsData['challengeNotifications'] == true
+          && settingsData['receiveNotifications'] == true) {
         await _showLocalNotification(
           "Challenge Completed!",
           "Congratulations on completing your challenge!",
@@ -78,7 +79,8 @@ class UserChallengesPageState extends State<UserChallengesPage> {
   }
 
   // Mark a challenge as completed and handle notifications
-  Future<void> markChallengeAsCompleted(String challengeId, String collection) async {
+  Future<void> markChallengeAsCompleted(
+      String challengeId, String collection) async {
     final currentUser = _auth.currentUser;
     if (currentUser != null) {
       await _firestore
@@ -87,7 +89,8 @@ class UserChallengesPageState extends State<UserChallengesPage> {
           .update({'challengeCompleted': true});
 
       // Check for badge eligibility after marking challenge as completed
-      await BadgeService().awardPointsAndCheckBadges(currentUser.uid, 0, 'challengeCompleted');
+      await BadgeService()
+          .awardPointsAndCheckBadges(currentUser.uid, 0, 'challengeCompleted');
 
       // Trigger a notification if enabled
       await _notifyChallengeCompleted();
@@ -113,12 +116,14 @@ class UserChallengesPageState extends State<UserChallengesPage> {
 
           final communityChallenges = userChallenges
               .where((doc) =>
-          (doc.data() as Map<String, dynamic>?)?['communityChallenge'] == true)
+          (doc.data() as Map<String, dynamic>?)?['communityChallenge'] ==
+              true)
               .toList();
 
           final normalChallenges = userChallenges
               .where((doc) =>
-          (doc.data() as Map<String, dynamic>?)?['communityChallenge'] != true)
+          (doc.data() as Map<String, dynamic>?)?['communityChallenge'] !=
+              true)
               .toList();
 
           return ListView(
@@ -126,7 +131,8 @@ class UserChallengesPageState extends State<UserChallengesPage> {
               if (normalChallenges.isNotEmpty)
                 _buildChallengeSection('Your Challenges', normalChallenges),
               if (communityChallenges.isNotEmpty)
-                _buildChallengeSection('Community Challenges', communityChallenges),
+                _buildChallengeSection(
+                    'Community Challenges', communityChallenges),
             ],
           );
         },
@@ -134,7 +140,8 @@ class UserChallengesPageState extends State<UserChallengesPage> {
     );
   }
 
-  Widget _buildChallengeSection(String title, List<QueryDocumentSnapshot> challenges) {
+  Widget _buildChallengeSection(
+      String title, List<QueryDocumentSnapshot> challenges) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -147,7 +154,8 @@ class UserChallengesPageState extends State<UserChallengesPage> {
         ),
         ...challenges.map((challengeData) {
           final data = challengeData.data() as Map<String, dynamic>?;
-          final bool isCompleted = data != null && data['challengeCompleted'] == true;
+          final bool isCompleted =
+              data != null && data['challengeCompleted'] == true;
 
           return _buildChallengeTile(
             challengeData.id,
@@ -172,23 +180,108 @@ class UserChallengesPageState extends State<UserChallengesPage> {
       bool isCompleted,
       DateTime? startDate,
       DateTime? endDate,
-      String collection) {
+      String collection,
+      ) {
     final dateText = startDate != null && endDate != null
         ? 'From: ${_formatDate(startDate)} To: ${_formatDate(endDate)}'
         : 'Dates: Not specified';
 
-    return ListTile(
-      title: Text(name),
-      subtitle: Text(
-          'Status: ${isCompleted ? "Completed" : "Pending"}\n$dateText'),
-      trailing: isCompleted
-          ? const Icon(Icons.check, color: Colors.green)
-          : IconButton(
-        icon: const Icon(Icons.check_box_outline_blank),
-        onPressed: () {
-          markChallengeAsCompleted(id, collection);
-        },
+    return GestureDetector(
+      onLongPress: () {
+        _fetchAndShowChallengeDetails(name);
+      },
+      child: ListTile(
+        title: Text(name),
+        subtitle: Text(
+            'Status: ${isCompleted ? "Completed" : "Pending"}\n$dateText'),
+        trailing: isCompleted
+            ? const Icon(Icons.check, color: Colors.green)
+            : IconButton(
+          icon: const Icon(Icons.check_box_outline_blank),
+          onPressed: () {
+            markChallengeAsCompleted(id, collection);
+          },
+        ),
       ),
+    );
+  }
+
+  Future<void> _fetchAndShowChallengeDetails(String challengeName) async {
+    try {
+      final doc = await _firestore
+          .collection('communityChallenges')
+          .doc(challengeName)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data();
+        final description = data?['description'] ?? 'No description provided';
+        final goal = data?['goal'] ?? 'No goal provided';
+        final intensity = data?['intensity']?.toString() ?? 'Not specified';
+
+        _showChallengeDetailsDialog(challengeName, description, goal, intensity);
+      } else {
+        _showErrorDialog('Challenge details not found.');
+      }
+    } catch (e) {
+      _showErrorDialog('Failed to fetch challenge details.');
+    }
+  }
+
+  void _showChallengeDetailsDialog(
+      String name, String description, String goal, String intensity) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(name),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Description:',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(description),
+                const SizedBox(height: 8),
+                Text('Goal:',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(goal),
+                const SizedBox(height: 8),
+                Text('Intensity:',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+                Text(intensity),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
     );
   }
 
