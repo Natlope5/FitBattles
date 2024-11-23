@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class WorkoutSuggestionsPage extends StatefulWidget {
@@ -64,7 +62,6 @@ class WorkoutSuggestionsPageState extends State<WorkoutSuggestionsPage> {
   @override
   void initState() {
     super.initState();
-    _loadExercises(); // Load exercises when the page is first opened
 
     // Initialize the notification plugin
     var initializationSettings = InitializationSettings(
@@ -80,19 +77,6 @@ class WorkoutSuggestionsPageState extends State<WorkoutSuggestionsPage> {
     _repsController.dispose();
     _weightController.dispose();
     super.dispose();
-  }
-
-  // Function to load exercises from SharedPreferences
-  Future<void> _loadExercises() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? exercisesString = prefs.getString('exercises');
-    if (exercisesString != null) {
-      List<dynamic> exercisesList = jsonDecode(exercisesString);
-      setState(() {
-        _exercises.clear();
-        _exercises.addAll(exercisesList.map((e) => Map<String, dynamic>.from(e)));
-      });
-    }
   }
 
   // Function to show workout details

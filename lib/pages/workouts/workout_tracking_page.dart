@@ -1,10 +1,13 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Add shared_preferences package
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Add local notifications package
-import 'package:logger/logger.dart'; // Add logger package
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:logger/logger.dart';
+import 'package:fitbattles/pages/workouts/workout_tips_page.dart';
 
 class WorkoutTrackingPage extends StatefulWidget {
   const WorkoutTrackingPage({super.key});
@@ -196,9 +199,18 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
         : "Notifications disabled.");
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final random = Random();
+    final List<String> workoutTips = [
+      "Try increasing your reps to boost strength.",
+      "Add 5 minutes of cardio to improve stamina.",
+      "Focus on form for better results and avoid injuries.",
+      "Challenge yourself with a new HIIT workout!",
+      "Incorporate rest days for muscle recovery."
+    ];
+    String selectedTip = workoutTips[random.nextInt(workoutTips.length)];
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workout Tracker'),
@@ -356,6 +368,46 @@ class WorkoutTrackingPageState extends State<WorkoutTrackingPage> {
                         backgroundColor: Colors.green,
                       ),
                       child: const Text('Save Workout'),
+                    ),
+                    Card(
+                      color: Colors.lightBlue[50],
+                      child: ListTile(
+                        title: const Text('Today\'s Workout Tip'),
+                        subtitle: Text(selectedTip),
+                        leading: const Icon(Icons.fitness_center, color: Colors.blue),
+                        trailing: GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DetailPage(
+                                title: 'Workout Tip Detail',
+                                content: 'Here’s more information on today\'s workout tip.',
+                              ),
+                            ),
+                          ),
+                          child: const Icon(Icons.arrow_forward),
+                        ),
+                      ),
+                    ),
+                    Card(
+                      color: Colors.orange[50],
+                      child: ListTile(
+                        title: const Text('Post-Workout Tip'),
+                        subtitle: Text('Stay hydrated and stretch after workouts to improve recovery.'),
+                        leading: const Icon(Icons.local_drink, color: Colors.orange),
+                        trailing: GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const DetailPage(
+                                title: 'Post-Workout Tips',
+                                content: 'More recovery tips after your workout.',
+                              ),
+                            ),
+                          ),
+                          child: const Icon(Icons.arrow_forward),
+                        ),
+                      ),
                     ),
                   ],
                 ),
