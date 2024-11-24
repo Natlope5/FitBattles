@@ -20,7 +20,7 @@ class SettingsPageState extends State<SettingsPage> {
   File? _image;
 
   // Profile settings controllers
-  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
@@ -133,7 +133,7 @@ class SettingsPageState extends State<SettingsPage> {
         Map<String, dynamic> profileData =
         profileDoc.data() as Map<String, dynamic>;
         setState(() {
-          _nameController.text = profileData['name'] ?? '';
+          nameController.text = profileData['name'] ?? '';
           _emailController.text = profileData['email'] ?? '';
           _ageController.text = (profileData['age'] ?? 0).toString();
           _weightController.text = (profileData['weight'] ?? 0.0).toString();
@@ -173,7 +173,7 @@ class SettingsPageState extends State<SettingsPage> {
 
         final profileRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('profile');
         await profileRef.set({
-          'name': _nameController.text,
+          'name': nameController.text,
           'email': _emailController.text,
           'age': int.parse(_ageController.text),
           'weight': double.parse(_weightController.text),
@@ -304,7 +304,7 @@ class SettingsPageState extends State<SettingsPage> {
               child: Column(
                 children: [
                   TextFormField(
-                    controller: _nameController,
+                    controller: nameController,
                     decoration: const InputDecoration(labelText: 'Name'),
                     validator: (value) =>
                     value!.isEmpty ? 'Please enter your name' : null,
