@@ -9,6 +9,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
@@ -20,8 +22,10 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+
 class _HomePageState extends State<HomePage> {
   String? _photoURL;
+  String _userName= 'User'; //Default
   File? _image;
   final picker = ImagePicker();
   final Logger logger = Logger();
@@ -68,6 +72,7 @@ class _HomePageState extends State<HomePage> {
       DocumentSnapshot userProfile = await FirebaseFirestore.instance.collection('users').doc(widget.id).get();
       setState(() {
         _photoURL = userProfile['photoURL'];
+        _userName= userProfile['name']?? 'User';
       });
     } catch (e) {
       logger.e("Error loading user profile: $e");
@@ -147,16 +152,27 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildScaffold(ThemeProvider themeProvider, int unreadMessages,
-      bool receiveNotifications, bool messageNotifications) {
+  Widget _buildScaffold(
+      ThemeProvider themeProvider,
+      int unreadMessages,
+      bool receiveNotifications,
+      bool messageNotifications) {
     return Scaffold(
-      backgroundColor: const Color(0xFF5D6C8A), // Blue background
+      backgroundColor:
+      themeProvider.isDarkMode ? Color(0xFF1F1F1F) : Color(0xFF58708F),
+
       appBar: AppBar(
-        backgroundColor: Colors.transparent, // Gray AppBar
+        backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false,
         title: const Text(
           "Home",
           style: TextStyle(color: Colors.white),
+        ),
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu), // Hamburger menu icon
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
         actions: [
           Stack(
@@ -166,13 +182,14 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ConversationsOverviewPage()),
+                    MaterialPageRoute(
+                        builder: (context) => ConversationsOverviewPage()),
                   );
                 },
               ),
-              if (unreadMessages > 0
-                  && receiveNotifications == true
-                  && messageNotifications == true)
+              if (unreadMessages > 0 &&
+                  receiveNotifications == true &&
+                  messageNotifications == true)
                 Positioned(
                   right: 8,
                   top: 8,
@@ -181,14 +198,16 @@ class _HomePageState extends State<HomePage> {
                     backgroundColor: Colors.red,
                     child: Text(
                       '$unreadMessages',
-                      style: const TextStyle(color: Colors.white, fontSize: 10),
+                      style:
+                      const TextStyle(color: Colors.white, fontSize: 10),
                     ),
                   ),
                 ),
             ],
           ),
           IconButton(
-            icon: Icon(themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
+            icon: Icon(
+                themeProvider.isDarkMode ? Icons.wb_sunny : Icons.nights_stay),
             onPressed: () {
               themeProvider.toggleTheme();
             },
@@ -201,12 +220,79 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: themeProvider.isDarkMode ? Color(0xFF1F1F1F) : Color(0xFF58708F),
+              ),
+              child: Text(
+                'FitBattles',
+                style: TextStyle(color: Colors.white, fontSize: 25),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.fitness_center),
+              title: const Text('Workout'),
+              onTap: () {
+                Navigator.pushNamed(context, '/workout');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.trending_up),
+              title: const Text('Challenges'),
+              onTap: () {
+                Navigator.pushNamed(context, '/challenges');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.history),
+              title: const Text('History'),
+              onTap: () {
+                Navigator.pushNamed(context, '/history');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                //To be continued
+
+              },
+            ),
+          ],
+        ),
+      ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 100.0, horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 18.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: <Widget>[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    'Welcome back, $_userName',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
+              ),
               _buildHeader(themeProvider),
               const SizedBox(height: 32),
               _buildPointsSection(context, themeProvider),
@@ -224,6 +310,38 @@ class _HomePageState extends State<HomePage> {
             ],
           ),
         ),
+      ),
+
+      floatingActionButton: SpeedDial(
+        animatedIcon: AnimatedIcons.add_event,
+        backgroundColor: Color(0xFF84C63E),
+        children: [
+          SpeedDialChild(
+            child:Icon(Icons.add),
+            label: 'Add...',
+              backgroundColor: Colors.lime,
+            onTap: (){
+              //Filler
+            }
+          ),
+          SpeedDialChild(
+              child:Icon(Icons.add),
+              label: 'Add Goal',
+              backgroundColor: Colors.lime,
+              onTap: (){
+                Navigator.of(context).pushNamed('/addGoal');
+              }
+          ),
+          SpeedDialChild(
+              child:Icon(Icons.add),
+              label: 'Add Challenge',
+              backgroundColor: Colors.lime,
+              onTap: (){
+                Navigator.of(context).pushNamed('/create_challenge');
+              }
+
+          ),
+        ]
       ),
     );
   }
@@ -243,9 +361,10 @@ class _HomePageState extends State<HomePage> {
           Text(
             'FitBattles',
             style: TextStyle(
-              fontSize: 36,
+              fontSize: 30,
               fontWeight: FontWeight.bold,
-              color: textColor,
+              color: Colors.transparent,
+
             ),
             textAlign: TextAlign.center,
           ),
@@ -275,9 +394,9 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Points Earned',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black),
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -294,7 +413,7 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 8),
           Text(
             '$pointsEarned / $pointsGoal points',
-            style: const TextStyle(fontSize: 16, color: Colors.black),
+            style: TextStyle(fontSize: 16, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
           ),
           const SizedBox(height: 16),
         ElevatedButton(
