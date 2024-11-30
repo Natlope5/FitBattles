@@ -249,7 +249,8 @@ class SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _showLogoutDialog() async {
+  static Future<void> showLogoutDialog(
+      BuildContext context, FirebaseAuth auth) async {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -270,12 +271,12 @@ class SettingsPageState extends State<SettingsPage> {
       },
     );
     if (shouldLogout == true) {
-      await _auth.signOut();
-      if (!mounted) return;
-      Navigator.of(context).pushReplacementNamed('/login');
+      await auth.signOut();
+      if (Navigator.canPop(context)) {
+        Navigator.of(context).pushReplacementNamed('/login');
+      }
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -394,9 +395,12 @@ class SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 50),
             ElevatedButton(
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: _showLogoutDialog,
+              onPressed: () {
+                showLogoutDialog(context, FirebaseAuth.instance); // Correctly passing the function
+              },
               child: const Text("Logout"),
             ),
+
           ],
         ),
       ),

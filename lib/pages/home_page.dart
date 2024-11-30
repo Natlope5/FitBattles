@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fitbattles/pages/points/earned_points_page.dart';
+import 'package:fitbattles/pages/settings/settings_page.dart';
 import 'package:fitbattles/pages/social/conversations_overview_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +11,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
@@ -266,7 +266,8 @@ class _HomePageState extends State<HomePage> {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () {
-                //To be continued
+                final FirebaseAuth auth = FirebaseAuth.instance;
+                SettingsPageState.showLogoutDialog(context, auth);
 
               },
             ),
