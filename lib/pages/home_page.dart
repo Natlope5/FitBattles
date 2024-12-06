@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:fitbattles/widgets/persistent_navigation_bar.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
@@ -33,6 +34,7 @@ class _HomePageState extends State<HomePage> {
   int pointsEarned = 500;
   int pointsGoal = 1000;
   int unreadMessages = 0;
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -40,6 +42,19 @@ class _HomePageState extends State<HomePage> {
     _loadUserProfile();
     _checkUnreadMessages();
     _setupRealtimeUpdates();
+  }
+
+  List<Widget> get _pages => [
+    _buildHomeContent(),
+    const ConversationsOverviewPage(),
+    EarnedPointsPage(userId: widget.id),
+    const SettingsPage(),
+  ];
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   Future<void> _pickAndUploadImage() async {
@@ -120,6 +135,47 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  Widget _buildHomeContent() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 18.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: <Widget>[
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: Text(
+                  'Welcome back, $_userName',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+              ),
+            ),
+            _buildHeader(themeProvider),
+            const SizedBox(height: 32),
+            _buildPointsSection(context, themeProvider),
+            const SizedBox(height: 32),
+            _buildChallengesContainer(context, themeProvider),
+            const SizedBox(height: 32),
+            _buildWorkoutContainer(context, themeProvider),
+            const SizedBox(height: 32),
+            _buildGoalsContainer(context, themeProvider),
+            const SizedBox(height: 32),
+            _buildHistoryContainer(context, themeProvider),
+            const SizedBox(height: 32),
+            _buildTopChallengedFriends(exampleFriends, themeProvider),
+            _buildFriendsListButton(context, themeProvider),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -274,43 +330,10 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 18.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: Text(
-                    'Welcome back, $_userName',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: themeProvider.isDarkMode ? Colors.white : Colors.black,
-                    ),
-                  ),
-                ),
-              ),
-              _buildHeader(themeProvider),
-              const SizedBox(height: 32),
-              _buildPointsSection(context, themeProvider),
-              const SizedBox(height: 32),
-              _buildChallengesContainer(context, themeProvider),
-              const SizedBox(height: 32),
-              _buildWorkoutContainer(context, themeProvider),
-              const SizedBox(height: 32),
-              _buildGoalsContainer(context, themeProvider),
-              const SizedBox(height: 32),
-              _buildHistoryContainer(context, themeProvider),
-              const SizedBox(height: 32),
-              _buildTopChallengedFriends(exampleFriends, themeProvider),
-              _buildFriendsListButton(context, themeProvider),
-            ],
-          ),
-        ),
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: PersistentNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
 
       floatingActionButton: SpeedDial(
