@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:fitbattles/pages/health/calories_page.dart';
 import 'package:fitbattles/pages/points/earned_points_page.dart';
 import 'package:fitbattles/pages/settings/settings_page.dart';
 import 'package:fitbattles/pages/social/conversations_overview_page.dart';
@@ -581,7 +582,7 @@ class _HomePageState extends State<HomePage> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF85C83E),
-                foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
             ),
             child: const Text('Add Goal'),
           ),
@@ -590,14 +591,29 @@ class _HomePageState extends State<HomePage> {
               Navigator.pushNamed(context, '/currentGoals');
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF85C83E), foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black
+              backgroundColor: const Color(0xFF85C83E),
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
             ),
             child: const Text('Current Goals'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Navigate to CaloriesPage
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const CaloriesPage()),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF85C83E),
+              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
+            ),
+            child: const Text('Track Calories'),
           ),
         ],
       ),
     );
   }
+
 
   Widget _buildHistoryContainer(BuildContext context,
       ThemeProvider themeProvider) {
