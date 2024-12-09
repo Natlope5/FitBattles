@@ -75,6 +75,7 @@ class LeaderboardPageState extends State<LeaderboardPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Leaderboard'),
+        backgroundColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
