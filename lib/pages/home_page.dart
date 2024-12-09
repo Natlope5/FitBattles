@@ -660,9 +660,6 @@ class _HomePageState extends State<HomePage> {
               Navigator.of(context).pushNamed('/customWorkout');
             },
           ),
-          _buildWorkoutTrackingButton(context, themeProvider),
-        ],
-      ),
         ),
       ],
     );
