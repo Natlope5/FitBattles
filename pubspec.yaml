@@ -20,6 +20,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_animate: ^4.5.2
   flutter_launcher_icons: ^0.14.1
   dio: ^5.2.1
   share_plus: ^10.1.1
@@ -106,3 +107,4 @@ flutter:
     - assets/animations/muscle_cup.json
     - assets/animations/graph2.json
     - assets/animations/congratulations.json
+    - assets/animations/dripping_circle.json

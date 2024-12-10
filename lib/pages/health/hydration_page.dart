@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:fitbattles/settings/ui/app_colors.dart';
+import 'package:fitbattles/settings/ui/app_strings.dart';
+import 'package:fitbattles/settings/ui/app_dimens.dart';
 import 'package:lottie/lottie.dart';
-import 'package:vibration/vibration.dart';
 
 class HydrationPage extends StatefulWidget {
   const HydrationPage({super.key});
@@ -13,255 +13,209 @@ class HydrationPage extends StatefulWidget {
 }
 
 class HydrationPageState extends State<HydrationPage> with TickerProviderStateMixin {
-  int consumedMl = 0;
-  int dailyGoalMl = 4000;
-  int cupSizeMl = 500;
-  late AnimationController _animationController;
-  final FlutterLocalNotificationsPlugin _notificationsPlugin = FlutterLocalNotificationsPlugin();
-  bool isDarkMode = false;
-  List<String> hydrationHistory = [];
-  String selectedWaterType = "Water";
+  int currentIntake = 1000; // Current water intake in mL
+  int dailyGoal = 4000; // Daily goal in mL
+  int cupsConsumed = 2; // Number of cups consumed
+  int totalCups = 8; // Total cups in the daily goal
+  bool goalReached = false; // Track if the goal is reached
+
+  late AnimationController _animationController; // Lottie Animation Controller
+  late double progress; // Track progress from 0 to 1
 
   @override
   void initState() {
     super.initState();
-    _initNotifications();
-    _loadSettings();
-    _loadHydrationHistory();
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
+    loadProgress(); // Load saved progress when the page loads
+  }
 
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    );
+  // Load saved progress from SharedPreferences
+  Future<void> loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      cupsConsumed = prefs.getInt('cupsConsumed') ?? 0;
+      currentIntake = cupsConsumed * 500; // Assuming each cup is 500mL
+      goalReached = cupsConsumed >= totalCups;
+      progress = cupsConsumed / totalCups; // Update progress as a fraction (0.0 to 1.0)
+    });
+  }
+
+  // Save the current progress to SharedPreferences
+  Future<void> saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('cupsConsumed', cupsConsumed);
+  }
+
+  // Reset the hydration progress
+  void resetProgress() {
+    setState(() {
+      cupsConsumed = 0;
+      currentIntake = 0;
+      goalReached = false;
+      progress = 0.0;
+    });
+    saveProgress(); // Save the reset progress
+  }
+
+  // Handle user cup consumption
+  void onCupConsumed() {
+    setState(() {
+      cupsConsumed++;
+      currentIntake += 500; // Assuming each cup is 500mL
+      progress = cupsConsumed / totalCups; // Update progress fraction
+
+      // Update the animation progress based on the cups consumed
+      _animationController.value = progress;
+
+      if (cupsConsumed == totalCups) {
+        goalReached = true;
+        _animationController.forward(); // Start animation when goal is reached
+      }
+    });
+    saveProgress(); // Save the updated progress after consuming a cup
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _animationController.dispose(); // Dispose the animation controller
     super.dispose();
-  }
-
-  void _loadSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      dailyGoalMl = prefs.getInt('dailyGoalMl') ?? 4000;
-      cupSizeMl = prefs.getInt('cupSizeMl') ?? 500;
-      consumedMl = prefs.getInt('consumedMl') ?? 0;
-    });
-  }
-
-  void _scheduleNotifications() async {
-    await _notificationsPlugin.periodicallyShow(
-      0,
-      'Hydration Reminder',
-      'Don\'t forget to drink water!',
-      RepeatInterval.hourly,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'hydration_channel',
-          'Hydration Notifications',
-          channelDescription: 'Reminders to drink water throughout the day',
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-      ),
-      androidScheduleMode: AndroidScheduleMode.inexact, // Required parameter
-    );
-  }
-
-  void _initNotifications() async {
-    const AndroidInitializationSettings androidInitSettings =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
-    const InitializationSettings initSettings = InitializationSettings(
-        android: androidInitSettings);
-    await _notificationsPlugin.initialize(initSettings);
-    _scheduleNotifications();
-  }
-
-  void _saveSettings() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setInt('dailyGoalMl', dailyGoalMl);
-    prefs.setInt('cupSizeMl', cupSizeMl);
-    prefs.setInt('consumedMl', consumedMl);
-    prefs.setStringList('hydrationHistory', hydrationHistory);
-  }
-
-  void _loadHydrationHistory() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      hydrationHistory = prefs.getStringList('hydrationHistory') ?? [];
-    });
-  }
-
-  void _addToHistory(String log) async {
-    String date = DateTime.now().toString().split(' ')[0];
-    hydrationHistory.add('$date: $consumedMl mL ($selectedWaterType)');
-    _saveSettings();
-  }
-
-  void _clearHistory() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    // Ensure widget is still mounted before calling setState or showing the snackbar
-    if (mounted) {
-      setState(() {
-        consumedMl = 0;
-        hydrationHistory.clear();
-        _animationController.value = 0.0;
-      });
-
-      // Clear preferences
-      await prefs.clear();
-
-      // Show snackbar if widget is still mounted
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Hydration log cleared!'),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
-      }
-    }
-  }
-
-  void _handleCupClick() {
-    setState(() {
-      if (consumedMl + cupSizeMl <= dailyGoalMl) {
-        consumedMl += cupSizeMl;
-        _animationController.value = consumedMl / dailyGoalMl;
-
-        _addToHistory('$cupSizeMl mL ($selectedWaterType) added');
-        Vibration.vibrate(duration: 50);
-      }
-      _saveSettings();
-    });
-  }
-
-  Widget _getCelebrationWidget() {
-    if (consumedMl >= dailyGoalMl) {
-      return Lottie.asset('assets/animations/congratulations.json', height: 150, width: 150);
-    }
-    return const SizedBox.shrink();
-  }
-
-  void _toggleTheme() {
-    setState(() {
-      isDarkMode = !isDarkMode;
-    });
-  }
-
-  Widget _hydrationGraph() {
-    return SizedBox(
-      height: 200,
-      child: LineChart(
-        LineChartData(
-          lineBarsData: [
-            LineChartBarData(
-              spots: hydrationHistory
-                  .asMap()
-                  .entries
-                  .map((entry) {
-                int index = entry.key;
-                int value = int.parse(entry.value.split(': ')[1].split(' ')[0]);
-                return FlSpot(index.toDouble(), value.toDouble());
-              }).toList(),
-              isCurved: true,
-              color: Colors.blue,
-              barWidth: 3,
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    double progressPercent = consumedMl / dailyGoalMl;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hydration Tracker'),
-        actions: [
-          IconButton(
-            icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-            onPressed: _toggleTheme,
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_forever),
-            onPressed: _clearHistory,
-            tooltip: 'Clear Log',
-          ),
-        ],
+        title: Text(AppStrings.hydrationTitle),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.surface,
       ),
-      backgroundColor: isDarkMode ? Colors.black : Colors.white,
-      body: SingleChildScrollView(
+      body: Container(
+        color: Theme.of(context).colorScheme.surface,
+        padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingLarge),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
-            // Muscle Cup Animation with Filling Progress
-            Lottie.asset(
-              'assets/animations/muscle_cup.json',
-              height: 150,
-              width: 150,
-              fit: BoxFit.cover,
-              controller: _animationController,
-              onLoaded: (composition) {
-                _animationController.duration = composition.duration;
-              },
+            // Dripping Circle Animation
+            SizedBox(
+              width: 200, // Set the circle size (can be adjusted)
+              height: 200,
+              child: Lottie.asset(
+                'assets/animations/muscle_cup.json',
+                fit: BoxFit.contain, // Ensure the image scales properly
+                controller: _animationController, // Use the controller
+                onLoaded: (composition) {
+                  if (!goalReached) {
+                    _animationController.forward();
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: AppDimens.spacingSmall),
+            // Display Smiley Face below the animation when goal is reached
+            if (goalReached)
+              Icon(
+                Icons.sentiment_very_satisfied,
+                size: 100,
+                color: AppColors.waterBlue,
+              ),
+            // Display current water intake and progress
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '$currentIntake mL',
+                  style: TextStyle(
+                    fontSize: AppDimens.fontLarge,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  '${(progress * 100).toStringAsFixed(0)}%',
+                  style: TextStyle(
+                    fontSize: AppDimens.fontMedium,
+                    color: AppColors.lightGray,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppDimens.spacingSmall),
+            // Display Daily Goal and Cups Information
+            Text(
+              '$cupsConsumed/$totalCups ${AppStrings.cups}',
+              style: TextStyle(
+                fontSize: AppDimens.fontMedium,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             Text(
-              '$consumedMl mL / $dailyGoalMl mL',
+              '${AppStrings.dailyGoal} $dailyGoal mL',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : Colors.black,
+                fontSize: AppDimens.fontSmall,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 10),
-            LinearProgressIndicator(
-              value: progressPercent.clamp(0.0, 1.0),
-              color: Colors.blue,
-              backgroundColor: Colors.grey[300],
-              minHeight: 10,
-            ),
-            const SizedBox(height: 20),
-            _getCelebrationWidget(),
-            ElevatedButton(
-              onPressed: _handleCupClick,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-              ),
-              child: Text('Add $cupSizeMl mL ($selectedWaterType)'),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Your Hydration Graph',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            _hydrationGraph(),
-            const SizedBox(height: 20),
-            const Text(
-              'Hydration History',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Column(
-              children: hydrationHistory.map((entry) {
-                return ListTile(
-                  leading: const Icon(Icons.history, color: Colors.blue),
-                  title: Text(
-                    entry,
-                    style: TextStyle(
-                      color: isDarkMode ? Colors.white : Colors.black,
+            const SizedBox(height: AppDimens.spacingSmall),
+            // Water Cup Icons (Wrap Row in SingleChildScrollView to avoid overflow)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: List.generate(totalCups, (index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.spacingSmall),
+                    child: GestureDetector(
+                      onTap: () {
+                        if (!goalReached) onCupConsumed(); // Increase intake on cup press
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: index < cupsConsumed
+                                  ? AppColors.waterBlue.withValues(alpha: 0.7)
+                                  : Colors.transparent,
+                              blurRadius: 10,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.local_drink,
+                          size: 40,
+                          color: index < cupsConsumed
+                              ? AppColors.waterBlue
+                              : AppColors.lightGray,
+                        ),
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }),
+              ),
             ),
+            const SizedBox(height: AppDimens.spacingSmall),
+            // Reset Button to Clear Progress
+            ElevatedButton(
+              onPressed: () {
+                resetProgress();
+              },
+              child: Text(AppStrings.reset),
+            ),
+            // Congratulations message when the goal is reached
+            if (goalReached)
+              Padding(
+                padding: const EdgeInsets.only(top: AppDimens.spacingLarge),
+                child: Text(
+                  AppStrings.congratulations,
+                  style: TextStyle(
+                    fontSize: AppDimens.fontLarge,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.waterBlue,
+                  ),
+                ),
+              ),
           ],
         ),
       ),

@@ -409,15 +409,10 @@ class AppStrings {
   static String loggedOut = "You have been logged out successfully.";
 
 
-
-
-
   // Titles
   static const String pointsInfoTitle = 'Points Information';
   static const String createProfileTitle = 'Create Profile';
   static const String settingsTitle = 'Settings';
-
-
 
 
   // Messages
@@ -445,6 +440,14 @@ class AppStrings {
 
   // Notifications
   static const String friendRequestSent = 'Friend request sent!';
+  static const String cups = "cups";
+  static const String hydrationTitle = "Hydration Tracker";
+
+
+  static const String addWater = "Add Water";
+
+  static String reset = 'Reset';
+
+  static const String congratulations = "Congratulations! You have reached your daily goal!";
+
 }
-
-

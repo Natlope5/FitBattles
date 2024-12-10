@@ -1,149 +1,199 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 
 class CaloriesPage extends StatefulWidget {
-  const CaloriesPage({super.key});
+  const CaloriesPage({super.key, required String userId});
 
   @override
-  State<CaloriesPage> createState() => _CaloriesPageState();
+  CaloriesPageState createState() => CaloriesPageState();
 }
 
-class _CaloriesPageState extends State<CaloriesPage> {
-  // List to store activity data (name, calories, and icon)
-  final List<Map<String, dynamic>> _activities = [
-    {'name': 'Yoga', 'calories': '500 KCal', 'icon': Icons.self_improvement},
-    {'name': 'Aerobics', 'calories': '300 KCal', 'icon': Icons.fitness_center},
-    {'name': 'Weight Lifting', 'calories': '400 KCal', 'icon': Icons.directions_run},
-    {'name': 'Dance', 'calories': '350 KCal', 'icon': Icons.directions_bike},
-  ];
+class CaloriesPageState extends State<CaloriesPage> {
+  // Variables to hold calories data
+  int totalCaloriesConsumed = 0;
+  int totalCaloriesBurned = 0;
 
-  // Function to add a new activity
-  void _addActivity() {
-    final TextEditingController nameController = TextEditingController();
-    final TextEditingController caloriesController = TextEditingController();
+  // Controllers for input fields
+  final TextEditingController _consumedController = TextEditingController();
+  final TextEditingController _burnedController = TextEditingController();
 
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Add Activity'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Activity Name'),
-              ),
-              TextField(
-                controller: caloriesController,
-                decoration: const InputDecoration(labelText: 'Calories Burned'),
-                keyboardType: TextInputType.number,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx), // Close dialog
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _activities.add({
-                    'name': nameController.text,
-                    'calories': '${caloriesController.text} KCal',
-                    'icon': Icons.fitness_center, // Default icon
-                  });
-                });
-                Navigator.pop(ctx); // Close dialog
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
+  // Function to add consumed calories
+  void _addConsumedCalories() {
+    setState(() {
+      totalCaloriesConsumed += int.tryParse(_consumedController.text) ?? 0;
+      _consumedController.clear();
+    });
+  }
+
+  // Function to add burned calories
+  void _addBurnedCalories() {
+    setState(() {
+      totalCaloriesBurned += int.tryParse(_burnedController.text) ?? 0;
+      _burnedController.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    int netCalories = totalCaloriesConsumed - totalCaloriesBurned;
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF5D6C8A),
-        title: Text(
-          _formattedDate(),
-          style: const TextStyle(color: Colors.white),
+        title: const Text(
+          'Calories Tracker',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         centerTitle: true,
-        actions: const [
-          Icon(Icons.fitness_center, color: Colors.white),
-          SizedBox(width: 10),
-        ],
       ),
-      body: Column(
-        children: [
-          // Dynamic Graph Section
-          Expanded(
-            flex: 6,
-            child: Container(
-              color: const Color(0xFF5D6C8A),
-              child: Lottie.asset(
-                'assets/animations/graph2.json',
-                width: double.infinity,
-                fit: BoxFit.cover,
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSummaryCard(
+              title: "Calories Consumed",
+              value: totalCaloriesConsumed,
+              icon: Icons.fastfood,
+              color: Colors.orangeAccent,
+            ),
+            const SizedBox(height: 10),
+            _buildSummaryCard(
+              title: "Calories Burned",
+              value: totalCaloriesBurned,
+              icon: Icons.local_fire_department,
+              color: Colors.greenAccent,
+            ),
+            const SizedBox(height: 10),
+            _buildSummaryCard(
+              title: "Net Calories",
+              value: netCalories,
+              icon: Icons.calculate,
+              color: netCalories >= 0 ? Colors.blueAccent : Colors.redAccent,
+            ),
+            const SizedBox(height: 20),
+            _buildInputSection(),
+            const Spacer(),
+            Center(
+              child: Text(
+                'Stay on track! Log your calories regularly.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).hintColor,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          // Dynamic Activities Section
-          Expanded(
-            flex: 5,
-            child: ListView.builder(
-              itemCount: _activities.length,
-              itemBuilder: (context, index) {
-                final activity = _activities[index];
-                return ListTile(
-                  leading: Icon(activity['icon'], color: const Color(0xFF5D6C8A)),
-                  title: Text(
-                    activity['name'],
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  trailing: Text(
-                    activity['calories'],
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF85C83E),
-        onPressed: _addActivity, // Trigger add activity dialog
-        child: const Icon(Icons.add),
+            const SizedBox(height: 10),
+          ],
+        ),
       ),
     );
   }
 
-  // Display today's date dynamically
-  String _formattedDate() {
-    final now = DateTime.now();
-    return '${now.day} ${_monthName(now.month)}';
+  // Widget to build summary cards
+  Widget _buildSummaryCard({
+    required String title,
+    required int value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: Color.fromRGBO(
+            color.r.toInt(),
+            color.g.toInt(),
+            color.b.toInt(),
+            0.2, // opacity remains a double
+          ),
+          child: Icon(icon, color: color),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        trailing: Text(
+          '$value kcal',
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
   }
 
-  // Helper function to format month name
-  String _monthName(int month) {
-    const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-    return months[month - 1];
+  // Input Section for Calories
+  Widget _buildInputSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildInputField(
+          controller: _consumedController,
+          label: 'Calories Consumed',
+          icon: Icons.restaurant,
+        ),
+        const SizedBox(height: 10),
+        _buildActionButton('Add Consumed Calories', _addConsumedCalories),
+        const SizedBox(height: 20),
+        _buildInputField(
+          controller: _burnedController,
+          label: 'Calories Burned',
+          icon: Icons.directions_run,
+        ),
+        const SizedBox(height: 10),
+        _buildActionButton('Add Burned Calories', _addBurnedCalories),
+      ],
+    );
+  }
+
+  // Custom input field widget
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: Theme.of(context).iconTheme.color),
+        filled: true,
+        fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    );
+  }
+
+  // Custom action button
+  Widget _buildActionButton(String text, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).primaryColor,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 16, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _consumedController.dispose();
+    _burnedController.dispose();
+    super.dispose();
   }
 }

@@ -600,7 +600,7 @@ class _HomePageState extends State<HomePage> {
             onPressed: () {
               // Navigate to CaloriesPage
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const CaloriesPage()),
+                MaterialPageRoute(builder: (context) => const CaloriesPage(userId: '',)),
               );
             },
             style: ElevatedButton.styleFrom(
