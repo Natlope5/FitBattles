@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 import 'package:fitbattles/settings/ui/app_colors.dart';
 import 'package:fitbattles/settings/ui/app_strings.dart';
 import 'package:fitbattles/settings/ui/app_dimens.dart';
@@ -13,40 +14,59 @@ class HydrationPage extends StatefulWidget {
 }
 
 class HydrationPageState extends State<HydrationPage> with TickerProviderStateMixin {
-  int currentIntake = 1000; // Current water intake in mL
-  int dailyGoal = 4000; // Daily goal in mL
-  int cupsConsumed = 2; // Number of cups consumed
-  int totalCups = 8; // Total cups in the daily goal
-  bool goalReached = false; // Track if the goal is reached
+  int currentIntake = 0;
+  int dailyGoal = 4000;
+  int cupsConsumed = 0;
+  int totalCups = 8;
+  bool goalReached = false;
 
-  late AnimationController _animationController; // Lottie Animation Controller
-  late double progress; // Track progress from 0 to 1
+  List<String> dailyLogs = [];
+  late AnimationController _animationController;
+  late double progress;
 
   @override
   void initState() {
     super.initState();
     _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500));
-    loadProgress(); // Load saved progress when the page loads
+    loadProgress();
+    loadWeeklyLogs();
   }
 
-  // Load saved progress from SharedPreferences
   Future<void> loadProgress() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       cupsConsumed = prefs.getInt('cupsConsumed') ?? 0;
-      currentIntake = cupsConsumed * 500; // Assuming each cup is 500mL
+      currentIntake = cupsConsumed * 500;
       goalReached = cupsConsumed >= totalCups;
-      progress = cupsConsumed / totalCups; // Update progress as a fraction (0.0 to 1.0)
+      progress = cupsConsumed / totalCups;
     });
   }
 
-  // Save the current progress to SharedPreferences
+  Future<void> loadWeeklyLogs() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      dailyLogs = prefs.getStringList('dailylogs') ?? [];
+    });
+  }
+
   Future<void> saveProgress() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setInt('cupsConsumed', cupsConsumed);
   }
 
-  // Reset the hydration progress
+  Future<void> logWeeklyConsumption() async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final formattedDate = DateFormat('EEE, MMM d').format(now);
+    final logEntry = 'Day of $formattedDate: $currentIntake mL';
+
+    setState(() {
+      dailyLogs.add(logEntry);
+    });
+
+    await prefs.setStringList('weeklyLogs', dailyLogs);
+  }
+
   void resetProgress() {
     setState(() {
       cupsConsumed = 0;
@@ -54,30 +74,42 @@ class HydrationPageState extends State<HydrationPage> with TickerProviderStateMi
       goalReached = false;
       progress = 0.0;
     });
-    saveProgress(); // Save the reset progress
+    saveProgress();
   }
 
-  // Handle user cup consumption
   void onCupConsumed() {
     setState(() {
-      cupsConsumed++;
-      currentIntake += 500; // Assuming each cup is 500mL
-      progress = cupsConsumed / totalCups; // Update progress fraction
+      if (cupsConsumed < totalCups) {
+        cupsConsumed++;
+        currentIntake += 500;
+        progress = cupsConsumed / totalCups;
 
-      // Update the animation progress based on the cups consumed
-      _animationController.value = progress;
+        _animationController.value = progress;
 
-      if (cupsConsumed == totalCups) {
-        goalReached = true;
-        _animationController.forward(); // Start animation when goal is reached
+        if (cupsConsumed == totalCups) {
+          goalReached = true;
+          _animationController.forward();
+          logWeeklyConsumption();
+        }
       }
     });
-    saveProgress(); // Save the updated progress after consuming a cup
+    saveProgress();
+  }
+
+  int calculateWeeklyTotal() {
+    int total = 0;
+    for (var log in dailyLogs) {
+      final match = RegExp(r'(\d+) mL').firstMatch(log);
+      if (match != null) {
+        total += int.parse(match.group(1)!);
+      }
+    }
+    return total;
   }
 
   @override
   void dispose() {
-    _animationController.dispose(); // Dispose the animation controller
+    _animationController.dispose();
     super.dispose();
   }
 
@@ -90,133 +122,98 @@ class HydrationPageState extends State<HydrationPage> with TickerProviderStateMi
         elevation: 0,
         backgroundColor: Theme.of(context).colorScheme.surface,
       ),
-      body: Container(
-        color: Theme.of(context).colorScheme.surface,
-        padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingLarge),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Dripping Circle Animation
-            SizedBox(
-              width: 200, // Set the circle size (can be adjusted)
-              height: 200,
-              child: Lottie.asset(
-                'assets/animations/muscle_cup.json',
-                fit: BoxFit.contain, // Ensure the image scales properly
-                controller: _animationController, // Use the controller
-                onLoaded: (composition) {
-                  if (!goalReached) {
-                    _animationController.forward();
-                  }
-                },
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingLarge),
+          child: Column(
+            children: [
+              // Title and Total Weekly Consumption
+              Text(
+                'Hydration Tracker',
+                style: TextStyle(fontSize: AppDimens.fontLarge, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: AppDimens.spacingSmall),
-            // Display Smiley Face below the animation when goal is reached
-            if (goalReached)
-              Icon(
-                Icons.sentiment_very_satisfied,
-                size: 100,
-                color: AppColors.waterBlue,
+              const SizedBox(height: 10),
+              Text(
+                'Total Water Consumed This Week: ${calculateWeeklyTotal()} mL',
+                style: TextStyle(fontSize: AppDimens.fontMedium, fontWeight: FontWeight.bold, color: AppColors.waterBlue),
               ),
-            // Display current water intake and progress
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '$currentIntake mL',
-                  style: TextStyle(
-                    fontSize: AppDimens.fontLarge,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+              const SizedBox(height: AppDimens.spacingMedium),
+
+              // Animation
+              SizedBox(
+                width: 200,
+                height: 200,
+                child: Lottie.asset(
+                  'assets/animations/muscle_cup.json',
+                  fit: BoxFit.contain,
+                  controller: _animationController,
                 ),
-                Text(
-                  '${(progress * 100).toStringAsFixed(0)}%',
-                  style: TextStyle(
-                    fontSize: AppDimens.fontMedium,
-                    color: AppColors.lightGray,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppDimens.spacingSmall),
-            // Display Daily Goal and Cups Information
-            Text(
-              '$cupsConsumed/$totalCups ${AppStrings.cups}',
-              style: TextStyle(
-                fontSize: AppDimens.fontMedium,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
               ),
-            ),
-            Text(
-              '${AppStrings.dailyGoal} $dailyGoal mL',
-              style: TextStyle(
-                fontSize: AppDimens.fontSmall,
-                color: Theme.of(context).colorScheme.onSurface,
+              if (goalReached)
+                Icon(Icons.sentiment_very_satisfied, size: 100, color: AppColors.waterBlue),
+              const SizedBox(height: AppDimens.spacingSmall),
+
+              // Progress Info
+              Text(
+                '$currentIntake mL',
+                style: TextStyle(fontSize: AppDimens.fontLarge, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: AppDimens.spacingSmall),
-            // Water Cup Icons (Wrap Row in SingleChildScrollView to avoid overflow)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
+              Text('${(progress * 100).toStringAsFixed(0)}%'),
+              Text('$cupsConsumed/$totalCups ${AppStrings.cups}'),
+              Text('${AppStrings.dailyGoal} $dailyGoal mL'),
+              const SizedBox(height: AppDimens.spacingSmall),
+
+              // Cup Icons
+              Wrap(
+                alignment: WrapAlignment.center,
                 children: List.generate(totalCups, (index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppDimens.spacingSmall),
-                    child: GestureDetector(
-                      onTap: () {
-                        if (!goalReached) onCupConsumed(); // Increase intake on cup press
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: index < cupsConsumed
-                                  ? AppColors.waterBlue.withValues(alpha: 0.7)
-                                  : Colors.transparent,
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          Icons.local_drink,
-                          size: 40,
-                          color: index < cupsConsumed
-                              ? AppColors.waterBlue
-                              : AppColors.lightGray,
-                        ),
-                      ),
+                  return IconButton(
+                    icon: Icon(
+                      Icons.local_drink,
+                      color: index < cupsConsumed ? AppColors.waterBlue : AppColors.lightGray,
                     ),
+                    onPressed: () {
+                      if (!goalReached) onCupConsumed();
+                    },
                   );
                 }),
               ),
-            ),
-            const SizedBox(height: AppDimens.spacingSmall),
-            // Reset Button to Clear Progress
-            ElevatedButton(
-              onPressed: () {
-                resetProgress();
-              },
-              child: Text(AppStrings.reset),
-            ),
-            // Congratulations message when the goal is reached
-            if (goalReached)
+              const SizedBox(height: AppDimens.spacingSmall),
+
+              // Weekly Logs and Total Water Consumption
               Padding(
-                padding: const EdgeInsets.only(top: AppDimens.spacingLarge),
-                child: Text(
-                  AppStrings.congratulations,
-                  style: TextStyle(
-                    fontSize: AppDimens.fontLarge,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.waterBlue,
-                  ),
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Column(
+                  children: [
+                    Text(
+                      'Daily Water Consumption',
+                      style: TextStyle(fontSize: AppDimens.fontMedium, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    ...dailyLogs.map((log) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Text(
+                        log,
+                        style: TextStyle(fontSize: AppDimens.fontSmall),
+                      ),
+                    )),
+                  ],
                 ),
               ),
-          ],
+
+              // Reset Button
+              ElevatedButton(onPressed: resetProgress, child: Text(AppStrings.reset)),
+
+              if (goalReached)
+                Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Text(
+                    AppStrings.congratulations,
+                    style: TextStyle(fontSize: AppDimens.fontLarge, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
