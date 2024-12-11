@@ -45,7 +45,7 @@ class HydrationPageState extends State<HydrationPage> with TickerProviderStateMi
   Future<void> loadWeeklyLogs() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      dailyLogs = prefs.getStringList('dailylogs') ?? [];
+      dailyLogs = prefs.getStringList('dailyLogs') ?? []; // Fixed to 'dailyLogs'
     });
   }
 
@@ -64,7 +64,7 @@ class HydrationPageState extends State<HydrationPage> with TickerProviderStateMi
       dailyLogs.add(logEntry);
     });
 
-    await prefs.setStringList('weeklyLogs', dailyLogs);
+    await prefs.setStringList('dailyLogs', dailyLogs); // Fixed to 'dailyLogs'
   }
 
   void resetProgress() {
