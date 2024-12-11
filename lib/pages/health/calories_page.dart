@@ -151,16 +151,27 @@ class CaloriesPageState extends State<CaloriesPage> {
     );
   }
 
-  Widget _buildInfoCard({required IconData icon, required String title, required String subtitle, bool isGoal = false, VoidCallback? onPlusPressed}) {
+  Widget _buildInfoCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    bool isGoal = false,
+    VoidCallback? onPlusPressed,
+  }) {
+    // Get the current theme mode (light or dark)
+    Color iconColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).primaryColor;
+
     return Card(
       elevation: 2,
       margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: Icon(icon, color: Theme.of(context).primaryColor, size: 30),
+        leading: Icon(icon, color: iconColor, size: 30),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 14, color: Colors.black54)),
-        trailing: isGoal ? IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.green), onPressed: onPlusPressed) : null,
+        trailing: isGoal
+            ? IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.green), onPressed: onPlusPressed)
+            : null,
       ),
     );
   }
@@ -216,11 +227,12 @@ class CaloriesPageState extends State<CaloriesPage> {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
+      style: TextStyle(color: Colors.black),  // Ensuring text color is black
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Theme.of(context).primaryColor),
         filled: true,
-        fillColor: Colors.grey[200],
+        fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200], // Different background color for dark mode
         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2), borderRadius: BorderRadius.circular(12)),
       ),
