@@ -160,6 +160,9 @@ class CaloriesPageState extends State<CaloriesPage> {
   }) {
     // Get the current theme mode (light or dark)
     Color iconColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).primaryColor;
+    // Set the text color based on theme brightness
+    Color titleColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
+    Color subtitleColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black54;
 
     return Card(
       elevation: 2,
@@ -167,14 +170,15 @@ class CaloriesPageState extends State<CaloriesPage> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         leading: Icon(icon, color: iconColor, size: 30),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 14, color: Colors.black54)),
+        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: titleColor)),
+        subtitle: Text(subtitle, style: TextStyle(fontSize: 14, color: subtitleColor)),
         trailing: isGoal
             ? IconButton(icon: const Icon(Icons.add_circle_outline, color: Colors.green), onPressed: onPlusPressed)
             : null,
       ),
     );
   }
+
 
   void _showGoalInputDialog() {
     final TextEditingController goalController = TextEditingController();
