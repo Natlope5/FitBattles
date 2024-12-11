@@ -15,6 +15,7 @@ class CaloriesPage extends StatefulWidget {
 class CaloriesPageState extends State<CaloriesPage> {
   late final String userId;
 
+  // Initializes the userId and loads the saved data from SharedPreferences
   @override
   void initState() {
     super.initState();
@@ -22,17 +23,19 @@ class CaloriesPageState extends State<CaloriesPage> {
     _loadSavedData();
   }
 
+  // Variables to store calorie data
   int totalCaloriesConsumed = 0;
   int totalCaloriesBurned = 0;
-  int averageDailyBurnedCalories = 1000; // Default value, can be updated
-  int daysAsMember = 35; // Default value, can be updated
+  int averageDailyBurnedCalories = 1000; // Default value
+  int daysAsMember = 35; // Default value
   int goalCalories = 2000;
   int caloriesBurnedThisWeek = 500;
 
+  // Controllers to handle input from user
   final TextEditingController _consumedController = TextEditingController();
   final TextEditingController _burnedController = TextEditingController();
 
-  // Load saved data from SharedPreferences
+  // Loads saved data from SharedPreferences
   Future<void> _loadSavedData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -44,7 +47,7 @@ class CaloriesPageState extends State<CaloriesPage> {
     });
   }
 
-  // Save data to SharedPreferences
+  // Saves the data to SharedPreferences
   Future<void> _saveData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setInt('totalCaloriesConsumed', totalCaloriesConsumed);
@@ -54,6 +57,7 @@ class CaloriesPageState extends State<CaloriesPage> {
     prefs.setInt('goalCalories', goalCalories);
   }
 
+  // Adds consumed calories to the total and updates SharedPreferences
   void _addConsumedCalories() {
     final consumedValue = int.tryParse(_consumedController.text);
     if (consumedValue != null) {
@@ -62,12 +66,13 @@ class CaloriesPageState extends State<CaloriesPage> {
       });
       _saveData(); // Save the updated data
     } else {
-      // Print a debug statement if the value is invalid
+      // Log an error if input is invalid
       logger.i("Invalid consumed calories input");
     }
     _consumedController.clear();
   }
 
+  // Adds burned calories to the total and updates SharedPreferences
   void _addBurnedCalories() {
     final burnedValue = int.tryParse(_burnedController.text);
     if (burnedValue != null) {
@@ -76,7 +81,7 @@ class CaloriesPageState extends State<CaloriesPage> {
       });
       _saveData(); // Save the updated data
     } else {
-      // Print a debug statement if the value is invalid
+      // Log an error if input is invalid
       logger.i("Invalid burned calories input");
     }
     _burnedController.clear();
@@ -87,7 +92,7 @@ class CaloriesPageState extends State<CaloriesPage> {
     // Calculate net calories based on the updated values
     int netCalories = totalCaloriesConsumed - totalCaloriesBurned;
 
-    // Recalculate the total calories burned since member update
+    // Calculate total calories burned since member update
     int totalCaloriesBurnedSinceMember = averageDailyBurnedCalories * daysAsMember;
 
     return Scaffold(
@@ -126,6 +131,7 @@ class CaloriesPageState extends State<CaloriesPage> {
     );
   }
 
+  // Builds a summary card for consumed, burned, and net calories
   Widget _buildSummaryCard({
     required String title,
     required int value,
@@ -138,10 +144,10 @@ class CaloriesPageState extends State<CaloriesPage> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Color.fromRGBO(
-            color.r.toInt(), // Cast .r (double) to int
-            color.g.toInt(), // Cast .g (double) to int
-            color.b.toInt(), // Cast .b (double) to int
-            0.2, // Set the opacity value (0.2 for 20% opacity)
+            color.r.toInt(), // Convert .r (double) to int
+            color.g.toInt(), // Convert .g (double) to int
+            color.b.toInt(), // Convert .b (double) to int
+            0.2, // Set opacity to 20%
           ),
           child: Icon(icon, color: color),
         ),
@@ -151,6 +157,7 @@ class CaloriesPageState extends State<CaloriesPage> {
     );
   }
 
+  // Builds an info card for additional information such as total burned calories and weekly goal
   Widget _buildInfoCard({
     required IconData icon,
     required String title,
@@ -158,9 +165,8 @@ class CaloriesPageState extends State<CaloriesPage> {
     bool isGoal = false,
     VoidCallback? onPlusPressed,
   }) {
-    // Get the current theme mode (light or dark)
+    // Adjust colors based on theme (light/dark mode)
     Color iconColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Theme.of(context).primaryColor;
-    // Set the text color based on theme brightness
     Color titleColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black;
     Color subtitleColor = Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black54;
 
@@ -179,7 +185,7 @@ class CaloriesPageState extends State<CaloriesPage> {
     );
   }
 
-
+  // Displays a dialog to set the weekly goal for calories
   void _showGoalInputDialog() {
     final TextEditingController goalController = TextEditingController();
 
@@ -204,6 +210,7 @@ class CaloriesPageState extends State<CaloriesPage> {
     );
   }
 
+  // Builds the input section where users can log calories consumed and burned
   Widget _buildInputSection() {
     return Card(
       elevation: 4,
@@ -227,22 +234,24 @@ class CaloriesPageState extends State<CaloriesPage> {
     );
   }
 
+  // Builds a text field for logging consumed or burned calories
   Widget _buildInputField({required TextEditingController controller, required String label, required IconData icon}) {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.number,
-      style: TextStyle(color: Colors.black),  // Ensuring text color is black
+      style: TextStyle(color: Colors.black),  // Ensures text color is black
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: Theme.of(context).primaryColor),
         filled: true,
-        fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200], // Different background color for dark mode
+        fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200], // Dark mode handling
         enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey[300]!), borderRadius: BorderRadius.circular(12)),
         focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2), borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 
+  // Builds an action button for submitting calorie input
   Widget _buildActionButton(String text, VoidCallback onPressed) {
     return SizedBox(
       width: double.infinity,
