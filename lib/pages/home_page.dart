@@ -1,8 +1,9 @@
-import 'dart:io';
+// import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+// import 'package:firebase_storage/firebase_storage.dart';
 import 'package:fitbattles/pages/points/earned_points_page.dart';
+import 'package:fitbattles/pages/points/leaderboard_page.dart';
 import 'package:fitbattles/pages/settings/settings_page.dart';
 import 'package:fitbattles/pages/social/conversations_overview_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
@@ -10,7 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logger/logger.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+// import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:fitbattles/widgets/persistent_navigation_bar.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -26,9 +27,9 @@ class HomePage extends StatefulWidget {
 
 
 class _HomePageState extends State<HomePage> {
-  String? _photoURL;
-  String _userName= 'User'; //Default
-  File? _image;
+  // String? _photoURL;
+  // String _userName= 'User';
+  // File? _image;
   final picker = ImagePicker();
   final Logger logger = Logger();
   bool showPreloadedChallenges = false;
@@ -40,7 +41,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    // _loadUserProfile();
     _checkUnreadMessages();
     _setupRealtimeUpdates();
   }
@@ -48,7 +49,7 @@ class _HomePageState extends State<HomePage> {
   List<Widget> get _pages => [
     _buildHomeContent(),
     const ConversationsOverviewPage(),
-    EarnedPointsPage(userId: widget.id),
+    LeaderboardPage(),
     const SettingsPage(),
   ];
 
@@ -58,42 +59,42 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _pickAndUploadImage() async {
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _image = File(pickedFile.path);
-      });
+  // Future<void> _pickAndUploadImage() async {
+  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       _image = File(pickedFile.path);
+  //     });
+  //
+  //     try {
+  //       final storageRef = FirebaseStorage.instance.ref();
+  //       final userId = FirebaseAuth.instance.currentUser!.uid;
+  //       final imageRef = storageRef.child('profile_images/$userId.jpg');
+  //
+  //       await imageRef.putFile(_image!);
+  //       String downloadURL = await imageRef.getDownloadURL();
+  //
+  //       // Save download URL to Firestore
+  //       await FirebaseFirestore.instance.collection('users').doc(userId).update(
+  //         {'photoURL': downloadURL},
+  //       );
+  //     } catch (e) {
+  //       logger.e("Error uploading image: $e");
+  //     }
+  //   }
+  // }
 
-      try {
-        final storageRef = FirebaseStorage.instance.ref();
-        final userId = FirebaseAuth.instance.currentUser!.uid;
-        final imageRef = storageRef.child('profile_images/$userId.jpg');
-
-        await imageRef.putFile(_image!);
-        String downloadURL = await imageRef.getDownloadURL();
-
-        // Save download URL to Firestore
-        await FirebaseFirestore.instance.collection('users').doc(userId).update(
-          {'photoURL': downloadURL},
-        );
-      } catch (e) {
-        logger.e("Error uploading image: $e");
-      }
-    }
-  }
-
-  Future<void> _loadUserProfile() async {
-    try {
-      DocumentSnapshot userProfile = await FirebaseFirestore.instance.collection('users').doc(widget.id).get();
-      setState(() {
-        _photoURL = userProfile['photoURL'];
-        _userName= userProfile['name']?? 'User';
-      });
-    } catch (e) {
-      logger.e("Error loading user profile: $e");
-    }
-  }
+  // Future<void> _loadUserProfile() async {
+  //   try {
+  //     DocumentSnapshot userProfile = await FirebaseFirestore.instance.collection('users').doc(widget.id).get();
+  //     setState(() {
+  //       _photoURL = userProfile['photoURL'];
+  //       _userName= userProfile['name']?? 'User';
+  //     });
+  //   } catch (e) {
+  //     logger.e("Error loading user profile: $e");
+  //   }
+  // }
 
   Future<void> _checkUnreadMessages() async {
     final currentUser = FirebaseAuth.instance.currentUser;
@@ -144,27 +145,27 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 16.0),
-                child: Text(
-                  'Welcome back, $_userName',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: themeProvider.isDarkMode ? Colors.white : Colors.black,
-                  ),
-                ),
-              ),
-            ),
-            _buildHeader(themeProvider),
+            // Align(
+            //   alignment: Alignment.centerLeft,
+            //   child: Padding(
+            //     padding: const EdgeInsets.only(bottom: 16.0),
+                // child: Text(
+                //   'Welcome back, $_userName',
+                //   style: TextStyle(
+                //     fontSize: 24,
+                //     fontWeight: FontWeight.bold,
+                //     color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+                //   ),
+                // ),
+            //   ),
+            // ),
+            // _buildHeader(themeProvider),
+            // const SizedBox(height: 32),
+            // _buildPointsSection(context, themeProvider),
+            // const SizedBox(height: 32),
+            _buildHealthReportContainer(context, themeProvider),
             const SizedBox(height: 32),
-            _buildPointsSection(context, themeProvider),
-            const SizedBox(height: 32),
-            _buildHealthReportContainer(context, themeProvider), // Moved above
-            const SizedBox(height: 32),
-            _buildChallengesContainer(context, themeProvider), // Moved below
+            _buildChallengesContainer(context, themeProvider),
             const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -239,252 +240,252 @@ class _HomePageState extends State<HomePage> {
         ),
         child: Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            automaticallyImplyLeading: false,
-            title: const Text(
-              "Home",
-              style: TextStyle(color: Colors.transparent),
-            ),
-            leading: Builder(
-              builder: (context) => IconButton(
-                icon: Icon(Icons.menu), // Hamburger menu icon
-                onPressed: () => Scaffold.of(context).openDrawer(),
-              ),
-            ),
-            actions: [
-              Stack(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.message),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => ConversationsOverviewPage()),
-                      );
-                    },
-                  ),
-                  if (unreadMessages > 0 &&
-                      receiveNotifications == true &&
-                      messageNotifications == true)
-                    Positioned(
-                      right: 8,
-                      top: 8,
-                      child: CircleAvatar(
-                        radius: 8,
-                        backgroundColor: Colors.red,
-                        child: Text(
-                          '$unreadMessages',
-                          style:
-                          const TextStyle(color: Colors.white, fontSize: 10),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              IconButton(
-                icon: Icon(themeProvider.isDarkMode
-                    ? Icons.wb_sunny
-                    : Icons.nights_stay),
-                onPressed: () {
-                  themeProvider.toggleTheme();
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.settings),
-                onPressed: () {
-                  Navigator.pushNamed(context, '/settings');
-                },
-              ),
-            ],
-          ),
-          drawer: Drawer(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: <Widget>[
-                DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: themeProvider.isDarkMode
-                        ? Color(0xFF1F1F1F)
-                        : Color(0xFF58708F),
-                  ),
-                  child: Text(
-                    'FitBattles',
-                    style: TextStyle(color: Colors.white, fontSize: 25),
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.home),
-                  title: const Text('Home'),
-                  onTap: () {
-                    Navigator.pop(context); // Close the drawer
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.fitness_center),
-                  title: const Text('Workout'),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/workout');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.trending_up),
-                  title: const Text('Challenges'),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/challenges');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.history),
-                  title: const Text('History'),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/history');
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.logout),
-                  title: const Text('Logout'),
-                  onTap: () {
-                    final FirebaseAuth auth = FirebaseAuth.instance;
-                    SettingsPageState.showLogoutDialog(context, auth);
-                  },
-                ),
-              ],
-            ),
-          ),
+          // appBar: AppBar(
+          //   backgroundColor: Colors.transparent,
+          //   automaticallyImplyLeading: false,
+          //   title: const Text(
+          //     "Home",
+          //     style: TextStyle(color: Colors.transparent),
+          //   ),
+          //   leading: Builder(
+          //     builder: (context) => IconButton(
+          //       icon: Icon(Icons.menu), // Hamburger menu icon
+          //       onPressed: () => Scaffold.of(context).openDrawer(),
+          //     ),
+          //   ),
+          //   actions: [
+          //     Stack(
+          //       children: [
+          //         IconButton(
+          //           icon: const Icon(Icons.message),
+          //           onPressed: () {
+          //             Navigator.push(
+          //               context,
+          //               MaterialPageRoute(
+          //                   builder: (context) => ConversationsOverviewPage()),
+          //             );
+          //           },
+          //         ),
+          //         if (unreadMessages > 0 &&
+          //             receiveNotifications == true &&
+          //             messageNotifications == true)
+          //           Positioned(
+          //             right: 8,
+          //             top: 8,
+          //             child: CircleAvatar(
+          //               radius: 8,
+          //               backgroundColor: Colors.red,
+          //               child: Text(
+          //                 '$unreadMessages',
+          //                 style:
+          //                 const TextStyle(color: Colors.white, fontSize: 10),
+          //               ),
+          //             ),
+          //           ),
+          //       ],
+          //     ),
+          //     IconButton(
+          //       icon: Icon(themeProvider.isDarkMode
+          //           ? Icons.wb_sunny
+          //           : Icons.nights_stay),
+          //       onPressed: () {
+          //         themeProvider.toggleTheme();
+          //       },
+          //     ),
+          //     IconButton(
+          //       icon: const Icon(Icons.settings),
+          //       onPressed: () {
+          //         Navigator.pushNamed(context, '/settings');
+          //       },
+          //     ),
+          //   ],
+          // ),
+          // drawer: Drawer(
+          //   child: ListView(
+          //     padding: EdgeInsets.zero,
+          //     children: <Widget>[
+          //       DrawerHeader(
+          //         decoration: BoxDecoration(
+          //           color: themeProvider.isDarkMode
+          //               ? Color(0xFF1F1F1F)
+          //               : Color(0xFF58708F),
+          //         ),
+          //         child: Text(
+          //           'FitBattles',
+          //           style: TextStyle(color: Colors.white, fontSize: 25),
+          //         ),
+          //       ),
+          //       ListTile(
+          //         leading: const Icon(Icons.home),
+          //         title: const Text('Home'),
+          //         onTap: () {
+          //           Navigator.pop(context); // Close the drawer
+          //         },
+          //       ),
+          //       ListTile(
+          //         leading: const Icon(Icons.fitness_center),
+          //         title: const Text('Workout'),
+          //         onTap: () {
+          //           Navigator.pushNamed(context, '/workout');
+          //         },
+          //       ),
+          //       ListTile(
+          //         leading: const Icon(Icons.trending_up),
+          //         title: const Text('Challenges'),
+          //         onTap: () {
+          //           Navigator.pushNamed(context, '/challenges');
+          //         },
+          //       ),
+          //       ListTile(
+          //         leading: const Icon(Icons.history),
+          //         title: const Text('History'),
+          //         onTap: () {
+          //           Navigator.pushNamed(context, '/history');
+          //         },
+          //       ),
+          //       ListTile(
+          //         leading: const Icon(Icons.logout),
+          //         title: const Text('Logout'),
+          //         onTap: () {
+          //           final FirebaseAuth auth = FirebaseAuth.instance;
+          //           SettingsPageState.showLogoutDialog(context, auth);
+          //         },
+          //       ),
+          //     ],
+          //   ),
+          // ),
           body: _pages[_selectedIndex],
           bottomNavigationBar: PersistentNavigationBar(
             currentIndex: _selectedIndex,
             onTap: _onItemTapped,
           ),
-          floatingActionButton: SpeedDial(
-            animatedIcon: AnimatedIcons.add_event,
-            backgroundColor: Color(0xFF84C63E),
-            children: [
-
-              SpeedDialChild(
-                child: Icon(Icons.add),
-                label: 'Add Goal',
-                backgroundColor: Colors.lime,
-                onTap: () {
-                  Navigator.of(context).pushNamed('/addGoal');
-                },
-              ),
-              SpeedDialChild(
-                  child: Icon(Icons.add),
-                  label: 'Log Workout',
-                  backgroundColor: Colors.lime,
-                  onTap: () {
-                    Navigator.of(context).pushNamed('/customWorkout');
-                  }
-              ),
-              SpeedDialChild(
-                child: Icon(Icons.add),
-                label: 'Add Challenge',
-                backgroundColor: Colors.lime,
-                onTap: () {
-                  Navigator.of(context).pushNamed('/create_challenge');
-                },
-              ),
-            ],
-          ),
+          // floatingActionButton: SpeedDial(
+          //   animatedIcon: AnimatedIcons.add_event,
+          //   backgroundColor: Color(0xFF84C63E),
+          //   children: [
+          //
+          //     SpeedDialChild(
+          //       child: Icon(Icons.add),
+          //       label: 'Add Goal',
+          //       backgroundColor: Colors.lime,
+          //       onTap: () {
+          //         Navigator.of(context).pushNamed('/addGoal');
+          //       },
+          //     ),
+          //     SpeedDialChild(
+          //         child: Icon(Icons.add),
+          //         label: 'Log Workout',
+          //         backgroundColor: Colors.lime,
+          //         onTap: () {
+          //           Navigator.of(context).pushNamed('/customWorkout');
+          //         }
+          //     ),
+          //     SpeedDialChild(
+          //       child: Icon(Icons.add),
+          //       label: 'Add Challenge',
+          //       backgroundColor: Colors.lime,
+          //       onTap: () {
+          //         Navigator.of(context).pushNamed('/create_challenge');
+          //       },
+          //     ),
+          //   ],
+          // ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader(ThemeProvider themeProvider) {
-    final textColor = themeProvider.isDarkMode ? Colors.white : Colors.black;
+  // Widget _buildHeader(ThemeProvider themeProvider) {
+  //   final textColor = themeProvider.isDarkMode ? Colors.white : Colors.black;
+  //
+  //   return Container(
+  //     color: Colors.transparent,
+  //     width: double.infinity,
+  //     height: 200,
+  //     padding: const EdgeInsets.symmetric(horizontal: 16.0),
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Text(
+  //           'FitBattles',
+  //           style: TextStyle(
+  //             fontSize: 30,
+  //             fontWeight: FontWeight.bold,
+  //             color: Colors.transparent,
+  //
+  //           ),
+  //           textAlign: TextAlign.center,
+  //         ),
+  //         const SizedBox(height: 10),
+  //         GestureDetector(
+  //           onTap: _pickAndUploadImage,
+  //           child: CircleAvatar(
+  //             radius: 60,
+  //             backgroundColor: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[300],
+  //             backgroundImage: _image != null
+  //                 ? FileImage(_image!)
+  //                 : (_photoURL != null ? NetworkImage(_photoURL!) : null),
+  //             child: _image == null && _photoURL == null
+  //                 ? Icon(Icons.add_a_photo, color: textColor, size: 30)
+  //                 : null,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-    return Container(
-      color: Colors.transparent,
-      width: double.infinity,
-      height: 200,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'FitBattles',
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: Colors.transparent,
-
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: _pickAndUploadImage,
-            child: CircleAvatar(
-              radius: 60,
-              backgroundColor: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[300],
-              backgroundImage: _image != null
-                  ? FileImage(_image!)
-                  : (_photoURL != null ? NetworkImage(_photoURL!) : null),
-              child: _image == null && _photoURL == null
-                  ? Icon(Icons.add_a_photo, color: textColor, size: 30)
-                  : null,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPointsSection(BuildContext context,
-      ThemeProvider themeProvider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Points Earned',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
-          ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: pointsEarned / pointsGoal,
-              minHeight: 20,
-              backgroundColor: themeProvider.isDarkMode
-                  ? Colors.grey[800]
-                  : Colors.grey[300],
-              color: const Color(0xFF85C83E),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '$pointsEarned / $pointsGoal points',
-            style: TextStyle(fontSize: 16, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
-          ),
-          const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EarnedPointsPage(
-                  userId: widget.id, // Only pass userId, as EarnedPointsPage fetches other data from Firebase
-                ),
-              ),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor: const Color(0xFF85C83E),
-          ),
-          child: const Text('View Earned Points'),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildPointsSection(BuildContext context,
+  //     ThemeProvider themeProvider) {
+  //   return Padding(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16.0),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.center,
+  //       children: [
+  //         Text(
+  //           'Points Earned',
+  //           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         ClipRRect(
+  //           borderRadius: BorderRadius.circular(10),
+  //           child: LinearProgressIndicator(
+  //             value: pointsEarned / pointsGoal,
+  //             minHeight: 20,
+  //             backgroundColor: themeProvider.isDarkMode
+  //                 ? Colors.grey[800]
+  //                 : Colors.grey[300],
+  //             color: const Color(0xFF85C83E),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         Text(
+  //           '$pointsEarned / $pointsGoal points',
+  //           style: TextStyle(fontSize: 16, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
+  //         ),
+  //         const SizedBox(height: 16),
+  //       ElevatedButton(
+  //         onPressed: () {
+  //           Navigator.push(
+  //             context,
+  //             MaterialPageRoute(
+  //               builder: (context) => EarnedPointsPage(
+  //                 userId: widget.id, // Only pass userId, as EarnedPointsPage fetches other data from Firebase
+  //               ),
+  //             ),
+  //           );
+  //         },
+  //         style: ElevatedButton.styleFrom(
+  //           foregroundColor: Colors.white,
+  //           backgroundColor: const Color(0xFF85C83E),
+  //         ),
+  //         child: const Text('View Earned Points'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildChallengesContainer(BuildContext context, ThemeProvider themeProvider) {
     return Stack(
@@ -556,40 +557,6 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
-
-// Helper method to create a row of buttons
-  Widget _buildButtonRow(BuildContext context, ThemeProvider themeProvider, String route1, String text1, String route2, String text2) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, route1);
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
-            ),
-            child: Text(text1),
-          ),
-        ),
-        const SizedBox(width: 8), // Add spacing between buttons
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushNamed(context, route2);
-            },
-            style: ElevatedButton.styleFrom(
-              foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
-            ),
-            child: Text(text2),
-          ),
-        ),
-      ],
-    );
-  }
-
-
 
   Widget _buildWorkoutContainer(BuildContext context, ThemeProvider themeProvider) {
     return Stack(
@@ -967,19 +934,4 @@ class _HomePageState extends State<HomePage> {
       child: const Text('Friends'),
     );
   }
-}
-
-// Widget to build the workout tracking navigation button
-Widget _buildWorkoutTrackingButton(BuildContext context, ThemeProvider themeProvider) {
-  return ElevatedButton(
-    onPressed: () {
-      Navigator.pushNamed(context, '/workoutTracking'); // Navigate to the workout tracking page
-    },
-    style: ElevatedButton.styleFrom(
-      foregroundColor: themeProvider.isDarkMode ? Colors.white : Colors.black,
-      backgroundColor: const Color(0xFF85C83E), // Use the theme color
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 32.0),
-    ),
-    child: const Text('Workout Tracking'), // Button text
-  );
 }
