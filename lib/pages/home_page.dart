@@ -547,7 +547,7 @@ class _HomePageState extends State<HomePage> {
           child: IconButton(
             icon: Icon(
               Icons.arrow_forward,
-              color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+              color: themeProvider.isDarkMode ? Colors.lightGreen : Colors.lightGreen,
             ),
             onPressed: () {
               Navigator.of(context).pushNamed('/user_challenges');
@@ -694,7 +694,7 @@ class _HomePageState extends State<HomePage> {
           child: IconButton(
             icon: Icon(
               Icons.arrow_forward,
-              color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+              color: themeProvider.isDarkMode ? Colors.lightGreen: Colors.lightGreen,
             ),
             onPressed: () {
               // To be determined
@@ -754,11 +754,10 @@ class _HomePageState extends State<HomePage> {
           child: IconButton(
             icon: Icon(
               Icons.arrow_forward,
-              color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+              color: themeProvider.isDarkMode ? Colors.lightGreen : Colors.lightGreen,
             ),
             onPressed: () {
-              // Add your desired action here
-              Navigator.of(context).pushNamed('/historyNextPage');
+              Navigator.of(context).pushNamed('/healthReport');
             },
           ),
         ),
@@ -860,10 +859,9 @@ class _HomePageState extends State<HomePage> {
           child: IconButton(
             icon: Icon(
               Icons.arrow_forward,
-              color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+              color: themeProvider.isDarkMode ? Colors.lightGreen : Colors.lightGreen,
             ),
             onPressed: () {
-              // Add your desired action here
               Navigator.of(context).pushNamed('/topChallengedFriendsNextPage');
             },
           ),
