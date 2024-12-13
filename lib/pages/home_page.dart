@@ -47,10 +47,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Widget> get _pages => [
-    _buildHomeContent(),
     const ConversationsOverviewPage(),
+    _buildHomeContent(),
     LeaderboardPage(),
-    const SettingsPage(),
   ];
 
   void _onItemTapped(int index) {
