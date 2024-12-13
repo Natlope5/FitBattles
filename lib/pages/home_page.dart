@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 // import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:fitbattles/widgets/persistent_navigation_bar.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:fitbattles/pages/health/health_report_graph.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
@@ -738,11 +739,10 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 10),
 
-              // Graph Section
-              const SizedBox(height: 10),
-              SizedBox(
+              // Reusable HealthReportGraph
+              const SizedBox(
                 height: 200,
-                child: _buildCaloriesChart(), // fl_chart bar chart for calories
+                child: HealthReportGraph(), // Integrated reusable graph widget
               ),
             ],
           ),
