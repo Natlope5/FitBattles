@@ -1,5 +1,4 @@
 import 'package:firebase_core/firebase_core.dart';
-import 'package:fitbattles/pages/points/earned_points_page.dart';
 import 'package:fitbattles/pages/goals/add_goal_page.dart';
 import 'package:fitbattles/pages/challenges/time_based_challenges_page.dart';
 import 'package:fitbattles/pages/challenges/community_challenge_page.dart';
@@ -87,7 +86,6 @@ class MyApp extends StatelessWidget {
             '/friends': (context) => const FriendsListPage(),
             '/history': (context) => const MyHistoryPage(),
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
-            '/pointsInfo': (context) => EarnedPointsPage(userId: ''),
             '/leaderboard': (context) => const LeaderboardPage(),
             '/create_challenge': (context) => CreateChallengePage(),
             '/user_challenges': (context) => UserChallengesPage(),

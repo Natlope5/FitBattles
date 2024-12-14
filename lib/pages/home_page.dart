@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/pages/health/history_page.dart';
 import 'package:fitbattles/pages/points/leaderboard_page.dart';
-import 'package:fitbattles/pages/social/conversations_overview_page.dart';
+import 'package:fitbattles/pages/social/friends_list_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:fitbattles/widgets/containment/settings_bottom_sheet.dart';
 import 'package:flutter/material.dart';
@@ -33,14 +33,11 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final ScrollController _scrollController = ScrollController();
 
-  // We no longer have _appBarOpacity or scroll listener logic for it
-
   @override
   void initState() {
     super.initState();
     _checkUnreadMessages();
     _setupRealtimeUpdates();
-    // No scroll listener needed for opacity now
   }
 
   @override
@@ -51,7 +48,7 @@ class _HomePageState extends State<HomePage> {
 
   List<Widget> get _pages => [
     _buildHomeContent(),
-    const ConversationsOverviewPage(),
+    const FriendsListPage(),
     LeaderboardPage(),
     const MyHistoryPage(),
   ];
@@ -111,7 +108,6 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: <Widget>[
-            // Heading with date and Summary title
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -282,26 +278,6 @@ class _HomePageState extends State<HomePage> {
         child: CustomScrollView(
           controller: _scrollController,
           slivers: [
-            // Make the appbar show "Summary" once the heading scrolls out of view.
-            // Setting floating: true, snap: true means the appbar will appear
-            // when the user scrolls back slightly, after the heading goes out of view.
-            SliverAppBar(
-              automaticallyImplyLeading: false,
-              centerTitle: true,
-              floating: true,
-              pinned: true,
-              snap: true,
-              backgroundColor: themeProvider.isDarkMode
-                  ? const Color(0xFF1F1F1F)
-                  : const Color(0xFF2C96CF),
-              title: const Text(
-                'Summary',
-                style: TextStyle(
-                  fontSize: 18.0,
-                ),
-              ),
-            ),
-
             if (_selectedIndex == 0)
               SliverToBoxAdapter(
                 child: _buildHomeContentWithoutSingleChildScrollView(),
@@ -347,7 +323,7 @@ class _HomePageState extends State<HomePage> {
                 height: 100,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 5, // Number of placeholder challenges
+                  itemCount: 5,
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 16.0),
@@ -395,7 +371,7 @@ class _HomePageState extends State<HomePage> {
     return Stack(
       children: [
         Card(
-          elevation: 5, // Adds depth to the card
+          elevation: 5,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
           child: Padding(
@@ -404,7 +380,7 @@ class _HomePageState extends State<HomePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Workout', // Section title
+                  'Workout',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 Divider(
@@ -418,7 +394,7 @@ class _HomePageState extends State<HomePage> {
                   height: 88,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    itemCount: 5, // Number of placeholder workouts
+                    itemCount: 5,
                     itemBuilder: (context, index) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 16.0),
@@ -491,7 +467,7 @@ class _HomePageState extends State<HomePage> {
                 height: 88,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 5, // Number of placeholder goals
+                  itemCount: 5,
                   itemBuilder: (context, index) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 16.0),
