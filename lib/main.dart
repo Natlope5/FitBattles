@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:fitbattles/pages/points/earned_points_page.dart';
 import 'package:fitbattles/pages/goals/add_goal_page.dart';
 import 'package:fitbattles/pages/challenges/time_based_challenges_page.dart';
-import 'package:fitbattles/pages/challenges/community_challenge.dart';
+import 'package:fitbattles/pages/challenges/community_challenge_page.dart';
 import 'package:fitbattles/pages/goals/current_goals_page.dart';
 import 'package:fitbattles/pages/workouts/custom_workout_page.dart';
 import 'package:fitbattles/pages/goals/goals_completion_page.dart';
@@ -14,7 +14,6 @@ import 'package:fitbattles/pages/workouts/workout_tracking_page.dart';
 import 'package:fitbattles/pages/social/friends_list_page.dart';
 import 'package:fitbattles/pages/home_page.dart';
 import 'package:fitbattles/pages/health/history_page.dart';
-import 'package:fitbattles/pages/settings/settings_page.dart';
 import 'package:fitbattles/pages/settings/user_profile_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -90,7 +89,6 @@ class MyApp extends StatelessWidget {
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
             '/pointsInfo': (context) => EarnedPointsPage(userId: ''),
             '/leaderboard': (context) => const LeaderboardPage(),
-            '/settings': (context) => const SettingsPage(),
             '/create_challenge': (context) => CreateChallengePage(),
             '/user_challenges': (context) => UserChallengesPage(),
             '/addGoal': (context) => AddGoalPage(),

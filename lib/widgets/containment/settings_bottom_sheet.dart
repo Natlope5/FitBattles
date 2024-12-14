@@ -4,22 +4,32 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
-import 'package:fitbattles/pages/settings/notifications_settings_page.dart';
 
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
-
-  @override
-  SettingsPageState createState() => SettingsPageState();
+class SettingsBottomSheet {
+  static void show(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        return const SettingsContent();
+      },
+    );
+  }
 }
 
-class SettingsPageState extends State<SettingsPage> {
+class SettingsContent extends StatefulWidget {
+  const SettingsContent({super.key});
+
+  @override
+  SettingsContentState createState() => SettingsContentState();
+}
+
+class SettingsContentState extends State<SettingsContent> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final ImagePicker _picker = ImagePicker();
   File? _image;
 
-  // Profile settings controllers
   final TextEditingController nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
@@ -29,13 +39,8 @@ class SettingsPageState extends State<SettingsPage> {
 
   String _privacy = 'public';
   String _avatarUrl = '';
-
-  // App settings
   bool _darkMode = false;
-
-  // Notification settings
   bool _receiveNotifications = true;
-
   String _message = '';
   final _formKey = GlobalKey<FormState>();
 
@@ -277,132 +282,119 @@ class SettingsPageState extends State<SettingsPage> {
       }
     }
   }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Settings'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationSettingsPage(),
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16.0,
+        right: 16.0,
+        top: 16.0,
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Name'),
+                  validator: (value) =>
+                  value!.isEmpty ? 'Please enter your name' : null,
                 ),
-              );
+                TextFormField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(labelText: 'Email'),
+                ),
+                TextFormField(
+                  controller: _ageController,
+                  decoration: const InputDecoration(labelText: 'Age'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) =>
+                  value!.isEmpty ? 'Please enter your age' : null,
+                ),
+                TextFormField(
+                  controller: _weightController,
+                  decoration: const InputDecoration(labelText: 'Weight (lbs)'),
+                  keyboardType: TextInputType.number,
+                  validator: (value) =>
+                  value!.isEmpty ? 'Please enter your weight' : null,
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _heightFeetController,
+                        decoration:
+                        const InputDecoration(labelText: 'Height (feet)'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) =>
+                        value!.isEmpty ? 'Please enter feet' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _heightInchesController,
+                        decoration: const InputDecoration(
+                            labelText: 'Height (inches)'),
+                        keyboardType: TextInputType.number,
+                        validator: (value) =>
+                        value!.isEmpty ? 'Please enter inches' : null,
+                      ),
+                    ),
+                  ],
+                ),
+                DropdownButtonFormField<String>(
+                  value: _privacy,
+                  decoration: const InputDecoration(labelText: 'Privacy'),
+                  items: ['public', 'friends', 'private']
+                      .map((privacy) => DropdownMenuItem<String>(
+                    value: privacy,
+                    child: Text(privacy),
+                  ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _privacy = value ?? 'public';
+                    });
+                  },
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () async {
+                    await _saveSettings();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Settings updated successfully!')),
+                    );
+                  },
+                  child: const Text('Save Settings'),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  _message,
+                  style: const TextStyle(color: Colors.green),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.camera_alt),
+                  onPressed: _pickImage,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 50),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              showLogoutDialog(context, FirebaseAuth.instance);
             },
+            child: const Text("Logout"),
           ),
         ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Name'),
-                    validator: (value) =>
-                    value!.isEmpty ? 'Please enter your name' : null,
-                  ),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(labelText: 'Email'),
-                  ),
-                  TextFormField(
-                    controller: _ageController,
-                    decoration: const InputDecoration(labelText: 'Age'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) =>
-                    value!.isEmpty ? 'Please enter your age' : null,
-                  ),
-                  TextFormField(
-                    controller: _weightController,
-                    decoration:
-                    const InputDecoration(labelText: 'Weight (lbs)'),
-                    keyboardType: TextInputType.number,
-                    validator: (value) =>
-                    value!.isEmpty ? 'Please enter your weight' : null,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextFormField(
-                          controller: _heightFeetController,
-                          decoration:
-                          const InputDecoration(labelText: 'Height (feet)'),
-                          keyboardType: TextInputType.number,
-                          validator: (value) =>
-                          value!.isEmpty ? 'Please enter feet' : null,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: TextFormField(
-                          controller: _heightInchesController,
-                          decoration: const InputDecoration(
-                              labelText: 'Height (inches)'),
-                          keyboardType: TextInputType.number,
-                          validator: (value) =>
-                          value!.isEmpty ? 'Please enter inches' : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  DropdownButtonFormField<String>(
-                    value: _privacy,
-                    decoration: const InputDecoration(labelText: 'Privacy'),
-                    items: ['public', 'friends', 'private']
-                        .map((privacy) => DropdownMenuItem<String>(
-                      value: privacy,
-                      child: Text(privacy),
-                    ))
-                        .toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _privacy = value ?? 'public';
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () async {
-                      await _saveSettings();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Settings updated successfully!')),
-                      );
-                    },
-                    child: const Text('Save Settings'),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    _message,
-                    style: const TextStyle(color: Colors.green),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.camera_alt),
-                    onPressed: _pickImage,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 50),
-            ElevatedButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () {
-                showLogoutDialog(context, FirebaseAuth.instance); // Correctly passing the function
-              },
-              child: const Text("Logout"),
-            ),
-
-          ],
-        ),
       ),
     );
   }
