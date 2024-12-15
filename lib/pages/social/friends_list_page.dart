@@ -32,6 +32,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
 
   Future<void> _loadFriends() async {
     final loadedFriends = await _firebaseService.fetchFriends();
+    if (!mounted) return;
     setState(() {
       friends = loadedFriends;
     });

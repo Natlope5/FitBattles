@@ -1,15 +1,20 @@
-import 'package:flutter/material.dart';
+import 'dart:io';
+import 'dart:ui';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 class SettingsBottomSheet {
   static void show(BuildContext context) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent, // Make background transparent for backdrop effect
       builder: (BuildContext context) {
         return const SettingsContent();
       },
@@ -53,7 +58,6 @@ class SettingsContentState extends State<SettingsContent> {
   Future<void> _migrateSettings(DocumentSnapshot userDoc, String uid) async {
     final Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
 
-    // Fetch existing settings documents if they already exist
     final profileRef = _firestore.collection('users').doc(uid).collection('settings').doc('profile');
     final appRef = _firestore.collection('users').doc(uid).collection('settings').doc('app');
     final notificationsRef = _firestore.collection('users').doc(uid).collection('settings').doc('notifications');
@@ -62,7 +66,6 @@ class SettingsContentState extends State<SettingsContent> {
     final appDoc = await appRef.get();
     final notificationsDoc = await notificationsRef.get();
 
-    // Prepare profile settings, preserving existing data
     Map<String, dynamic> profileData = {
       'name': userData['name'] ?? (profileDoc.exists ? profileDoc['name'] : ''),
       'email': userData['email'] ?? (profileDoc.exists ? profileDoc['email'] : ''),
@@ -75,21 +78,18 @@ class SettingsContentState extends State<SettingsContent> {
 
     await profileRef.set(profileData);
 
-    // Prepare app settings, preserving existing data
     Map<String, dynamic> appData = {
       'darkMode': userData['darkMode'] ?? (appDoc.exists ? appDoc['darkMode'] : false),
     };
 
     await appRef.set(appData);
 
-    // Prepare notification settings, preserving existing data
     Map<String, dynamic> notificationData = {
       'receiveNotifications': userData['receive_notifications'] ?? (notificationsDoc.exists ? notificationsDoc['receiveNotifications'] : true),
     };
 
     await notificationsRef.set(notificationData);
 
-    // Clean up the original fields from the user document
     await _firestore.collection('users').doc(uid).update({
       'email': FieldValue.delete(),
       'age': FieldValue.delete(),
@@ -104,21 +104,9 @@ class SettingsContentState extends State<SettingsContent> {
   Future<void> _loadUserSettings() async {
     User? user = _auth.currentUser;
     if (user != null) {
-      final profileRef = _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('settings')
-          .doc('profile');
-      final appRef = _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('settings')
-          .doc('app');
-      final notificationsRef = _firestore
-          .collection('users')
-          .doc(user.uid)
-          .collection('settings')
-          .doc('notifications');
+      final profileRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('profile');
+      final appRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('app');
+      final notificationsRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('notifications');
 
       DocumentSnapshot profileDoc = await profileRef.get();
       DocumentSnapshot appDoc = await appRef.get();
@@ -135,8 +123,7 @@ class SettingsContentState extends State<SettingsContent> {
       }
 
       if (profileDoc.exists) {
-        Map<String, dynamic> profileData =
-        profileDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic> profileData = profileDoc.data() as Map<String, dynamic>;
         setState(() {
           nameController.text = profileData['name'] ?? '';
           _emailController.text = profileData['email'] ?? '';
@@ -144,8 +131,7 @@ class SettingsContentState extends State<SettingsContent> {
           _weightController.text = (profileData['weight'] ?? 0.0).toString();
           int totalHeightInInches = profileData['heightInches'] ?? 0;
           _heightFeetController.text = (totalHeightInInches ~/ 12).toString();
-          _heightInchesController.text =
-              (totalHeightInInches % 12).toString();
+          _heightInchesController.text = (totalHeightInInches % 12).toString();
           _privacy = profileData['privacy'] ?? 'public';
           _avatarUrl = profileData['avatar'] ?? '';
         });
@@ -159,11 +145,9 @@ class SettingsContentState extends State<SettingsContent> {
       }
 
       if (notificationsDoc.exists) {
-        Map<String, dynamic> notificationsData =
-        notificationsDoc.data() as Map<String, dynamic>;
+        Map<String, dynamic> notificationsData = notificationsDoc.data() as Map<String, dynamic>;
         setState(() {
-          _receiveNotifications =
-              notificationsData['receiveNotifications'] ?? true;
+          _receiveNotifications = notificationsData['receiveNotifications'] ?? true;
         });
       }
     }
@@ -173,8 +157,7 @@ class SettingsContentState extends State<SettingsContent> {
     User? user = _auth.currentUser;
     if (user != null && _formKey.currentState!.validate()) {
       try {
-        int totalHeightInInches = (int.parse(_heightFeetController.text) * 12) +
-            int.parse(_heightInchesController.text);
+        int totalHeightInInches = (int.parse(_heightFeetController.text) * 12) + int.parse(_heightInchesController.text);
 
         final profileRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('profile');
         await profileRef.set({
@@ -223,11 +206,8 @@ class SettingsContentState extends State<SettingsContent> {
   Future<void> _uploadImage() async {
     if (_image != null) {
       try {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('avatars/${DateTime.now().millisecondsSinceEpoch}.png');
+        final storageRef = FirebaseStorage.instance.ref().child('avatars/${DateTime.now().millisecondsSinceEpoch}.png');
         await storageRef.putFile(_image!);
-
         String imageUrl = await storageRef.getDownloadURL();
 
         setState(() {
@@ -236,17 +216,12 @@ class SettingsContentState extends State<SettingsContent> {
 
         User? user = _auth.currentUser;
         if (user != null) {
-          final profileRef = _firestore
-              .collection('users')
-              .doc(user.uid)
-              .collection('settings')
-              .doc('profile');
+          final profileRef = _firestore.collection('users').doc(user.uid).collection('settings').doc('profile');
           await profileRef.update({'avatar': _avatarUrl});
         }
 
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Avatar updated successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Avatar updated successfully')));
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to upload image: ${e.toString()}')));
@@ -254,8 +229,7 @@ class SettingsContentState extends State<SettingsContent> {
     }
   }
 
-  static Future<void> showLogoutDialog(
-      BuildContext context, FirebaseAuth auth) async {
+  static Future<void> showLogoutDialog(BuildContext context, FirebaseAuth auth) async {
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -285,116 +259,217 @@ class SettingsContentState extends State<SettingsContent> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16.0,
-        right: 16.0,
-        top: 16.0,
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
+
+    final textStyle = TextStyle(
+      color: isDark ? Colors.white : Colors.black,
+    );
+
+    final inputDecoration = InputDecoration(
+      filled: true,
+      fillColor: isDark ? Colors.grey[800] : Colors.grey[200],
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
       ),
-      child: ListView(
-        shrinkWrap: true,
-        children: [
-          Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                  validator: (value) =>
-                  value!.isEmpty ? 'Please enter your name' : null,
-                ),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                ),
-                TextFormField(
-                  controller: _ageController,
-                  decoration: const InputDecoration(labelText: 'Age'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) =>
-                  value!.isEmpty ? 'Please enter your age' : null,
-                ),
-                TextFormField(
-                  controller: _weightController,
-                  decoration: const InputDecoration(labelText: 'Weight (lbs)'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) =>
-                  value!.isEmpty ? 'Please enter your weight' : null,
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _heightFeetController,
-                        decoration:
-                        const InputDecoration(labelText: 'Height (feet)'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) =>
-                        value!.isEmpty ? 'Please enter feet' : null,
-                      ),
+      labelStyle: TextStyle(color: isDark ? Colors.white70 : Colors.black87),
+    );
+
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+      child: Container(
+        // Match the styling with gradient if not dark mode
+        decoration: !isDark
+            ? const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFE7E9EF), Color(0xFF2C96CF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        )
+            : BoxDecoration(
+          color: Colors.black.withOpacity(0.6),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 24.0,
+              right: 24.0,
+              top: 16.0,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  // Top drag handle
+                  Container(
+                    width: 40,
+                    height: 5,
+                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black26,
+                      borderRadius: BorderRadius.circular(2.5),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _heightInchesController,
-                        decoration: const InputDecoration(
-                            labelText: 'Height (inches)'),
-                        keyboardType: TextInputType.number,
-                        validator: (value) =>
-                        value!.isEmpty ? 'Please enter inches' : null,
+                  ),
+
+                  // Dark Mode Toggle
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Settings', style: TextStyle(color: isDark ? Colors.white : Colors.black, fontSize: 24, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          Text('Dark Mode', style: textStyle),
+                          Switch(
+                            value: _darkMode,
+                            onChanged: (val) {
+                              setState(() {
+                                _darkMode = val;
+                                themeProvider.toggleTheme();
+                                // Make sure your ThemeProvider can handle this change.
+                              });
+                            },
+                            activeColor: const Color(0xFF85C83E),
+                          ),
+                        ],
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: nameController,
+                          decoration: inputDecoration.copyWith(labelText: 'Name'),
+                          style: textStyle,
+                          validator: (value) => value!.isEmpty ? 'Please enter your name' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: inputDecoration.copyWith(labelText: 'Email'),
+                          style: textStyle,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _ageController,
+                          decoration: inputDecoration.copyWith(labelText: 'Age'),
+                          keyboardType: TextInputType.number,
+                          style: textStyle,
+                          validator: (value) => value!.isEmpty ? 'Please enter your age' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _weightController,
+                          decoration: inputDecoration.copyWith(labelText: 'Weight (lbs)'),
+                          keyboardType: TextInputType.number,
+                          style: textStyle,
+                          validator: (value) => value!.isEmpty ? 'Please enter your weight' : null,
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _heightFeetController,
+                                decoration: inputDecoration.copyWith(labelText: 'Height (feet)'),
+                                keyboardType: TextInputType.number,
+                                style: textStyle,
+                                validator: (value) => value!.isEmpty ? 'Please enter feet' : null,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: TextFormField(
+                                controller: _heightInchesController,
+                                decoration: inputDecoration.copyWith(labelText: 'Height (inches)'),
+                                keyboardType: TextInputType.number,
+                                style: textStyle,
+                                validator: (value) => value!.isEmpty ? 'Please enter inches' : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        DropdownButtonFormField<String>(
+                          value: _privacy,
+                          decoration: inputDecoration.copyWith(labelText: 'Privacy'),
+                          style: textStyle,
+                          dropdownColor: isDark ? Colors.grey[900] : Colors.white,
+                          items: ['public', 'friends', 'private']
+                              .map((privacy) => DropdownMenuItem<String>(
+                            value: privacy,
+                            child: Text(privacy, style: textStyle),
+                          ))
+                              .toList(),
+                          onChanged: (value) {
+                            setState(() {
+                              _privacy = value ?? 'public';
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        ElevatedButton(
+                          onPressed: () async {
+                            await _saveSettings();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Settings updated successfully!')),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: const Color(0xFF85C83E),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Save Settings'),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          _message,
+                          style: const TextStyle(color: Colors.green),
+                        ),
+                        const SizedBox(height: 20),
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: CircleAvatar(
+                            radius: 30,
+                            backgroundImage: _avatarUrl.isNotEmpty
+                                ? NetworkImage(_avatarUrl)
+                                : (_image != null ? FileImage(_image!) : const AssetImage('assets/images/placeholder_avatar.png') as ImageProvider),
+                            child: Container(
+                              alignment: Alignment.bottomRight,
+                              child: const CircleAvatar(
+                                radius: 12,
+                                backgroundColor: Colors.white,
+                                child: Icon(Icons.camera_alt, size: 16, color: Colors.black),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                DropdownButtonFormField<String>(
-                  value: _privacy,
-                  decoration: const InputDecoration(labelText: 'Privacy'),
-                  items: ['public', 'friends', 'private']
-                      .map((privacy) => DropdownMenuItem<String>(
-                    value: privacy,
-                    child: Text(privacy),
-                  ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _privacy = value ?? 'public';
-                    });
-                  },
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    await _saveSettings();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Settings updated successfully!')),
-                    );
-                  },
-                  child: const Text('Save Settings'),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  _message,
-                  style: const TextStyle(color: Colors.green),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.camera_alt),
-                  onPressed: _pickImage,
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 50),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      showLogoutDialog(context, FirebaseAuth.instance);
+                    },
+                    child: const Text("Logout"),
+                  ),
+                  const SizedBox(height: 30),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 50),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              showLogoutDialog(context, FirebaseAuth.instance);
-            },
-            child: const Text("Logout"),
-          ),
-        ],
+        ),
       ),
     );
   }

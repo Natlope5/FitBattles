@@ -1,16 +1,12 @@
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/pages/health/history_page.dart';
-import 'package:fitbattles/pages/points/leaderboard_page.dart';
 import 'package:fitbattles/pages/social/friends_list_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:fitbattles/widgets/containment/settings_bottom_sheet.dart';
-import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:logger/logger.dart';
-import 'package:provider/provider.dart';
-import 'package:fitbattles/widgets/navigation/persistent_navigation_bar.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:fitbattles/pages/health/health_report_graph.dart';
 
@@ -25,20 +21,25 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final picker = ImagePicker();
-  final Logger logger = Logger();
-  bool showPreloadedChallenges = false;
-  int pointsEarned = 500;
-  int pointsGoal = 1000;
-  int unreadMessages = 0;
-  int _selectedIndex = 0;
   final ScrollController _scrollController = ScrollController();
+  int unreadMessages = 0;
+  int _selectedIndex = 1; // Default to home tab
+
+  final List<String> exampleFriends = [
+    'assets/images/Bob.png',
+    'assets/images/Charlie.png',
+    'assets/images/Hannah.png',
+    'assets/images/Ian.png',
+    'assets/images/Fiona.png',
+    'assets/images/George.png',
+    'assets/images/Ethan.png',
+    'assets/images/Diana.png',
+    'assets/images/Alice.png',
+  ];
 
   @override
   void initState() {
     super.initState();
-    _checkUnreadMessages();
-    _setupRealtimeUpdates();
   }
 
   @override
@@ -47,250 +48,77 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  List<Widget> get _pages => [
-    const ConversationsOverviewPage(),
-    _buildHomeContent(),
-    LeaderboardPage(),
-  ];
-
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
   }
 
-  Future<void> _checkUnreadMessages() async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
-
-    final query = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('conversations')
-        .where('lastRead', isLessThan: FieldValue.serverTimestamp())
-        .get();
-
-    setState(() {
-      unreadMessages = query.docs.length;
-    });
-  }
-
-  void _setupRealtimeUpdates() {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
-
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.uid)
-        .collection('conversations')
-        .snapshots()
-        .listen((snapshot) {
-      int unreadCount = 0;
-      for (var doc in snapshot.docs) {
-        final lastRead = doc.data().containsKey('lastRead') ? doc['lastRead'] as Timestamp? : null;
-        final lastUpdated = doc.data().containsKey('lastUpdated') ? doc['lastUpdated'] as Timestamp? : null;
-
-        if (lastUpdated != null && (lastRead == null || lastRead.compareTo(lastUpdated) < 0)) {
-          unreadCount++;
-        }
-      }
-      setState(() {
-        unreadMessages = unreadCount;
-      });
-    });
-  }
-
   Widget _buildHomeContent() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    // Match spacing style to Friends List:
+    // Friends List uses padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0)
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.only(top: 0.0, bottom: 60.0, left: 18.0, right: 18.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      DateFormat('EEEE, MMM d').format(DateTime.now()),
-                      style: const TextStyle(color: Colors.grey, fontSize: 14),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Summary',
-                      style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                InkWell(
-                  onTap: () {
-                    SettingsBottomSheet.show(context);
-                  },
-                  child: CircleAvatar(
-                    radius: 20,
-                    backgroundImage: const AssetImage('assets/images/placeholder_avatar.png'),
-                    backgroundColor: Colors.transparent,
-                  ),
-                )
-              ],
-            ),
-            const SizedBox(height: 32),
-            _buildHealthReportContainer(context, themeProvider),
-            const SizedBox(height: 32),
-            _buildChallengesContainer(context, themeProvider),
-            const SizedBox(height: 32),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: _buildWorkoutContainer(context, themeProvider),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 1,
-                  child: _buildGoalsContainer(context, themeProvider),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            _buildTopChallengedFriends(exampleFriends, themeProvider),
-            _buildFriendsListButton(context, themeProvider),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHomeContentWithoutSingleChildScrollView() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    return Padding(
-      padding: const EdgeInsets.only(top: 0.0, bottom: 60.0, left: 18.0, right: 18.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      controller: _scrollController,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start, // Align start like Friends List
+            children: <Widget>[
+              // Header, similar spacing as Friends List
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    DateFormat('EEEE, MMM d').format(DateTime.now()),
-                    style: const TextStyle(color: Colors.grey, fontSize: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        DateFormat('EEEE, MMM d').format(DateTime.now()),
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Summary',
+                        style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'Summary',
-                    style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                  InkWell(
+                    onTap: () {
+                      SettingsBottomSheet.show(context);
+                    },
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundImage: const AssetImage('assets/images/placeholder_avatar.png'),
+                      backgroundColor: Colors.transparent,
+                    ),
+                  )
+                ],
+              ),
+              const SizedBox(height: 32),
+              _buildHealthReportContainer(context, themeProvider),
+              const SizedBox(height: 32),
+              _buildChallengesContainer(context, themeProvider),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    flex: 1,
+                    child: _buildWorkoutContainer(context, themeProvider),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 1,
+                    child: _buildGoalsContainer(context, themeProvider),
                   ),
                 ],
               ),
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: const AssetImage('assets/images/placeholder_avatar.png'),
-                backgroundColor: Colors.transparent,
-              ),
+              const SizedBox(height: 32),
+              _buildTopChallengedFriends(exampleFriends, themeProvider),
             ],
           ),
-          const SizedBox(height: 32),
-          _buildHealthReportContainer(context, themeProvider),
-          const SizedBox(height: 32),
-          _buildChallengesContainer(context, themeProvider),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                flex: 1,
-                child: _buildWorkoutContainer(context, themeProvider),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 1,
-                child: _buildGoalsContainer(context, themeProvider),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          _buildTopChallengedFriends(exampleFriends, themeProvider),
-          _buildFriendsListButton(context, themeProvider),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection('users')
-          .doc(FirebaseAuth.instance.currentUser?.uid)
-          .collection('settings')
-          .doc('notifications')
-          .get(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (!snapshot.hasData || !snapshot.data!.exists) {
-          return _buildScaffold(themeProvider, unreadMessages, true, true);
-        }
-
-        final data = snapshot.data!.data() as Map<String, dynamic>;
-        final receiveNotifications = data['receiveNotifications'] ?? true;
-        final messageNotifications = data['messageNotifications'] ?? true;
-
-        return _buildScaffold(
-            themeProvider, unreadMessages, receiveNotifications, messageNotifications);
-      },
-    );
-  }
-
-  Widget _buildScaffold(
-      ThemeProvider themeProvider,
-      int unreadMessages,
-      bool receiveNotifications,
-      bool messageNotifications,
-      ) {
-    return Scaffold(
-      backgroundColor: themeProvider.isDarkMode ? const Color(0xFF1F1F1F) : null,
-      bottomNavigationBar: PersistentNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-      ),
-      body: Container(
-        decoration: themeProvider.isDarkMode
-            ? null
-            : const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFE7E9EF), Color(0xFF2C96CF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-        child: CustomScrollView(
-          controller: _scrollController,
-          slivers: [
-            if (_selectedIndex == 0)
-              SliverToBoxAdapter(
-                child: _buildHomeContentWithoutSingleChildScrollView(),
-              ),
-
-            if (_selectedIndex != 0)
-              SliverFillRemaining(
-                child: Scaffold(
-                  backgroundColor: Colors.transparent,
-                  body: _pages[_selectedIndex],
-                ),
-              ),
-          ],
         ),
       ),
     );
@@ -304,7 +132,7 @@ class _HomePageState extends State<HomePage> {
             color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
             borderRadius: BorderRadius.circular(10),
           ),
-          width: MediaQuery.of(context).size.width * 0.9,
+          width: MediaQuery.of(context).size.width,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,7 +187,9 @@ class _HomePageState extends State<HomePage> {
               color: Colors.lightGreen,
             ),
             onPressed: () {
-              Navigator.of(context).pushNamed('/user_challenges');
+              if (mounted) {
+                Navigator.of(context).pushNamed('/user_challenges');
+              }
             },
           ),
         ),
@@ -388,8 +218,7 @@ class _HomePageState extends State<HomePage> {
                   thickness: 1,
                   height: 0,
                 ),
-                const SizedBox(height: 10),
-                const SizedBox(height: 10),
+                const SizedBox(height: 20),
                 SizedBox(
                   height: 88,
                   child: ListView.builder(
@@ -431,7 +260,9 @@ class _HomePageState extends State<HomePage> {
               color: Colors.lightGreen,
             ),
             onPressed: () {
-              Navigator.of(context).pushNamed('/customWorkout');
+              if (mounted) {
+                Navigator.of(context).pushNamed('/workoutTracking');
+              }
             },
           ),
         ),
@@ -447,7 +278,7 @@ class _HomePageState extends State<HomePage> {
             color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
             borderRadius: BorderRadius.circular(10),
           ),
-          width: MediaQuery.of(context).size.width * 0.9,
+          width: MediaQuery.of(context).size.width,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -461,8 +292,7 @@ class _HomePageState extends State<HomePage> {
                 thickness: 1,
                 height: 0,
               ),
-              const SizedBox(height: 10),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
               SizedBox(
                 height: 88,
                 child: ListView.builder(
@@ -503,7 +333,9 @@ class _HomePageState extends State<HomePage> {
               color: Colors.lightGreen,
             ),
             onPressed: () {
-              Navigator.pushNamed(context, '/currentGoals');
+              if (mounted) {
+                Navigator.pushNamed(context, '/currentGoals');
+              }
             },
           ),
         ),
@@ -527,7 +359,7 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          width: MediaQuery.of(context).size.width * 0.9,
+          width: MediaQuery.of(context).size.width,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -542,11 +374,9 @@ class _HomePageState extends State<HomePage> {
                 height: 0,
               ),
               const SizedBox(height: 10),
-
-              // Reusable HealthReportGraph
               const SizedBox(
                 height: 200,
-                child: HealthReportGraph(), // Integrated reusable graph widget
+                child: HealthReportGraph(),
               ),
             ],
           ),
@@ -560,36 +390,13 @@ class _HomePageState extends State<HomePage> {
               color: Colors.lightGreen,
             ),
             onPressed: () {
-              Navigator.of(context).pushNamed('/healthReport');
+              if (mounted) {
+                Navigator.of(context).pushNamed('/healthReport');
+              }
             },
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCaloriesChart() {
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(show: true),
-        titlesData: FlTitlesData(show: true),
-        borderData: FlBorderData(show: true),
-        lineBarsData: [
-          LineChartBarData(
-            spots: [
-              FlSpot(0, 1),
-              FlSpot(1, 3),
-              FlSpot(2, 2),
-              FlSpot(3, 5),
-              FlSpot(4, 3),
-              FlSpot(5, 4),
-            ],
-            isCurved: true,
-            barWidth: 4,
-            belowBarData: BarAreaData(show: false),
-          ),
-        ],
-      ),
     );
   }
 
@@ -601,7 +408,7 @@ class _HomePageState extends State<HomePage> {
             color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
             borderRadius: BorderRadius.circular(10),
           ),
-          width: MediaQuery.of(context).size.width * 0.9,
+          width: MediaQuery.of(context).size.width,
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -663,7 +470,9 @@ class _HomePageState extends State<HomePage> {
               color: Colors.lightGreen,
             ),
             onPressed: () {
-              Navigator.of(context).pushNamed('/topChallengedFriendsNextPage');
+              if (mounted) {
+                Navigator.of(context).pushNamed('/topChallengedFriendsNextPage');
+              }
             },
           ),
         ),
@@ -671,9 +480,9 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showFriendInfo(BuildContext context, String friendName,
-      String friendImagePath,
+  void _showFriendInfo(BuildContext context, String friendName, String friendImagePath,
       {int gamesWon = 0, int streakDays = 0, int rank = 0}) {
+    if (!mounted) return;
     showDialog(
       context: context,
       builder: (context) {
@@ -694,9 +503,7 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
+              onPressed: () => Navigator.of(context).pop(),
               child: const Text('Close', style: TextStyle(color: Colors.black)),
             ),
           ],
@@ -705,29 +512,70 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  final List<String> exampleFriends = [
-    'assets/images/Bob.png',
-    'assets/images/Charlie.png',
-    'assets/images/Hannah.png',
-    'assets/images/Ian.png',
-    'assets/images/Fiona.png',
-    'assets/images/George.png',
-    'assets/images/Ethan.png',
-    'assets/images/Diana.png',
-    'assets/images/Alice.png',
-  ];
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.isDarkMode;
 
-  Widget _buildFriendsListButton(BuildContext context, ThemeProvider themeProvider) {
-    return ElevatedButton(
-      onPressed: () {
-        SettingsBottomSheet.show(context);
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.uid)
+          .collection('settings')
+          .doc('notifications')
+          .get(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final List<Widget> pages = [
+          const FriendsListPage(),
+          _buildHomeContent(),
+          const MyHistoryPage(),
+        ];
+
+        return Scaffold(
+          backgroundColor: isDark ? const Color(0xFF1F1F1F) : null,
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: pages,
+          ),
+          bottomNavigationBar: ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: BottomNavigationBar(
+                currentIndex: _selectedIndex,
+                onTap: _onItemTapped,
+                backgroundColor: isDark ? Colors.black.withOpacity(0.05) : Colors.white.withOpacity(0.1),
+                elevation: 0,
+                selectedItemColor: isDark ? Colors.white : Colors.blue,
+                unselectedItemColor: isDark ? Colors.grey[400] : Colors.grey[700],
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.face),
+                    label: 'Friends',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.home),
+                    label: 'Home',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.history_edu),
+                    label: 'History',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
       },
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: const Color(0xFF85C83E),
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 36.0),
-      ),
-      child: const Text('Settings'),
     );
   }
 }
