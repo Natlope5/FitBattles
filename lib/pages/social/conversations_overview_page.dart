@@ -86,6 +86,7 @@ class _ConversationsOverviewPageState extends State<ConversationsOverviewPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false, // Removes the back button
         title: const Text("Chats"),
       ),
       body: StreamBuilder<QuerySnapshot>(
@@ -120,8 +121,7 @@ class _ConversationsOverviewPageState extends State<ConversationsOverviewPage> {
               return FutureBuilder<String>(
                 future: _getDisplayName(otherUserId),
                 builder: (context, snapshot) {
-                  final displayName =
-                  snapshot.hasData ? snapshot.data! : "Loading...";
+                  final displayName = snapshot.hasData ? snapshot.data! : "Loading...";
 
                   return GestureDetector(
                     onLongPress: () => _showContextMenu(context, conversation.id),

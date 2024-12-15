@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import 'package:fitbattles/widgets/navigation/persistent_navigation_bar.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:fitbattles/pages/health/health_report_graph.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key, required this.id, required this.email, required String uid});
@@ -47,10 +48,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   List<Widget> get _pages => [
+    const ConversationsOverviewPage(),
     _buildHomeContent(),
-    const FriendsListPage(),
     LeaderboardPage(),
-    const MyHistoryPage(),
   ];
 
   void _onItemTapped(int index) {
@@ -542,10 +542,11 @@ class _HomePageState extends State<HomePage> {
                 height: 0,
               ),
               const SizedBox(height: 10),
-              const SizedBox(height: 10),
-              SizedBox(
+
+              // Reusable HealthReportGraph
+              const SizedBox(
                 height: 200,
-                child: _buildCaloriesChart(),
+                child: HealthReportGraph(), // Integrated reusable graph widget
               ),
             ],
           ),
