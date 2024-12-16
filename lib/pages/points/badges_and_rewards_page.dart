@@ -58,12 +58,18 @@ class RewardsPageState extends State<RewardsPage> with TickerProviderStateMixin 
     super.dispose();
   }
 
+  // Function to simulate the next badge milestone
+  String _nextBadgeMilestone(int currentPoints) {
+    int pointsNeeded = (currentPoints ~/ 100 + 1) * 100; // Round up to next multiple of 100
+    return "You need ${pointsNeeded - currentPoints} more points for the next badge!";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Badges & Rewards', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-        backgroundColor: const Color(0xFF6A4C93), // Modern purple color
+        backgroundColor: const Color(0xFF8A2BE2), // Modern purple color
       ),
       body: _isLoading
           ? Center(
@@ -76,7 +82,7 @@ class RewardsPageState extends State<RewardsPage> with TickerProviderStateMixin 
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF6A4C93), Color(0xFF4F5B6A)],
+              colors: [Color(0xFF00C9B9), Color(0xFF8A2BE2)], // Updated gradient colors
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -119,11 +125,22 @@ class RewardsPageState extends State<RewardsPage> with TickerProviderStateMixin 
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Lottie.asset( // Add Lottie animation here
-                        'assets/animations/reward_animation.json', // Path to your Lottie file
-                        width: 150,
-                        height: 150,
-                        fit: BoxFit.cover,
+                      Center( // Centering the Lottie animation
+                        child: Lottie.asset( // Add Lottie animation here
+                          'assets/animations/reward_animation.json', // Path to your Lottie file
+                          width: 150,
+                          height: 150,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        _nextBadgeMilestone(points),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   );
@@ -155,18 +172,18 @@ class RewardsPageState extends State<RewardsPage> with TickerProviderStateMixin 
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          color: Colors.white,
+                          color: Colors.deepPurple,
                           child: ListTile(
                             contentPadding: const EdgeInsets.all(16.0),
                             leading: const Icon(Icons.emoji_events, color: Colors.amber, size: 40),
                             title: Text(
                               badge['name'] ?? 'Unknown Badge',
                               style: const TextStyle(
-                                  color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+                                  color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
                               formattedDate,
-                              style: const TextStyle(color: Colors.black),
+                              style: const TextStyle(color: Colors.white),
                             ),
                             onTap: () {
                               // Animate badge on tap

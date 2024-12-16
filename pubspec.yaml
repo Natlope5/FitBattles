@@ -105,4 +105,8 @@ flutter:
     - assets/animations/muscle_cup.json
     - assets/animations/congratulations.json
     - assets/animations/reward_animation.json
+    - assets/images/abs.png
+    - assets/images/chest.png
+    - assets/images/arms.png
+    - assets/images/legs.png
 
