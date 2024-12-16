@@ -142,10 +142,6 @@ class _LoginPageState extends State<LoginPage> {
     return Theme(
       data: loginTheme, // Apply custom theme to this page only
       child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF5D6C8A), // App bar color
-          title: Text(widget.title), // Title of the app bar
-        ),
         body: Container(
           color: const Color(0xFF5D6C8A), // Background color for the login page
           child: Center(
