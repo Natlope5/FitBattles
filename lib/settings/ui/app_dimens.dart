@@ -132,7 +132,12 @@ class AppDimens {
   static const double textSizeSmall = 12.0;
   static const double textSizeMedium = 16.0;
   static const double textSizeLarge = 20.0;
-  static const double pagePadding = 16.0; // Example value, adjust as necessary
+  static const double pagePadding = 16.0;
+
+  static const double fontSmall = 12.0;
+  static const double fontMedium = 16.0;
+  static const double fontLarge = 20.0;
+
 
 
 }

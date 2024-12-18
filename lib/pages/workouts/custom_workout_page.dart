@@ -12,28 +12,92 @@ class CustomWorkoutPlanPage extends StatefulWidget {
   CustomWorkoutPlanPageState createState() => CustomWorkoutPlanPageState();
 }
 
-class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
-    with TickerProviderStateMixin {
+class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage> {
   final List<Map<String, dynamic>> _exercises = [];
-  final List<String> _daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  final List<String> _daysOfWeek = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday'
+  ];
   String? _selectedDay;
   final TextEditingController _exerciseNameController = TextEditingController();
   final TextEditingController _setsController = TextEditingController();
   final TextEditingController _repsController = TextEditingController();
   final TextEditingController _weightController = TextEditingController();
-  bool _showAddExercise = false;
   final logger = Logger();
-  List<String> logMessages = [];
-  bool _notificationsEnabled = true;
 
-  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+  FlutterLocalNotificationsPlugin();
+
+  // Workout Suggestions for Categories
+  final Map<String, List<Map<String, String>>> _workoutSuggestions = {
+    'Arms': [
+      {
+        'name': 'Bicep Curls',
+        'description': 'Stand with feet shoulder-width apart. Curl the weights towards your shoulders, then slowly lower them back down.',
+      },
+      {
+        'name': 'Tricep Dips',
+        'description': 'Use a bench or step for support. Lower your body by bending your elbows, then push back up.',
+      },
+      {
+        'name': 'Hammer Curls',
+        'description': 'Hold dumbbells with a neutral grip and curl the weights towards your shoulders.',
+      },
+    ],
+    'Chest': [
+      {
+        'name': 'Bench Press',
+        'description': 'Lie on a bench and press a barbell or dumbbells upward.',
+      },
+      {
+        'name': 'Push-Ups',
+        'description': 'Lower your body until your chest almost touches the ground, then push yourself back up.',
+      },
+      {
+        'name': 'Chest Fly',
+        'description': 'Lie on a bench with dumbbells in both hands and extend arms wide, then bring them back together.',
+      },
+    ],
+    'Abs': [
+      {
+        'name': 'Crunches',
+        'description': 'Lie on your back with knees bent and lift your upper body towards your knees.',
+      },
+      {
+        'name': 'Plank',
+        'description': 'Hold a position similar to a push-up with your body in a straight line.',
+      },
+      {
+        'name': 'Bicycle Crunches',
+        'description': 'Lie on your back, pedal your legs in the air, and twist your torso to touch opposite elbows to knees.',
+      },
+    ],
+    'Legs': [
+      {
+        'name': 'Squats',
+        'description': 'Lower your hips as if sitting in a chair, keeping your knees behind your toes.',
+      },
+      {
+        'name': 'Lunges',
+        'description': 'Step forward into a lunge, lowering your hips until both knees are at 90-degree angles.',
+      },
+      {
+        'name': 'Deadlifts',
+        'description': 'With a barbell or dumbbells, hinge at the hips to lower the weights, then return to standing.',
+      },
+    ],
+  };
 
   @override
   void initState() {
     super.initState();
-    _loadExercises(); // Load exercises when the page is first opened
-    _loadNotificationPreference();
-    // Initialize the notification plugin
+    _loadExercises();
+
     var initializationSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
     );
@@ -49,7 +113,6 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     super.dispose();
   }
 
-  // Function to load exercises from SharedPreferences
   Future<void> _loadExercises() async {
     final prefs = await SharedPreferences.getInstance();
     final String? exercisesString = prefs.getString('exercises');
@@ -57,73 +120,25 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
       List<dynamic> exercisesList = jsonDecode(exercisesString);
       setState(() {
         _exercises.clear();
-        _exercises.addAll(exercisesList.map((e) => Map<String, dynamic>.from(e)));
+        _exercises.addAll(
+            exercisesList.map((e) => Map<String, dynamic>.from(e)));
       });
     }
   }
 
-  // Function to save exercises to SharedPreferences
   Future<void> _saveExercises() async {
     final prefs = await SharedPreferences.getInstance();
     String exercisesString = jsonEncode(_exercises);
     prefs.setString('exercises', exercisesString);
   }
-  Future<void> _loadNotificationPreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? true;
-    });
-  }
-  Future<void> _saveNotificationPreference(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setBool('notificationsEnabled', enabled);
-  }
-  // Function to show a notification
-  Future<void> _showNotification(String title, String body) async {
-    var androidDetails = AndroidNotificationDetails(
-      'channel_id',
-      'channel_name',
-      importance: Importance.high,
-      priority: Priority.high,
-    );
-    var notificationDetails = NotificationDetails(android: androidDetails);
-    await flutterLocalNotificationsPlugin.show(
-      0,
-      title,
-      body,
-      notificationDetails,
-    );
-  }
 
-  // Function to trigger a rest and hydration notification after adding an exercise
-  Future<void> _triggerRestNotification() async {
-    if (!_notificationsEnabled) return; // Check if notifications are enabled
-
-    const restTime = Duration(seconds: 5);
-
-    await Future.delayed(restTime, () async {
-      await _showNotification(
-        "Rest Reminder",
-        "It's time to rest, recover, and hydrate! Drink some water for optimal performance.",
-      );
-    });
-  }
-
-
-  // Function to add exercises
   void _addExercise() {
     if (_exerciseNameController.text.isEmpty ||
         _setsController.text.isEmpty ||
         _repsController.text.isEmpty ||
         _weightController.text.isEmpty ||
         _selectedDay == null) {
-      logger.w("All fields, including day selection, must be filled");
-      setState(() {
-        logMessages.add("All fields, including day selection, must be filled");
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
+      _showSnackBar('Please fill in all fields', isError: true);
       return;
     }
 
@@ -135,18 +150,10 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
         'weight': double.tryParse(_weightController.text) ?? 0.0,
         'day': _selectedDay,
       });
-      _showAddExercise = true; // Show success message after adding
-      logMessages.add("Exercise added successfully");
     });
 
+    _showSnackBar('Exercise added successfully!');
     _saveExercises();
-    logger.i("Exercise added: ${_exerciseNameController.text}");
-
-    _showNotification("Exercise Added", "You have added a new exercise: ${_exerciseNameController.text}");
-    _triggerRestNotification();
-
-
-    // Clear text fields after adding an exercise
     _exerciseNameController.clear();
     _setsController.clear();
     _repsController.clear();
@@ -154,15 +161,23 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     _selectedDay = null;
   }
 
-  // Function to delete exercise
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+      ),
+    );
+  }
+
   void _deleteExercise(int index) {
     setState(() {
       _exercises.removeAt(index);
     });
-    _saveExercises(); // Save the updated list after deletion
+    _saveExercises();
+    _showSnackBar('Exercise deleted.');
   }
 
-  // Function to share the workout plan
   void _shareWorkoutPlan() {
     final StringBuffer shareContent = StringBuffer("My Workout Plan:\n\n");
     for (var exercise in _exercises) {
@@ -173,161 +188,236 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage>
     Share.share(shareContent.toString());
   }
 
+  void _showSuggestionsDialog(String category, String description) {
+    final suggestions = _workoutSuggestions[category] ?? [];
+    showDialog(
+      context: context,
+      builder: (context) =>
+          AlertDialog(
+            title: Text('$category Workout Suggestions'),
+            content: SizedBox(
+              height: 200,
+              width: 300,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(description),
+                  const SizedBox(height: 10),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: suggestions.length,
+                      itemBuilder: (context, index) {
+                        return ListTile(
+                          title: Text(suggestions[index]['name']!),
+                          subtitle: Text(suggestions[index]['description']!),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Widget _buildCategoryCard(String title, String imagePath, String description) {
+    return GestureDetector(
+      onTap: () => _showSuggestionsDialog(title, description),
+      child: Card(
+        elevation: 5,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(imagePath, height: 60, width: 60),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Check for current theme brightness
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Custom Workout Plan"),
-        backgroundColor: const Color(0xFF5D6C8A),
         actions: [
           IconButton(
             icon: const Icon(Icons.share),
             onPressed: _shareWorkoutPlan,
-            tooltip: 'Share Workout Plan',
           ),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
-        child: ListView(
-            children: [
-        SwitchListTile(
-        title: const Text("Enable Notifications"),
-        value: _notificationsEnabled,
-        onChanged: (value) {
-          setState(() {
-            _notificationsEnabled = value;
-          });
-          _saveNotificationPreference(value);
-        },
-      ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                value: _selectedDay,
-                hint: const Text("Select a day"),
-                items: _daysOfWeek.map((String day) {
-                  return DropdownMenuItem<String>(value: day, child: Text(day));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedDay = value;
-                  });
-                },
-                decoration: const InputDecoration(border: OutlineInputBorder()),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _exerciseNameController,
-                decoration: const InputDecoration(
-                  labelText: "Exercise Name",
-                  border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _setsController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Sets",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _repsController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Reps",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _weightController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Weight (kg)",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _addExercise,
-              child: const Text("Add Exercise"),
-            ),
-            const SizedBox(height: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Section for adding custom exercises
             const Text(
-              "Log Messages",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              "Add Custom Exercise",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              height: 150,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: logMessages.map((msg) {
-                    return Text(
-                      msg,
-                      style: TextStyle(
-                        color: isDarkMode ? Colors.white : Colors.black,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
+            _buildExerciseForm(),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pushNamed(context, '/workoutSuggestions');
-              },
-              child: const Text('View Suggestions'),
+
+            // Section for displaying added exercises
+            const Text(
+              "Your Workout Plan",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            if (_showAddExercise)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Container(
-                  color: Colors.green,
-                  padding: const EdgeInsets.all(8.0),
-                  child: const Text(
-                    'Exercise added successfully!',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-              ),
             const SizedBox(height: 10),
-            // Display added exercises
-            ..._exercises.map((exercise) {
-              return Card(
-                elevation: 2.0,
-                margin: const EdgeInsets.symmetric(vertical: 5),
-                child: ListTile(
-                  title: Text(exercise['name']),
-                  subtitle: Text(
-                      "${exercise['day']}: ${exercise['sets']} sets x ${exercise['reps']} reps @ ${exercise['weight']} kg"),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () {
-                      _deleteExercise(_exercises.indexOf(exercise));
-                    },
-                  ),
+            _buildWorkoutList(),
+            const SizedBox(height: 20),
+
+            // Section for workout suggestions
+            const Text(
+              "Workout Suggestions",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 2,
+              crossAxisSpacing: 16.0,
+              mainAxisSpacing: 16.0,
+              children: [
+                _buildCategoryCard(
+                  'Arms',
+                  'assets/images/arms.png',
+                  '3 exercises targeting your biceps, triceps, and forearms.',
                 ),
-              );
-            }),
+                _buildCategoryCard(
+                  'Chest',
+                  'assets/images/chest.png',
+                  '3 exercises focusing on chest strength and growth.',
+                ),
+                _buildCategoryCard(
+                  'Abs',
+                  'assets/images/abs.png',
+                  '3 exercises to engage your core muscles.',
+                ),
+                _buildCategoryCard(
+                  'Legs',
+                  'assets/images/legs.png',
+                  '3 exercises for building leg strength and endurance.',
+                ),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildExerciseForm() {
+    return Column(
+      children: [
+        // Exercise name input
+        TextField(
+          controller: _exerciseNameController,
+          decoration: const InputDecoration(
+            labelText: 'Exercise Name',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Sets input
+        TextField(
+          controller: _setsController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Sets',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Reps input
+        TextField(
+          controller: _repsController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: 'Reps',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Weight input
+        TextField(
+          controller: _weightController,
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Weight (kg)',
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Day of the week dropdown
+        DropdownButton<String>(
+          value: _selectedDay,
+          onChanged: (String? newValue) {
+            setState(() {
+              _selectedDay = newValue;
+            });
+          },
+          hint: const Text('Select a Day'),
+          items: _daysOfWeek
+              .map<DropdownMenuItem<String>>(
+                (String day) => DropdownMenuItem<String>(
+              value: day,
+              child: Text(day),
+            ),
+          )
+              .toList(),
+        ),
+        const SizedBox(height: 10),
+
+        // Add Exercise button
+        ElevatedButton(
+          onPressed: _addExercise,
+          child: const Text('Add Exercise'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWorkoutList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: _exercises.length,
+      itemBuilder: (context, index) {
+        final exercise = _exercises[index];
+        return ListTile(
+          title: Text(exercise['name']),
+          subtitle: Text(
+              '${exercise['sets']} sets x ${exercise['reps']} reps @ ${exercise['weight']} kg'),
+          trailing: IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () => _deleteExercise(index),
+          ),
+        );
+      },
     );
   }
 }
