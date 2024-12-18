@@ -1,222 +1,283 @@
-import 'package:fitbattles/pages/settings/user_profile_page.dart'; // Importing UserProfilePage
-import 'package:flutter/material.dart'; // Importing Flutter material package
-import 'package:firebase_auth/firebase_auth.dart'; // Importing Firebase Auth for user authentication
-import 'package:logger/logger.dart'; // Importing Logger for error logging
-import 'package:fitbattles/pages/home_page.dart'; // Importing the home page to navigate after login
-import 'package:fitbattles/services/firebase/session_manager.dart'; // Import your SessionManager
+import 'package:fitbattles/pages/settings/user_profile_page.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:logger/logger.dart';
+import 'package:fitbattles/pages/home_page.dart';
+import 'package:fitbattles/services/firebase/session_manager.dart';
 
-// Login page widget
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key, required this.title, required Null Function(dynamic locale) setLocale});
-  final String title; // Title of the login page
+  final String title;
 
   @override
-  State<LoginPage> createState() => _LoginPageState(); // State management for the login page
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-// State class for login page
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController _emailController = TextEditingController(); // Controller for email input
-  final TextEditingController _passwordController = TextEditingController(); // Controller for password input
-  final Logger logger = Logger(); // Logger instance for logging errors
-  String? errorMessage; // Variable to hold error messages
-  final SessionManager _sessionManager = SessionManager(); // Instance of SessionManager
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final Logger logger = Logger();
+  String? errorMessage;
+  final SessionManager _sessionManager = SessionManager();
+  bool _rememberMe = false;
 
-  // Method to authenticate user
   Future<void> authenticateUser(String email, String password) async {
     if (email.isEmpty || password.isEmpty) {
       setState(() {
-        errorMessage = 'Email and password cannot be empty.'; // Set error message for empty fields
+        errorMessage = 'Email and password cannot be empty.';
       });
       return;
     }
 
     try {
-      // Attempt to sign in using Firebase Auth
       UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Retrieve user ID and email upon successful authentication
-      String uid = userCredential.user!.uid; // User ID
-      String userEmail = userCredential.user!.email!; // User email
+      String uid = userCredential.user!.uid;
+      String userEmail = userCredential.user!.email!;
 
-      // Store the user email in shared preferences using SessionManager
-      await _sessionManager.saveUserEmail(userEmail); // Call to SessionManager to handle session
+      await _sessionManager.saveUserEmail(userEmail);
 
-      // Clear error message and navigate to home page
       errorMessage = null;
       _navigateToHomePage(uid, userEmail);
     } on FirebaseAuthException catch (e) {
-      logger.e("Error code: ${e.code}, Message: ${e.message}"); // Log Firebase error
+      logger.e("Error code: ${e.code}, Message: ${e.message}");
       setState(() {
-        errorMessage = _getErrorMessage(e); // Set error message
+        errorMessage = _getErrorMessage(e);
       });
     } catch (e) {
-      logger.e("Unexpected error: $e"); // Log unexpected errors
+      logger.e("Unexpected error: $e");
       setState(() {
-        errorMessage = 'An unexpected error occurred: $e'; // Set generic error message
+        errorMessage = 'An unexpected error occurred: $e';
       });
     }
   }
 
-  // Method to navigate to the home page
   void _navigateToHomePage(String id, String email) {
-    if (!mounted) return; // Ensure widget is still mounted
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, uid: '')), // Navigate to home page with user data
+      MaterialPageRoute(builder: (context) => HomePage(id: id, email: email, uid: '')),
     );
   }
 
-  // Method to get error messages based on Firebase error codes
   String _getErrorMessage(FirebaseAuthException e) {
     switch (e.code) {
       case 'user-not-found':
-        return 'No user found for that email.'; // Error for no user found
+        return 'No user found for that email.';
       case 'wrong-password':
-        return 'Wrong password provided for that user.'; // Error for wrong password
+        return 'Wrong password provided for that user.';
       default:
-        return 'An error occurred. Please try again.'; // Default error message
+        return 'An error occurred. Please try again.';
     }
   }
 
-  // Method to handle password reset
   Future<void> _resetPassword(String email) async {
     if (email.isEmpty) {
       setState(() {
-        errorMessage = 'You must enter an email address to receive the reset link.'; // Update error message for empty email
+        errorMessage = 'You must enter an email address to receive the reset link.';
       });
-      return; // Exit the method early
+      return;
     }
 
     try {
-      // Send a password reset email
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       setState(() {
-        errorMessage = 'Password reset email sent! Please check your inbox.'; // Inform user about the email sent
+        errorMessage = 'Password reset email sent! Please check your inbox.';
       });
     } on FirebaseAuthException catch (e) {
-      logger.e("Error code: ${e.code}, Message: ${e.message}"); // Log Firebase error
+      logger.e("Error code: ${e.code}, Message: ${e.message}");
       setState(() {
-        errorMessage = _getErrorMessage(e); // Set error message
+        errorMessage = _getErrorMessage(e);
       });
     } catch (e) {
-      logger.e("Unexpected error: $e"); // Log unexpected errors
+      logger.e("Unexpected error: $e");
       setState(() {
-        errorMessage = 'An unexpected error occurred: $e'; // Set generic error message
+        errorMessage = 'An unexpected error occurred: $e';
       });
     }
   }
 
-  // Build method to render the login page UI
   @override
   Widget build(BuildContext context) {
-    // Custom light theme for login page
     final ThemeData loginTheme = ThemeData(
-      brightness: Brightness.light, // Force light theme
-      primaryColor: const Color(0xFF5D6C8A), // Your app's primary color
+      brightness: Brightness.light,
+      primaryColor: const Color(0xFF5D6C8A),
       inputDecorationTheme: const InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white, // Set input fields to white background
+        fillColor: Colors.white,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(20.0)), // Rounded borders
+          borderRadius: BorderRadius.all(Radius.circular(20.0)),
         ),
-        labelStyle: TextStyle(color: Colors.black), // Black label text
+        labelStyle: TextStyle(color: Colors.black),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: Colors.black, // Set text button color to black
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF85C83E), // Green color for button
-          foregroundColor: Colors.white, // White text on button
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20), // Button padding
+          foregroundColor: Colors.black,
         ),
       ),
     );
 
     return Theme(
-      data: loginTheme, // Apply custom theme to this page only
+      data: loginTheme,
       child: Scaffold(
         body: Container(
-          color: const Color(0xFF5D6C8A), // Background color for the login page
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/images/AbstractWallpaperBackground.jpeg'),
+              fit: BoxFit.cover,
+            ),
+          ),
+
           child: Center(
-            child: SingleChildScrollView( // Enable scrolling for the content
+            child: SingleChildScrollView(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  const SizedBox(height: 0),
-                  Image.asset( // Logo image for the app
+                  Image.asset(
                     'assets/images/logo2.png',
-                    height: 250,
+                    height: 300,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 30),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
                     child: TextField(
-                      controller: _emailController, // Controller for email input
-                      decoration: const InputDecoration(
-                        labelText: 'Email', // Label for email input
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        filled: true,
+                        fillColor: Color(0xB0FFFFFF),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        prefixIcon: const Icon(Icons.email, color: Colors.blue),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20), // Padding for input fields
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
                     child: TextField(
-                      controller: _passwordController, // Controller for password input
-                      obscureText: true, // Hide password input
-                      decoration: const InputDecoration(
-                        labelText: 'Password', // Label for password input
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        filled: true,
+                        fillColor: Color(0xB0FFFFFF),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        prefixIcon: const Icon(Icons.lock, color: Colors.blue),
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  ElevatedButton(
-                    onPressed: () {
-                      // Call authenticateUser without using context
-                      authenticateUser(_emailController.text, _passwordController.text);
-                    },
-                    child: const Text('Login'), // Button text
+                  GestureDetector(
+                    onTap: () => authenticateUser(
+                        _emailController.text, _passwordController.text),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF84C63E), Color(0xFF91EF2E)],
+                          begin: Alignment.bottomLeft,
+                          end: Alignment.topRight,
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 12),
+                      child: const Text(
+                        'Sign In',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF272A2C),
+                        ),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 20),
-                  // Display error message if any
                   if (errorMessage != null)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
                       child: Text(
                         errorMessage!,
-                        style: const TextStyle(color: Colors.red), // Error message style
+                        style: const TextStyle(color: Colors.red),
                       ),
                     ),
                   const SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () {
-                      // Call _resetPassword when clicked
-                      _resetPassword(_emailController.text);
-                    },
-                    child: const Text(
-                      'Forgot Password?',
-                    ), // Forgot password prompt text
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      StatefulBuilder(
+                        builder: (BuildContext context, StateSetter setState) {
+                          return Checkbox(
+                            value: _rememberMe,
+                            checkColor: Colors.white,
+                            onChanged: (bool? value) {
+                              setState(() {
+                                _rememberMe = value!;
+                              });
+                            },
+                          );
+                        },
+                      ),
+                      const Text(
+                        'Remember me',
+                        style: TextStyle(color: Colors.black, fontSize: 15),
+                      ),
+                      TextButton(
+                        onPressed: () => _resetPassword(_emailController.text),
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(
+                            color: Colors.black,
+                            decoration: TextDecoration.underline,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  TextButton(
-                    onPressed: () {
-                      // Navigate to the UserProfilePage
+
+                  const SizedBox(height: 5),
+                  const Text(
+                    'Not a member?',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const UserProfilePage(heading: 'User Profile'), // Pass the necessary heading or data here
+                          builder: (context) => const UserProfilePage(
+                            heading: 'User Profile',
+                          ),
                         ),
                       );
                     },
-                    child: const Text(
-                      'Don’t have an account? Sign up here.',
-                    ), // Sign up prompt text
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.transparent),
+                        borderRadius: BorderRadius.circular(30),
+                        color: Color(0xFF84C63E)
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 65, vertical: 10),
+                      child: const Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF272A2C),
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
