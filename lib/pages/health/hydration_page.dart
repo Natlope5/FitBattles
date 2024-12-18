@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+import 'package:fitbattles/settings/ui/app_colors.dart';
+import 'package:fitbattles/settings/ui/app_strings.dart';
+import 'package:fitbattles/settings/ui/app_dimens.dart';
+import 'package:lottie/lottie.dart';
 
 class HydrationPage extends StatefulWidget {
   const HydrationPage({super.key});
@@ -13,318 +13,216 @@ class HydrationPage extends StatefulWidget {
   HydrationPageState createState() => HydrationPageState();
 }
 
-class HydrationPageState extends State<HydrationPage> {
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+class HydrationPageState extends State<HydrationPage> with TickerProviderStateMixin {
+  int currentIntake = 0; // Tracks current water intake in mL
+  int dailyGoal = 4000; // Set goal for daily water consumption
+  int cupsConsumed = 0; // Number of cups consumed so far
+  int totalCups = 8; // Total cups to consume to reach goal
+  bool goalReached = false; // Whether the daily goal has been reached
 
-  double _currentWaterIntake = 0.0;
-  final double _dailyGoal = 3.0;
-  List<Map<String, dynamic>> _waterLog = [];
+  List<String> dailyLogs = []; // Logs for daily water consumption
+  late AnimationController _animationController; // Controls the animation of water consumption progress
+  late double progress; // The progress of water intake as a percentage
 
   @override
   void initState() {
     super.initState();
-    tz.initializeTimeZones(); // Initialize time zone data
-    _initializeNotifications();
-    _scheduleHourlyReminder();
-    _loadWaterIntakeFromFirestore();
-    _loadWaterLogFromFirestore();
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 500)); // Initialize animation controller
+    loadProgress(); // Load the saved progress
+    loadWeeklyLogs(); // Load logs of water consumption for the week
+  }
+
+  // Loads the saved progress from SharedPreferences
+  Future<void> loadProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      cupsConsumed = prefs.getInt('cupsConsumed') ?? 0; // Load number of cups consumed
+      currentIntake = cupsConsumed * 500; // Calculate the total intake based on cups
+      goalReached = cupsConsumed >= totalCups; // Check if the goal is reached
+      progress = cupsConsumed / totalCups; // Calculate progress
+    });
+  }
+
+  // Loads weekly water consumption logs from SharedPreferences
+  Future<void> loadWeeklyLogs() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      dailyLogs = prefs.getStringList('dailyLogs') ?? []; // Load daily logs
+    });
+  }
+
+  // Saves the current progress (cups consumed) to SharedPreferences
+  Future<void> saveProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('cupsConsumed', cupsConsumed); // Save cups consumed
+  }
+
+  // Logs the current water consumption and saves it to the logs
+  Future<void> logWeeklyConsumption() async {
+    final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final formattedDate = DateFormat('EEE, MMM d').format(now); // Format the current date
+    final logEntry = 'Day of $formattedDate: $currentIntake mL'; // Log entry for the day
+
+    setState(() {
+      dailyLogs.add(logEntry); // Add the log entry to the daily logs
+    });
+
+    await prefs.setStringList('dailyLogs', dailyLogs); // Save logs to SharedPreferences
+  }
+
+  // Resets the progress (cups consumed) and the animation
+  void resetProgress() {
+    setState(() {
+      cupsConsumed = 0;
+      currentIntake = 0;
+      goalReached = false;
+      progress = 0.0;
+    });
+    saveProgress(); // Save the reset progress
+  }
+
+  // Increments the cups consumed when a cup is consumed
+  void onCupConsumed() {
+    setState(() {
+      if (cupsConsumed < totalCups) {
+        cupsConsumed++; // Increment the cups consumed
+        currentIntake += 500; // Increase the intake by 500 mL per cup
+        progress = cupsConsumed / totalCups; // Update progress
+
+        _animationController.value = progress; // Update the animation progress
+
+        if (cupsConsumed == totalCups) {
+          goalReached = true; // Mark goal as reached
+          _animationController.forward(); // Play the animation when the goal is reached
+          logWeeklyConsumption(); // Log the consumption for the day
+        }
+      }
+    });
+    saveProgress(); // Save the updated progress
+  }
+
+  // Calculates the total water consumed for the week from the logs
+  int calculateWeeklyTotal() {
+    int total = 0;
+    for (var log in dailyLogs) {
+      final match = RegExp(r'(\d+) mL').firstMatch(log); // Extract the water amount from the log
+      if (match != null) {
+        total += int.parse(match.group(1)!); // Add the water amount to the total
+      }
+    }
+    return total; // Return the total consumption for the week
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose(); // Dispose of the animation controller when no longer needed
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hydration Tracker'),
-        backgroundColor: const Color(0xFF5D6C8A),
+        title: Text(AppStrings.hydrationTitle),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Theme.of(context).colorScheme.surface, // App bar style
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const Text(
-              'Your Daily Water Intake',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            _buildProgressBar(),
-            const SizedBox(height: 20),
-            _buildWaterIntakeText(),
-            const SizedBox(height: 20),
-            _buildAddIntakeButton(),
-            const SizedBox(height: 20),
-            _buildLogSection(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProgressBar() {
-    return Column(
-      children: [
-        Text(
-          'Daily Goal: $_dailyGoal liters',
-          style: const TextStyle(fontSize: 18, color: Colors.black54),
-        ),
-        const SizedBox(height: 10),
-        LinearProgressIndicator(
-          value: _currentWaterIntake / _dailyGoal,
-          minHeight: 20,
-          backgroundColor: Colors.grey[300],
-          color: _currentWaterIntake >= _dailyGoal
-              ? Colors.green
-              : Colors.lightBlueAccent,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWaterIntakeText() {
-    return Text(
-      '${_currentWaterIntake.toStringAsFixed(1)} liters',
-      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-    );
-  }
-
-  Widget _buildAddIntakeButton() {
-    return ElevatedButton(
-      onPressed: _addWaterIntake,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.teal,
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-      ),
-      child: const Text('Add Water Intake'),
-    );
-  }
-
-  Widget _buildLogSection() {
-    return Expanded(
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppDimens.paddingLarge), // Main page padding
+          child: Column(
             children: [
-              const Text(
-                'Your Water Intake Log',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              // Title and Weekly Consumption Display
+              Text(
+                'Hydration Tracker',
+                style: TextStyle(fontSize: AppDimens.fontLarge, fontWeight: FontWeight.bold), // Title styling
               ),
-              TextButton(
-                onPressed: _clearWaterLog,
-                child: const Text(
-                  'Clear Log',
-                  style: TextStyle(color: Colors.red),
+              const SizedBox(height: 10),
+              Text(
+                'Total Water Consumed This Week: ${calculateWeeklyTotal()} mL', // Total weekly consumption
+                style: TextStyle(fontSize: AppDimens.fontMedium, fontWeight: FontWeight.bold, color: AppColors.waterBlue), // Styling for total weekly consumption
+              ),
+              const SizedBox(height: AppDimens.spacingMedium),
+
+              // Lottie animation for progress
+              SizedBox(
+                width: 200,
+                height: 200,
+                child: Lottie.asset(
+                  'assets/animations/muscle_cup.json', // Animation for water consumption
+                  fit: BoxFit.contain,
+                  controller: _animationController,
                 ),
               ),
+              if (goalReached)
+                Icon(Icons.sentiment_very_satisfied, size: 100, color: AppColors.waterBlue), // Display a happy icon if the goal is reached
+              const SizedBox(height: AppDimens.spacingSmall),
+
+              // Progress info
+              Text(
+                '$currentIntake mL',
+                style: TextStyle(fontSize: AppDimens.fontLarge, fontWeight: FontWeight.bold),
+              ),
+              Text('${(progress * 100).toStringAsFixed(0)}%'), // Display progress percentage
+              Text('$cupsConsumed/$totalCups ${AppStrings.cups}'), // Display cups consumed and total cups
+              Text('${AppStrings.dailyGoal} $dailyGoal mL'), // Display daily goal
+              const SizedBox(height: AppDimens.spacingSmall),
+
+              // Display cup icons to track consumed cups
+              Wrap(
+                alignment: WrapAlignment.center,
+                children: List.generate(totalCups, (index) {
+                  return IconButton(
+                    icon: Icon(
+                      Icons.local_drink,
+                      color: index < cupsConsumed ? AppColors.waterBlue : AppColors.lightGray, // Display filled or empty cup icons
+                    ),
+                    onPressed: () {
+                      if (!goalReached) onCupConsumed(); // Increment when a cup is pressed
+                    },
+                  );
+                }),
+              ),
+              const SizedBox(height: AppDimens.spacingSmall),
+
+              // Weekly logs display
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Column(
+                  children: [
+                    Text(
+                      'Daily Water Consumption',
+                      style: TextStyle(fontSize: AppDimens.fontMedium, fontWeight: FontWeight.bold), // Section title
+                    ),
+                    const SizedBox(height: 10),
+                    ...dailyLogs.map((log) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Text(
+                        log,
+                        style: TextStyle(fontSize: AppDimens.fontSmall),
+                      ),
+                    )),
+                  ],
+                ),
+              ),
+
+              // Reset Button
+              ElevatedButton(onPressed: resetProgress, child: Text(AppStrings.reset)),
+
+              if (goalReached)
+                Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: Text(
+                    AppStrings.congratulations,
+                    style: TextStyle(fontSize: AppDimens.fontLarge, fontWeight: FontWeight.bold), // Congratulations text when goal is reached
+                  ),
+                ),
             ],
           ),
-          Expanded(
-            child: _waterLog.isEmpty
-                ? const Text('No log entries yet.')
-                : ListView.builder(
-              itemCount: _waterLog.length,
-              itemBuilder: (context, index) {
-                final logEntry = _waterLog[index];
-                return ListTile(
-                  title: Text('Added ${logEntry['amount']} liters'),
-                  subtitle: Text(
-                      'Time: ${(logEntry['timestamp'] as Timestamp).toDate()}'),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _addWaterIntake() async {
-    double? addedIntake = await _showAddWaterDialog();
-
-    if (addedIntake != null && addedIntake > 0) {
-      setState(() {
-        _currentWaterIntake += addedIntake;
-      });
-      await _saveWaterIntakeToFirestore();
-      await _addToWaterLog(addedIntake);
-      _showToast('Water intake updated!');
-    }
-  }
-
-  Future<double?> _showAddWaterDialog() async {
-    double intakeAmount = 0.0;
-
-    return showDialog<double>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Water Intake'),
-        content: TextField(
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Enter amount in liters',
-            hintText: 'e.g. 0.5',
-          ),
-          onChanged: (value) {
-            intakeAmount = double.tryParse(value) ?? 0.0;
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(intakeAmount),
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _saveWaterIntakeToFirestore() async {
-    try {
-      String uid = FirebaseAuth.instance.currentUser!.uid;
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .set({'currentWaterIntake': _currentWaterIntake}, SetOptions(merge: true));
-    } catch (e) {
-      _showToast('Error saving data: $e');
-    }
-  }
-
-  Future<void> _addToWaterLog(double intake) async {
-    try {
-      String uid = FirebaseAuth.instance.currentUser!.uid;
-
-      Map<String, dynamic> waterLogEntry = {
-        'amount': intake,
-        'timestamp': Timestamp.now(),
-      };
-
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('water_log')
-          .add(waterLogEntry);
-
-      _loadWaterLogFromFirestore();
-    } catch (e) {
-      _showToast('Error adding to log: $e');
-    }
-  }
-
-  Future<void> _loadWaterLogFromFirestore() async {
-    try {
-      String uid = FirebaseAuth.instance.currentUser!.uid;
-
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('water_log')
-          .orderBy('timestamp', descending: true)
-          .get();
-
-      setState(() {
-        _waterLog = snapshot.docs
-            .map((doc) => doc.data() as Map<String, dynamic>)
-            .toList();
-      });
-    } catch (e) {
-      _showToast('Error loading log: $e');
-    }
-  }
-
-  void _initializeNotifications() {
-    const androidInitializationSettings =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
-
-    final initializationSettings =
-    InitializationSettings(android: androidInitializationSettings);
-
-    _flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  }
-
-  void _scheduleHourlyReminder() async {
-    final now = DateTime.now();
-    final nextHour = DateTime(now.year, now.month, now.day, now.hour + 1);
-
-    await _flutterLocalNotificationsPlugin.zonedSchedule(
-      0,
-      'Hydration Reminder',
-      'Time to drink water!',
-      tz.TZDateTime.from(nextHour, tz.local),
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'hydration_channel',
-          'Hydration Notifications',
-          importance: Importance.high,
-          priority: Priority.high,
         ),
       ),
-      androidScheduleMode: AndroidScheduleMode.exact,
-      uiLocalNotificationDateInterpretation:
-      UILocalNotificationDateInterpretation.wallClockTime,
-      matchDateTimeComponents: DateTimeComponents.time,
-    );
-  }
-
-  Future<void> _clearWaterLog() async {
-    try {
-      String uid = FirebaseAuth.instance.currentUser!.uid;
-
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .collection('water_log')
-          .get();
-
-      for (DocumentSnapshot doc in snapshot.docs) {
-        await doc.reference.delete();
-      }
-      setState(() {
-        _waterLog.clear();
-      });
-      _showToast('Log cleared!');
-    } catch (e) {
-      _showToast('Error clearing log: $e');
-    }
-  }
-
-  Future<void> _loadWaterIntakeFromFirestore() async {
-    try {
-      String uid = FirebaseAuth.instance.currentUser!.uid;
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(uid)
-          .get();
-
-      if (snapshot.exists) {
-        setState(() {
-          _currentWaterIntake =
-              (snapshot.data() as Map<String, dynamic>)['currentWaterIntake']?.toDouble() ?? 0.0;
-        });
-
-      } else {
-        setState(() {
-          _currentWaterIntake = 0.0;
-        });
-      }
-    } catch (e) {
-      _showToast('Error fetching data: $e');
-    }
-  }
-
-  void _showToast(String message) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      gravity: ToastGravity.BOTTOM,
-      backgroundColor: Colors.black54,
-      textColor: Colors.white,
     );
   }
 }
