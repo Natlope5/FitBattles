@@ -8,10 +8,10 @@ class HealthReportGraph extends StatefulWidget {
   const HealthReportGraph({super.key});
 
   @override
-  _HealthReportGraphState createState() => _HealthReportGraphState();
+  HealthReportGraphState createState() => HealthReportGraphState();
 }
 
-class _HealthReportGraphState extends State<HealthReportGraph> {
+class HealthReportGraphState extends State<HealthReportGraph> {
   Map<String, double> dailyCalories = {
     'Mon': 0,
     'Tue': 0,

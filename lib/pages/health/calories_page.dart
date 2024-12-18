@@ -144,9 +144,9 @@ class CaloriesPageState extends State<CaloriesPage> {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Color.fromRGBO(
-            color.r.toInt(), // Convert .r (double) to int
-            color.g.toInt(), // Convert .g (double) to int
-            color.b.toInt(), // Convert .b (double) to int
+            color.red.toInt(), // Convert .r (double) to int
+            color.green.toInt(), // Convert .g (double) to int
+            color.blue.toInt(), // Convert .b (double) to int
             0.2, // Set opacity to 20%
           ),
           child: Icon(icon, color: color),
