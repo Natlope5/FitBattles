@@ -40,95 +40,212 @@ class _FriendsListPageState extends State<FriendsListPage> {
 
   Future<void> _loadFriendRequests() async {
     final requests = await _firebaseService.fetchFriendRequests();
+    if (!mounted) return;
     setState(() {
       friendRequests = requests;
     });
   }
 
-  void _sendFriendRequest() async {
+  void _showFriendRequestsBottomSheet(BuildContext context) {
+    final localContext = context; // Capture context locally to avoid async gap issues.
     final emailController = TextEditingController();
     final friendCodeController = TextEditingController();
 
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Add a Friend'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
+    showModalBottomSheet(
+      context: localContext,
+      backgroundColor: Theme.of(localContext).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
+          height: MediaQuery.of(sheetContext).size.height * 0.8,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Enter your friend\'s email or code:', style: TextStyle(color: Colors.grey[700])),
+              // Centered handle bar
+              Center(
+                child: Container(
+                  width: 50,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[400],
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
+              const Text(
+                'Friend Requests',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.start,
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: friendRequests.isNotEmpty
+                    ? ListView.builder(
+                  itemCount: friendRequests.length,
+                  padding: EdgeInsets.zero,
+                  itemBuilder: (context, index) {
+                    final request = friendRequests[index];
+                    return Card(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      color: Theme.of(localContext).cardColor,
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        leading: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[300],
+                            borderRadius: BorderRadius.circular(8),
+                            image: const DecorationImage(
+                              image: AssetImage('assets/images/placeholder_avatar.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        title: Text(
+                          request['name'],
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                          textAlign: TextAlign.start,
+                        ),
+                        subtitle: Text(
+                          'Status: ${request['status']}',
+                          textAlign: TextAlign.start,
+                        ),
+                        trailing: Wrap(
+                          spacing: 8,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.check, color: Colors.green),
+                              onPressed: () async {
+                                await _firebaseService.acceptFriendRequest(
+                                  request['requestId'],
+                                  request['email'],
+                                );
+                                if (!mounted) return;
+                                await _loadFriendRequests();
+                                await _loadFriends();
+                              },
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.clear, color: Colors.red),
+                              onPressed: () async {
+                                await _firebaseService.declineFriendRequest(
+                                  request['requestId'],
+                                );
+                                if (!mounted) return;
+                                await _loadFriendRequests();
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                )
+                    : Align(
+                  alignment: Alignment.centerLeft,
+                  child: const Text('No friend requests available.'),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Add a Friend',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.start,
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: emailController,
+                textAlign: TextAlign.left,
                 decoration: const InputDecoration(
                   labelText: 'Friend\'s Email',
                   border: OutlineInputBorder(),
                 ),
               ),
-              const SizedBox(height: 16),
-              Text('OR', style: TextStyle(color: Colors.grey[500])),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'OR',
+                  style: TextStyle(color: Colors.grey[500]),
+                  textAlign: TextAlign.start,
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: friendCodeController,
+                textAlign: TextAlign.left,
                 decoration: const InputDecoration(
                   labelText: 'Friend\'s Code',
                   border: OutlineInputBorder(),
                 ),
               ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (emailController.text.isNotEmpty) {
+                        final friendData = await _firebaseService.sendFriendRequest(email: emailController.text);
+                        if (!mounted) return;
+                        _handleFriendRequestResponse(friendData, localContext);
+                      } else if (friendCodeController.text.isNotEmpty) {
+                        final friendData = await _firebaseService.sendFriendRequest(
+                          friendCode: friendCodeController.text,
+                        );
+                        if (!mounted) return;
+                        _handleFriendRequestResponse(friendData, localContext);
+                      }
+                      if (Navigator.canPop(sheetContext)) {
+                        Navigator.pop(sheetContext);
+                      }
+                    },
+                    child: const Text('Send'),
+                  ),
+                ],
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (emailController.text.isNotEmpty) {
-                  final friendData = await _firebaseService.sendFriendRequest(email: emailController.text);
-                  _handleFriendRequestResponse(friendData);
-                } else if (friendCodeController.text.isNotEmpty) {
-                  final friendData = await _firebaseService.sendFriendRequest(
-                    friendCode: friendCodeController.text,
-                  );
-                  _handleFriendRequestResponse(friendData);
-                }
-                Navigator.pop(context);
-              },
-              child: const Text('Send'),
-            ),
-          ],
         );
       },
     );
   }
 
-  void _handleFriendRequestResponse(Map<String, dynamic>? friendData) {
+  void _handleFriendRequestResponse(Map<String, dynamic>? friendData, BuildContext localContext) {
+    if (!mounted) return;
     if (friendData != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(localContext).showSnackBar(
         SnackBar(content: Text('Friend request sent to ${friendData['name']}!')),
       );
+      _loadFriendRequests();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(localContext).showSnackBar(
         const SnackBar(content: Text('User not found.')),
       );
     }
   }
 
   Future<void> _showFriendStatsDialog(Map<String, dynamic> friend) async {
+    final localContext = context; // Capture context to avoid async usage issue
     final friendId = friend['id'];
     final nameController = TextEditingController(text: friend['name']);
     bool isEditing = false;
 
     final privacySetting = await _firebaseService.getFriendPrivacy(friendId);
+    if (!mounted) return;
     bool canViewStats = privacySetting == 'public' || privacySetting == 'friends';
 
+    if (!mounted) return;
     showDialog(
-      context: context,
-      builder: (BuildContext context) {
+      context: localContext,
+      builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (dialogContext, setState) {
             return AlertDialog(
               title: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -138,6 +255,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
                       friend['name'] ?? 'Unknown',
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.start,
                     ),
                   ),
                   IconButton(
@@ -163,6 +281,7 @@ class _FriendsListPageState extends State<FriendsListPage> {
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
+                        textAlign: TextAlign.start,
                       ),
                       const SizedBox(height: 8),
                       if (canViewStats)
@@ -170,10 +289,17 @@ class _FriendsListPageState extends State<FriendsListPage> {
                           future: _firebaseService.getFriendWeeklyStats(friendId),
                           builder: (context, snapshot) {
                             if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
+                              return Align(
+                                alignment: Alignment.centerLeft,
+                                child: SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              );
                             }
                             if (snapshot.hasError) {
-                              return const Text('Failed to fetch stats.');
+                              return const Text('Failed to fetch stats.', textAlign: TextAlign.start);
                             }
                             final stats = snapshot.data ?? {};
                             final weeklyCalories = stats['calories'] ?? 0;
@@ -181,24 +307,24 @@ class _FriendsListPageState extends State<FriendsListPage> {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Calories Burned: $weeklyCalories kcal'),
-                                Text('Workouts Completed: $workoutsCount'),
+                                Text('Calories Burned: $weeklyCalories kcal', textAlign: TextAlign.start),
+                                Text('Workouts Completed: $workoutsCount', textAlign: TextAlign.start),
                               ],
                             );
                           },
                         )
                       else
-                        const Text('This user\'s stats are private.'),
+                        const Text('This user\'s stats are private.', textAlign: TextAlign.start),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
                         icon: const Icon(Icons.message),
                         label: const Text('Message'),
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.pop(dialogContext);
                           Navigator.push(
-                            context,
+                            dialogContext,
                             MaterialPageRoute(
-                              builder: (context) => ChatPage(friendId: friendId, friendName: friend['name']),
+                              builder: (newContext) => ChatPage(friendId: friendId, friendName: friend['name']),
                             ),
                           );
                         },
@@ -220,14 +346,15 @@ class _FriendsListPageState extends State<FriendsListPage> {
               ),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => Navigator.pop(dialogContext),
                   child: const Text('Cancel'),
                 ),
                 if (isEditing)
                   ElevatedButton(
                     onPressed: () async {
                       await _firebaseService.editFriendName(friendId, nameController.text);
-                      Navigator.pop(context);
+                      if (!mounted) return;
+                      Navigator.pop(dialogContext);
                       _loadFriends();
                     },
                     child: const Text('Save'),
@@ -240,93 +367,12 @@ class _FriendsListPageState extends State<FriendsListPage> {
     );
   }
 
-  Future<void> _showFriendRequestsBottomSheet(BuildContext context) async {
-    await showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 24.0),
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[400],
-                  borderRadius: BorderRadius.circular(2.5),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Friend Requests',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: friendRequests.isNotEmpty
-                    ? ListView.builder(
-                  itemCount: friendRequests.length,
-                  itemBuilder: (context, index) {
-                    final request = friendRequests[index];
-                    return Card(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          backgroundImage: AssetImage('assets/images/placeholder_avatar.png'),
-                        ),
-                        title: Text(request['name']),
-                        subtitle: Text('Status: ${request['status']}'),
-                        trailing: Wrap(
-                          spacing: 8,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.check, color: Colors.green),
-                              onPressed: () async {
-                                await _firebaseService.acceptFriendRequest(
-                                  request['requestId'],
-                                  request['email'],
-                                );
-                                _loadFriendRequests();
-                                _loadFriends();
-                              },
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.clear, color: Colors.red),
-                              onPressed: () async {
-                                await _firebaseService.declineFriendRequest(
-                                  request['requestId'],
-                                );
-                                _loadFriendRequests();
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                )
-                    : const Center(child: Text('No friend requests available.')),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.isDarkMode;
 
-    final bgColor = isDark
-        ? const Color(0xFF1F1F1F)
-        : null;
+    final bgColor = isDark ? const Color(0xFF1F1F1F) : null;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -344,83 +390,50 @@ class _FriendsListPageState extends State<FriendsListPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Modern Header with Requests
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Friends',
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => _showFriendRequestsBottomSheet(context),
-                          child: Stack(
-                            alignment: Alignment.topRight,
-                            children: [
-                              Icon(Icons.person_add_alt_1,
-                                  size: 28, color: isDark ? Colors.white : Colors.black),
-                              if (friendRequests.isNotEmpty)
-                                Container(
-                                  width: 14,
-                                  height: 14,
-                                  decoration: BoxDecoration(
-                                    color: Colors.red,
-                                    borderRadius: BorderRadius.circular(7),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      friendRequests.length.toString(),
-                                      style: const TextStyle(color: Colors.white, fontSize: 10),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Always visible search bar
-                    TextField(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      style: TextStyle(color: isDark ? Colors.white : Colors.black),
-                      decoration: InputDecoration(
-                        hintText: 'Search friends...',
-                        hintStyle: TextStyle(
-                          color: isDark ? Colors.grey[400] : Colors.grey[700],
-                        ),
-                        prefixIcon: Icon(Icons.search, color: isDark ? Colors.white : Colors.black),
-                        filled: true,
-                        fillColor: isDark ? Colors.grey[800] : Colors.white.withOpacity(0.9),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      onTap: () {
-                        // Request focus so that the keyboard stays open
-                        _searchFocusNode.requestFocus();
-                      },
-                      onChanged: (value) {
-                        // Implement friend filtering if desired
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                child: Text(
+                  'Friends',
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.start,
                 ),
               ),
+
+              // Search area
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 0.0),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocusNode,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  decoration: InputDecoration(
+                    hintText: 'Search friends...',
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey[700],
+                    ),
+                    prefixIcon: Icon(Icons.search, color: isDark ? Colors.white : Colors.black),
+                    filled: true,
+                    fillColor: isDark ? Colors.grey[800] : Colors.white.withOpacity(0.9),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onTap: () {
+                    _searchFocusNode.requestFocus();
+                  },
+                  onChanged: (value) {
+                    // Implement friend filtering if desired
+                  },
+                ),
+              ),
+
+              const SizedBox(height: 16),
 
               // Friends List
               Expanded(
@@ -440,12 +453,19 @@ class _FriendsListPageState extends State<FriendsListPage> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          leading: CircleAvatar(
-                            backgroundImage: friend['image'] != null && friend['image'].isNotEmpty
-                                ? NetworkImage(friend['image'])
-                                : const AssetImage('assets/images/placeholder_avatar.png')
-                            as ImageProvider,
-                            radius: 24,
+                          leading: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.grey[800],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: friend['image'] != null && friend['image'].isNotEmpty
+                                  ? Image.network(friend['image'], fit: BoxFit.cover)
+                                  : Image.asset('assets/images/placeholder_avatar.png', fit: BoxFit.cover),
+                            ),
                           ),
                           title: Text(
                             friend['name'] ?? 'Unknown',
@@ -453,12 +473,14 @@ class _FriendsListPageState extends State<FriendsListPage> {
                               color: isDark ? Colors.white : Colors.black,
                               fontWeight: FontWeight.w600,
                             ),
+                            textAlign: TextAlign.start,
                           ),
                           subtitle: Text(
                             friend['email'] ?? 'No email provided',
                             style: TextStyle(
                               color: isDark ? Colors.grey[300] : Colors.grey[700],
                             ),
+                            textAlign: TextAlign.start,
                           ),
                           onTap: () {
                             _showFriendStatsDialog(friend);
@@ -467,13 +489,15 @@ class _FriendsListPageState extends State<FriendsListPage> {
                       );
                     },
                   )
-                      : Center(
+                      : Align(
+                    alignment: Alignment.centerLeft,
                     child: Text(
                       'No friends found.',
                       style: TextStyle(
                         color: isDark ? Colors.white : Colors.black,
                         fontSize: 16,
                       ),
+                      textAlign: TextAlign.start,
                     ),
                   ),
                 ),
@@ -482,10 +506,8 @@ class _FriendsListPageState extends State<FriendsListPage> {
           ),
         ),
       ),
-
-      // Floating action button to send friend requests
       floatingActionButton: FloatingActionButton(
-        onPressed: _sendFriendRequest,
+        onPressed: () => _showFriendRequestsBottomSheet(context),
         backgroundColor: const Color(0xFF85C83E),
         child: const Icon(Icons.person_add, color: Colors.white),
       ),
