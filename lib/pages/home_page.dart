@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/pages/health/history_page.dart';
-import 'package:fitbattles/pages/social/friends_list_page.dart';
+import 'package:fitbattles/pages/social/friends_list_page.dart'; // Updated so that it no longer returns a Scaffold
 import 'package:fitbattles/settings/ui/theme_provider.dart';
 import 'package:fitbattles/widgets/containment/settings_bottom_sheet.dart';
 import 'package:intl/intl.dart';
@@ -22,7 +22,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
-  int unreadMessages = 0;
   int _selectedIndex = 1; // Default to home tab
 
   final List<String> exampleFriends = [
@@ -56,17 +55,15 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildHomeContent() {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    // Match spacing style to Friends List:
-    // Friends List uses padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0)
     return SingleChildScrollView(
       controller: _scrollController,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Align start like Friends List
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              // Header, similar spacing as Friends List
+              // Header similar to Friends List
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -489,7 +486,7 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: const Color(0xFF85C83E),
           title: Text(friendName, style: const TextStyle(color: Colors.black)),
@@ -507,7 +504,7 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Close', style: TextStyle(color: Colors.black)),
             ),
           ],
@@ -529,13 +526,9 @@ class _HomePageState extends State<HomePage> {
           .doc('notifications')
           .get(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
+        // Instead of returning a separate scaffold, keep the one scaffold and handle states here
         final List<Widget> pages = [
+          // These pages should be refactored to return only content (no scaffold)
           const FriendsListPage(),
           _buildHomeContent(),
           const MyHistoryPage(),
@@ -543,9 +536,16 @@ class _HomePageState extends State<HomePage> {
 
         return Scaffold(
           backgroundColor: isDark ? const Color(0xFF1F1F1F) : null,
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: pages,
+          body: SafeArea(
+            child: snapshot.connectionState == ConnectionState.waiting
+                ? const Center(child: CircularProgressIndicator())
+                : AnimatedSwitcher(
+              duration: const Duration(milliseconds: 100),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: pages[_selectedIndex],
+            ),
           ),
           bottomNavigationBar: ClipRRect(
             borderRadius: const BorderRadius.only(
