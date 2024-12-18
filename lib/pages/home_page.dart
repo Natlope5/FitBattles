@@ -4,9 +4,9 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/pages/health/history_page.dart';
-import 'package:fitbattles/pages/social/friends_list_page.dart'; // Updated so that it no longer returns a Scaffold
+import 'package:fitbattles/pages/social/friends_list_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
-import 'package:fitbattles/widgets/containment/settings_bottom_sheet.dart';
+import 'package:fitbattles/widgets/containment/profile_drawer.dart';
 import 'package:intl/intl.dart';
 import 'package:fitbattles/pages/health/health_report_graph.dart';
 
@@ -53,7 +53,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Widget _buildHomeContent() {
+  Widget _buildHomeContent(BuildContext scaffoldContext) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
     return SingleChildScrollView(
       controller: _scrollController,
@@ -63,7 +63,7 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              // Header similar to Friends List
+              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -85,15 +85,20 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  InkWell(
-                    onTap: () {
-                      SettingsBottomSheet.show(context);
+                  // Use a Builder to ensure Scaffold is found
+                  Builder(
+                    builder: (innerContext) {
+                      return InkWell(
+                        onTap: () {
+                          Scaffold.of(innerContext).openEndDrawer();
+                        },
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundImage: const AssetImage('assets/images/placeholder_avatar.png'),
+                          backgroundColor: Colors.transparent,
+                        ),
+                      );
                     },
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundImage: const AssetImage('assets/images/placeholder_avatar.png'),
-                      backgroundColor: Colors.transparent,
-                    ),
                   )
                 ],
               ),
@@ -526,16 +531,20 @@ class _HomePageState extends State<HomePage> {
           .doc('notifications')
           .get(),
       builder: (context, snapshot) {
-        // Instead of returning a separate scaffold, keep the one scaffold and handle states here
         final List<Widget> pages = [
-          // These pages should be refactored to return only content (no scaffold)
           const FriendsListPage(),
-          _buildHomeContent(),
+          // We pass a context that is guaranteed under the Scaffold using a Builder
+          Builder(
+            builder: (scaffoldContext) {
+              return _buildHomeContent(scaffoldContext);
+            },
+          ),
           const MyHistoryPage(),
         ];
 
         return Scaffold(
           backgroundColor: isDark ? const Color(0xFF1F1F1F) : null,
+          endDrawer: const ProfileDrawer(),
           body: SafeArea(
             child: snapshot.connectionState == ConnectionState.waiting
                 ? const Center(child: CircularProgressIndicator())

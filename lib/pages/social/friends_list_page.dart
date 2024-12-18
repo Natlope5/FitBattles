@@ -192,18 +192,14 @@ class _FriendsListPageState extends State<FriendsListPage> {
                     onPressed: () async {
                       if (emailController.text.isNotEmpty) {
                         final friendData = await _firebaseService.sendFriendRequest(email: emailController.text);
-                        if (!mounted) return;
                         _handleFriendRequestResponse(friendData, localContext);
                       } else if (friendCodeController.text.isNotEmpty) {
                         final friendData = await _firebaseService.sendFriendRequest(
                           friendCode: friendCodeController.text,
                         );
-                        if (!mounted) return;
                         _handleFriendRequestResponse(friendData, localContext);
                       }
-                      if (Navigator.canPop(sheetContext)) {
                         Navigator.pop(sheetContext);
-                      }
                     },
                     child: const Text('Send'),
                   ),
@@ -237,10 +233,8 @@ class _FriendsListPageState extends State<FriendsListPage> {
     bool isEditing = false;
 
     final privacySetting = await _firebaseService.getFriendPrivacy(friendId);
-    if (!mounted) return;
     bool canViewStats = privacySetting == 'public' || privacySetting == 'friends';
 
-    if (!mounted) return;
     showDialog(
       context: localContext,
       builder: (dialogContext) {
@@ -353,7 +347,6 @@ class _FriendsListPageState extends State<FriendsListPage> {
                   ElevatedButton(
                     onPressed: () async {
                       await _firebaseService.editFriendName(friendId, nameController.text);
-                      if (!mounted) return;
                       Navigator.pop(dialogContext);
                       _loadFriends();
                     },
