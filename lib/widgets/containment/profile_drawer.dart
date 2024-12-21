@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
@@ -332,7 +331,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                               height: 60,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
-                                color: Colors.grey[300],
+                                color: Colors.grey[800],
                                 image: _avatarUrl.isNotEmpty || _image != null
                                     ? DecorationImage(
                                   image: _avatarUrl.isNotEmpty
@@ -498,7 +497,7 @@ class _ProfileDrawerState extends State<ProfileDrawer> {
                                   ElevatedButton(
                                     onPressed: () async {
                                       String result = await _saveSettings();
-                                      if (mounted && result.contains('successfully')) {
+                                      if (result.contains('successfully')) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(content: Text('Settings updated successfully!')),
                                         );

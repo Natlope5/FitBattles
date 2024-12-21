@@ -539,7 +539,7 @@ class _HomePageState extends State<HomePage> {
               return _buildHomeContent(scaffoldContext);
             },
           ),
-          const MyHistoryPage(),
+          const HistoryPage(),
         ];
 
         return Scaffold(
