@@ -326,83 +326,138 @@ class CustomWorkoutPlanPageState extends State<CustomWorkoutPlanPage> {
   Widget _buildExerciseForm() {
     return Column(
       children: [
-        // Exercise name input
-        TextField(
-          controller: _exerciseNameController,
-          decoration: const InputDecoration(
-            labelText: 'Exercise Name',
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        // Sets input
-        TextField(
-          controller: _setsController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Sets',
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        // Reps input
-        TextField(
-          controller: _repsController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(
-            labelText: 'Reps',
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        // Weight input
-        TextField(
-          controller: _weightController,
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            labelText: 'Weight (kg)',
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        // Day of the week dropdown
-        DropdownButton<String>(
-          value: _selectedDay,
-          onChanged: (String? newValue) {
-            setState(() {
-              _selectedDay = newValue;
-            });
-          },
-          hint: const Text('Select a Day'),
-          items: _daysOfWeek
-              .map<DropdownMenuItem<String>>(
-                (String day) => DropdownMenuItem<String>(
-              value: day,
-              child: Text(day),
+        // Exercise name input inside a Card
+        Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _exerciseNameController,
+              decoration: const InputDecoration(
+                labelText: 'Exercise Name',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
             ),
-          )
-              .toList(),
+          ),
         ),
         const SizedBox(height: 10),
+
+        // Sets input inside a Card
+        Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _setsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Sets',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Reps input inside a Card
+        Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _repsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Reps',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Weight input inside a Card
+        Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _weightController,
+              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Weight (kg)',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // Day of the week dropdown inside a Card
+        Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: DropdownButton<String>(
+              value: _selectedDay,
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedDay = newValue;
+                });
+              },
+              hint: const Text('Select a Day'),
+              isExpanded: true,
+              items: _daysOfWeek
+                  .map<DropdownMenuItem<String>>(
+                    (String day) => DropdownMenuItem<String>(
+                  value: day,
+                  child: Text(day),
+                ),
+              )
+                  .toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
 
         // Add Exercise button
-        ElevatedButton(
-          onPressed: _addExercise,
-          child: const Text('Add Exercise'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.lightGreen,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: EdgeInsets.symmetric(vertical: 15, horizontal: 25),
+              ),
+              onPressed: _addExercise,
+              child: Text(
+                'Add Exercise',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
-
-  Widget _buildWorkoutList() {
+    Widget _buildWorkoutList() {
     return ListView.builder(
       shrinkWrap: true,
       itemCount: _exercises.length,

@@ -260,15 +260,15 @@ class _HomePageState extends State<HomePage> {
               color: Colors.lightGreen,
             ),
             onPressed: () {
-              if (mounted) {
-                Navigator.of(context).pushNamed('/workoutTracking');
-              }
+              _showWorkoutOptions(context); // Call the method to show workout options
             },
           ),
         ),
       ],
     );
   }
+
+
 
   Widget _buildGoalsContainer(BuildContext context, ThemeProvider themeProvider) {
     return Stack(
@@ -334,7 +334,7 @@ class _HomePageState extends State<HomePage> {
             ),
             onPressed: () {
               if (mounted) {
-                Navigator.pushNamed(context, '/currentGoals');
+                Navigator.pushNamed(context, '/addGoal'); // Changed the route here
               }
             },
           ),
@@ -342,6 +342,7 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
+
 
   Widget _buildHealthReportContainer(BuildContext context, ThemeProvider themeProvider) {
     return Stack(
@@ -511,6 +512,36 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
+  void _showWorkoutOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('Custom Workout'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/customWorkout'); // Replace with your actual route
+                },
+              ),
+              ListTile(
+                title: const Text('Workout Tracker'),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/workoutTracking'); // Replace with your actual route
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -553,7 +584,11 @@ class _HomePageState extends State<HomePage> {
               child: BottomNavigationBar(
                 currentIndex: _selectedIndex,
                 onTap: _onItemTapped,
-                backgroundColor: isDark ? Colors.black.withOpacity(0.05) : Colors.white.withOpacity(0.1),
+                backgroundColor: isDark
+                    ? Colors.black.withValues(alpha: 0.05)
+                    : Colors.white.withValues(alpha: 0.1),
+
+
                 elevation: 0,
                 selectedItemColor: isDark ? Colors.white : Colors.blue,
                 unselectedItemColor: isDark ? Colors.grey[400] : Colors.grey[700],

@@ -109,4 +109,8 @@ flutter:
     - assets/images/chest.png
     - assets/images/arms.png
     - assets/images/legs.png
+    - assets/animations/badge.json
+    - assets/animations/goals.json
+
+
 

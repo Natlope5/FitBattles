@@ -37,7 +37,8 @@ class MyHistoryPageState extends State<MyHistoryPage> {
 
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        double calories = data['calories'] != null ? (data['calories'] as num).toDouble() : 0.0;
+        double calories = data['calories'] != null ? (data['calories'] as num)
+            .toDouble() : 0.0;
         totalCalories += calories;
       }
 
@@ -85,7 +86,8 @@ class MyHistoryPageState extends State<MyHistoryPage> {
 
       for (var doc in snapshot.docs) {
         final data = doc.data() as Map<String, dynamic>;
-        double intake = data['amount'] != null ? (data['amount'] as num).toDouble() : 0.0;
+        double intake = data['amount'] != null ? (data['amount'] as num)
+            .toDouble() : 0.0;
         totalWaterIntake += intake;
       }
 
@@ -156,54 +158,73 @@ class MyHistoryPageState extends State<MyHistoryPage> {
   // Build the main UI of the History Page
   @override
   Widget build(BuildContext context) {
-    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final bool isDarkMode = Theme
+        .of(context)
+        .brightness == Brightness.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My History'),
-        backgroundColor: const Color(0xFF5D6C8A),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Summary',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: isDarkMode ? Colors.white : const Color(0xFF5D6C8A),
+    return PopScope(
+      canPop: false, // Prevent default pop behavior
+      onPopInvokedWithResult: (didPop, result) async {
+        if (!didPop) {
+          // Navigate back to the Home Page when the back button is pressed
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      },
+    child: Scaffold(
+        appBar: AppBar(
+          title: const Text('My History'),
+          backgroundColor: const Color(0xFF5D6C8A),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pushReplacementNamed(context, '/home');
+            },
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Summary',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : const Color(0xFF5D6C8A),
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: FutureBuilder<HistoryData>(
-                future: _fetchHistoryData(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return const Center(child: Text('Error fetching data.'));
-                  } else if (snapshot.hasData) {
-                    final data = snapshot.data!;
-                    return ListView(
-                      children: _buildHistoryCards(data.waterIntake, data.totalCaloriesBurned, isDarkMode),
-                    );
-                  } else {
-                    return const Center(child: Text('No data available.'));
-                  }
-                },
+              const SizedBox(height: 20),
+              Expanded(
+                child: FutureBuilder<HistoryData>(
+                  future: _fetchHistoryData(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return const Center(child: Text('Error fetching data.'));
+                    } else if (snapshot.hasData) {
+                      final data = snapshot.data!;
+                      return ListView(
+                        children: _buildHistoryCards(
+                            data.waterIntake, data.totalCaloriesBurned, isDarkMode),
+                      );
+                    } else {
+                      return const Center(child: Text('No data available.'));
+                    }
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   // Build the history cards dynamically
-  List<Widget> _buildHistoryCards(double waterIntake, double totalCaloriesBurned, bool isDarkMode) {
+  List<Widget> _buildHistoryCards(double waterIntake,
+      double totalCaloriesBurned, bool isDarkMode) {
     final historyData = {
       'Points Won': 150,
       'Calories Lost': totalCaloriesBurned,
@@ -214,6 +235,7 @@ class MyHistoryPageState extends State<MyHistoryPage> {
       'Challenges Tied': 1,
       'Friends Involved': [], // This will be fetched on tap
       'Goals & Achievements': 'View your achievements',
+      'Badges & Rewards Earned': 'View your rewards', // New Entry
     };
 
     return historyData.entries.map((entry) {
@@ -234,7 +256,9 @@ class MyHistoryPageState extends State<MyHistoryPage> {
             ),
           ),
           subtitle: Text(
-            entry.key == 'Friends Involved' || entry.key == 'Goals & Achievements'
+            entry.key == 'Friends Involved' ||
+                entry.key == 'Goals & Achievements' ||
+                entry.key == 'Badges & Rewards Earned'
                 ? 'Tap to view'
                 : '${entry.value}',
             style: TextStyle(
@@ -264,6 +288,9 @@ class MyHistoryPageState extends State<MyHistoryPage> {
                   builder: (context) => GoalCompletionPage(),
                 ),
               );
+            } else
+            if (entry.key == 'Badges & Rewards Earned') { // New navigation
+              Navigator.pushNamed(context, '/rewards');
             } else if (entry.key == 'Workout Sessions') {
               Navigator.push(
                 context,
@@ -302,6 +329,8 @@ class MyHistoryPageState extends State<MyHistoryPage> {
         return const Icon(Icons.people, color: Colors.teal);
       case 'Goals & Achievements':
         return const Icon(Icons.emoji_events, color: Colors.orange);
+      case 'Badges & Rewards Earned': // New icon
+        return const Icon(Icons.card_giftcard, color: Colors.purple);
       default:
         return const Icon(Icons.help, color: Colors.black);
     }
