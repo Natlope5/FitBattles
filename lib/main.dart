@@ -84,7 +84,7 @@ class MyApp extends StatelessWidget {
             '/home': (context) => HomePage(id: '', email: '', uid: ''),
             '/workoutTracking': (context) => const WorkoutTrackingPage(),
             '/friends': (context) => const FriendsListPage(),
-            '/history': (context) => const MyHistoryPage(),
+            '/history': (context) => const HistoryPage(),
             '/workoutHistory': (context) => const WorkoutHistoryPage(),
             '/leaderboard': (context) => const LeaderboardPage(),
             '/create_challenge': (context) => CreateChallengePage(),

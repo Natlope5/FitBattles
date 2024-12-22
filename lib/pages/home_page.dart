@@ -6,7 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fitbattles/pages/health/history_page.dart';
 import 'package:fitbattles/pages/social/friends_list_page.dart';
 import 'package:fitbattles/settings/ui/theme_provider.dart';
-import 'package:fitbattles/widgets/containment/settings_bottom_sheet.dart';
+import 'package:fitbattles/widgets/containment/profile_drawer.dart';
 import 'package:intl/intl.dart';
 import 'package:fitbattles/pages/health/health_report_graph.dart';
 
@@ -22,7 +22,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
-  int unreadMessages = 0;
   int _selectedIndex = 1; // Default to home tab
 
   final List<String> exampleFriends = [
@@ -54,19 +53,17 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Widget _buildHomeContent() {
+  Widget _buildHomeContent(BuildContext scaffoldContext) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    // Match spacing style to Friends List:
-    // Friends List uses padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0)
     return SingleChildScrollView(
       controller: _scrollController,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start, // Align start like Friends List
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              // Header, similar spacing as Friends List
+              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -78,21 +75,30 @@ class _HomePageState extends State<HomePage> {
                         style: const TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Summary',
-                        style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
-                  InkWell(
-                    onTap: () {
-                      SettingsBottomSheet.show(context);
+                  // Use a Builder to ensure Scaffold is found
+                  Builder(
+                    builder: (innerContext) {
+                      return InkWell(
+                        onTap: () {
+                          Scaffold.of(innerContext).openEndDrawer();
+                        },
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundImage: const AssetImage('assets/images/placeholder_avatar.png'),
+                          backgroundColor: Colors.transparent,
+                        ),
+                      );
                     },
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundImage: const AssetImage('assets/images/placeholder_avatar.png'),
-                      backgroundColor: Colors.transparent,
-                    ),
                   )
                 ],
               ),
@@ -486,7 +492,7 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           backgroundColor: const Color(0xFF85C83E),
           title: Text(friendName, style: const TextStyle(color: Colors.black)),
@@ -504,7 +510,7 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: const Text('Close', style: TextStyle(color: Colors.black)),
             ),
           ],
@@ -556,23 +562,30 @@ class _HomePageState extends State<HomePage> {
           .doc('notifications')
           .get(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
         final List<Widget> pages = [
           const FriendsListPage(),
-          _buildHomeContent(),
-          const MyHistoryPage(),
+          // We pass a context that is guaranteed under the Scaffold using a Builder
+          Builder(
+            builder: (scaffoldContext) {
+              return _buildHomeContent(scaffoldContext);
+            },
+          ),
+          const HistoryPage(),
         ];
 
         return Scaffold(
           backgroundColor: isDark ? const Color(0xFF1F1F1F) : null,
-          body: IndexedStack(
-            index: _selectedIndex,
-            children: pages,
+          endDrawer: const ProfileDrawer(),
+          body: SafeArea(
+            child: snapshot.connectionState == ConnectionState.waiting
+                ? const Center(child: CircularProgressIndicator())
+                : AnimatedSwitcher(
+              duration: const Duration(milliseconds: 100),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(opacity: animation, child: child);
+              },
+              child: pages[_selectedIndex],
+            ),
           ),
           bottomNavigationBar: ClipRRect(
             borderRadius: const BorderRadius.only(
