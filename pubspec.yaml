@@ -111,6 +111,6 @@ flutter:
     - assets/images/legs.png
     - assets/animations/badge.json
     - assets/animations/goals.json
-
+    - assets/images/AbstractWallpaperBackground.jpeg
 
 

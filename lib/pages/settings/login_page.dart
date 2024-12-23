@@ -19,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final Logger logger = Logger();
   String? errorMessage;
   final SessionManager _sessionManager = SessionManager();
-  bool _rememberMe = false;
+  //bool _rememberMe = false;
 
   Future<void> authenticateUser(String email, String password) async {
     if (email.isEmpty || password.isEmpty) {
@@ -114,9 +114,10 @@ class _LoginPageState extends State<LoginPage> {
         labelStyle: TextStyle(color: Colors.black),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: Colors.black,
-        ),
+          style: TextButton.styleFrom(
+            foregroundColor: Colors.black,
+          )
+
       ),
     );
 
@@ -130,11 +131,11 @@ class _LoginPageState extends State<LoginPage> {
               fit: BoxFit.cover,
             ),
           ),
-
           child: Center(
             child: SingleChildScrollView(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   Image.asset(
                     'assets/images/logo2.png',
@@ -151,6 +152,7 @@ class _LoginPageState extends State<LoginPage> {
                         fillColor: Color(0xB0FFFFFF),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.blue, width: 2.0),
                         ),
                         prefixIcon: const Icon(Icons.email, color: Colors.blue),
                       ),
@@ -168,6 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                         fillColor: Color(0xB0FFFFFF),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.blue, width: 2.0),
                         ),
                         prefixIcon: const Icon(Icons.lock, color: Colors.blue),
                       ),
@@ -187,6 +190,14 @@ class _LoginPageState extends State<LoginPage> {
                           end: Alignment.topRight,
                         ),
                         borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: Offset(0, 3),
+                          ),
+                        ],
                       ),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 50, vertical: 12),
@@ -201,6 +212,17 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () => _resetPassword(_emailController.text),
+                    child: const Text(
+                      'Forgot Password?',
+                      style: TextStyle(
+                          color: Colors.black,
+                          decoration: TextDecoration.underline,
+                          fontSize: 15),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   if (errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -210,48 +232,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      StatefulBuilder(
-                        builder: (BuildContext context, StateSetter setState) {
-                          return Checkbox(
-                            value: _rememberMe,
-                            checkColor: Colors.white,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                _rememberMe = value!;
-                              });
-                            },
-                          );
-                        },
-                      ),
-                      const Text(
-                        'Remember me',
-                        style: TextStyle(color: Colors.black, fontSize: 15),
-                      ),
-                      TextButton(
-                        onPressed: () => _resetPassword(_emailController.text),
-                        child: const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
-                            color: Colors.black,
-                            decoration: TextDecoration.underline,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 5),
-                  const Text(
-                    'Not a member?',
-                    style: TextStyle(color: Colors.black),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () {
+                  TextButton(
+                    onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -261,22 +243,12 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       );
                     },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.transparent),
-                        borderRadius: BorderRadius.circular(30),
-                        color: Color(0xFF84C63E)
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 65, vertical: 10),
-                      child: const Text(
-                        'Create Account',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF272A2C),
-                        ),
-                      ),
+                    child: const Text(
+                      'Create Account',
+                      style: TextStyle(
+                          color: Colors.black,
+                          decoration: TextDecoration.underline,
+                          fontSize: 15),
                     ),
                   ),
                 ],
