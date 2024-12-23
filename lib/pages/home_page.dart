@@ -23,7 +23,13 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
   int _selectedIndex = 1; // Default to home tab
+  String profileImageUrl = '';
 
+  @override
+  void initState() {
+    super.initState();
+    _fetchProfileImage();
+  }
   final List<String> exampleFriends = [
     'assets/images/Bob.png',
     'assets/images/Charlie.png',
@@ -35,10 +41,11 @@ class _HomePageState extends State<HomePage> {
     'assets/images/Diana.png',
     'assets/images/Alice.png',
   ];
-
-  @override
-  void initState() {
-    super.initState();
+  Future<void> _fetchProfileImage() async {
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.id).get();
+    setState(() {
+      profileImageUrl = userDoc['image_url'] ?? '';
+    });
   }
 
   @override
@@ -52,6 +59,7 @@ class _HomePageState extends State<HomePage> {
       _selectedIndex = index;
     });
   }
+
 
   Widget _buildHomeContent(BuildContext scaffoldContext) {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
@@ -85,7 +93,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                  // Use a Builder to ensure Scaffold is found
                   Builder(
                     builder: (innerContext) {
                       return InkWell(
@@ -94,7 +101,9 @@ class _HomePageState extends State<HomePage> {
                         },
                         child: CircleAvatar(
                           radius: 20,
-                          backgroundImage: const AssetImage('assets/images/placeholder_avatar.png'),
+                          backgroundImage: profileImageUrl.isNotEmpty
+                              ? NetworkImage(profileImageUrl)
+                              : const AssetImage('assets/images/placeholder_avatar.png') as ImageProvider,
                           backgroundColor: Colors.transparent,
                         ),
                       );
@@ -107,20 +116,9 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 32),
               _buildChallengesContainer(context, themeProvider),
               const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    flex: 1,
-                    child: _buildWorkoutContainer(context, themeProvider),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 1,
-                    child: _buildGoalsContainer(context, themeProvider),
-                  ),
-                ],
-              ),
+              _buildWorkoutContainer(context, themeProvider),
+              const SizedBox(height: 32),
+              _buildGoalsContainer(context, themeProvider),
               const SizedBox(height: 32),
               _buildTopChallengedFriends(exampleFriends, themeProvider),
             ],
@@ -130,58 +128,59 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+
   Widget _buildChallengesContainer(BuildContext context, ThemeProvider themeProvider) {
     return Stack(
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          width: MediaQuery.of(context).size.width,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Challenges',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Divider(
-                color: Colors.grey.shade300,
-                thickness: 1,
-                height: 0,
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 100,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 5,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 16.0),
-                      child: Container(
-                        width: 150,
-                        decoration: BoxDecoration(
-                          color: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Challenge ${index + 1}',
-                            style: TextStyle(
-                              color: themeProvider.isDarkMode ? Colors.white : Colors.black,
-                              fontWeight: FontWeight.bold,
+        Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Challenges',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                  height: 0,
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
+                        child: Container(
+                          width: 150,
+                          decoration: BoxDecoration(
+                            color: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Challenge ${index + 1}',
+                              style: TextStyle(
+                                color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         Positioned(
@@ -266,7 +265,7 @@ class _HomePageState extends State<HomePage> {
               color: Colors.lightGreen,
             ),
             onPressed: () {
-              _showWorkoutOptions(context); // Call the method to show workout options
+              _showWorkoutOptions(context);
             },
           ),
         ),
@@ -274,60 +273,58 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-
-
   Widget _buildGoalsContainer(BuildContext context, ThemeProvider themeProvider) {
     return Stack(
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          width: MediaQuery.of(context).size.width,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Goals',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Divider(
-                color: Colors.grey.shade300,
-                thickness: 1,
-                height: 0,
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                height: 88,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 5,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 16.0),
-                      child: Container(
-                        width: 150,
-                        decoration: BoxDecoration(
-                          color: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[300],
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Goal ${index + 1}',
-                            style: TextStyle(
-                              color: themeProvider.isDarkMode ? Colors.white : Colors.black,
-                              fontWeight: FontWeight.bold,
+        Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Goals',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                  height: 0,
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  height: 88,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
+                        child: Container(
+                          width: 150,
+                          decoration: BoxDecoration(
+                            color: themeProvider.isDarkMode ? Colors.grey[700] : Colors.grey[300],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'Goal ${index + 1}',
+                              style: TextStyle(
+                                color: themeProvider.isDarkMode ? Colors.white : Colors.black,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
         Positioned(
@@ -340,7 +337,7 @@ class _HomePageState extends State<HomePage> {
             ),
             onPressed: () {
               if (mounted) {
-                Navigator.pushNamed(context, '/addGoal'); // Changed the route here
+                Navigator.pushNamed(context, '/addGoal');
               }
             },
           ),
@@ -348,7 +345,6 @@ class _HomePageState extends State<HomePage> {
       ],
     );
   }
-
 
   Widget _buildHealthReportContainer(BuildContext context, ThemeProvider themeProvider) {
     return Stack(
@@ -410,62 +406,62 @@ class _HomePageState extends State<HomePage> {
   Widget _buildTopChallengedFriends(List<String> friends, ThemeProvider themeProvider) {
     return Stack(
       children: [
-        Container(
-          decoration: BoxDecoration(
-            color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          width: MediaQuery.of(context).size.width,
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Top Challenged Friends',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              Divider(
-                color: Colors.grey.shade300,
-                thickness: 1,
-                height: 0,
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 100,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: friends.length,
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 16.0),
-                      child: GestureDetector(
-                        onTap: () {
-                          _showFriendInfo(
-                            context,
-                            friends[index].split('/').last.split('.').first,
-                            friends[index],
-                            gamesWon: 25,
-                            streakDays: 10,
-                            rank: 3,
-                          );
-                        },
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircleAvatar(
-                              radius: 30,
-                              backgroundImage: AssetImage(friends[index]),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(friends[index].split('/').last.split('.').first),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+        Card(
+          elevation: 5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          color: themeProvider.isDarkMode ? Colors.grey[800] : Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Top Challenged Friends',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-              ),
-            ],
+                Divider(
+                  color: Colors.grey.shade300,
+                  thickness: 1,
+                  height: 0,
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: friends.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 16.0),
+                        child: GestureDetector(
+                          onTap: () {
+                            _showFriendInfo(
+                              context,
+                              friends[index].split('/').last.split('.').first,
+                              friends[index],
+                              gamesWon: 25,
+                              streakDays: 10,
+                              rank: 3,
+                            );
+                          },
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircleAvatar(
+                                radius: 30,
+                                backgroundImage: AssetImage(friends[index]),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(friends[index].split('/').last.split('.').first),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         Positioned(
@@ -531,14 +527,14 @@ class _HomePageState extends State<HomePage> {
                 title: const Text('Custom Workout'),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.pushNamed(context, '/customWorkout'); // Replace with your actual route
+                  Navigator.pushNamed(context, '/customWorkout');
                 },
               ),
               ListTile(
                 title: const Text('Workout Tracker'),
                 onTap: () {
                   Navigator.pop(context);
-                  Navigator.pushNamed(context, '/workoutTracking'); // Replace with your actual route
+                  Navigator.pushNamed(context, '/workoutTracking');
                 },
               ),
             ],
@@ -547,7 +543,6 @@ class _HomePageState extends State<HomePage> {
       },
     );
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -564,7 +559,6 @@ class _HomePageState extends State<HomePage> {
       builder: (context, snapshot) {
         final List<Widget> pages = [
           const FriendsListPage(),
-          // We pass a context that is guaranteed under the Scaffold using a Builder
           Builder(
             builder: (scaffoldContext) {
               return _buildHomeContent(scaffoldContext);
@@ -598,10 +592,8 @@ class _HomePageState extends State<HomePage> {
                 currentIndex: _selectedIndex,
                 onTap: _onItemTapped,
                 backgroundColor: isDark
-                    ? Colors.black.withValues(alpha: 0.05)
-                    : Colors.white.withValues(alpha: 0.1),
-
-
+                    ? Colors.black.withOpacity(0.05)
+                    : Colors.white.withOpacity(0.1),
                 elevation: 0,
                 selectedItemColor: isDark ? Colors.white : Colors.blue,
                 unselectedItemColor: isDark ? Colors.grey[400] : Colors.grey[700],
