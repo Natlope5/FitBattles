@@ -19,7 +19,7 @@ class WorkoutHistoryPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Workout History'),
-        backgroundColor: const Color(0xFF5D6C8A),
+        backgroundColor: Colors.transparent,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: workoutsRef.orderBy('timestamp', descending: true).snapshots(),
