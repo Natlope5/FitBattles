@@ -76,8 +76,7 @@ class _HealthReportPageState extends State<HealthReportPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Health Report'),
-        backgroundColor: const Color(0xFF5D6C8A),
+        backgroundColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
